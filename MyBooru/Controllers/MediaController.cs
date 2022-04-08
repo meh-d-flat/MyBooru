@@ -13,15 +13,28 @@ namespace MyBooru.Controllers
     public class MediaController : ControllerBase
     {
         readonly Contracts.ICheckService checker;
+        readonly Contracts.IUploadService uploader;
 
-        public MediaController(Contracts.ICheckService checkerService)
+        public MediaController(Contracts.ICheckService checkerService, Contracts.IUploadService uploaderService)
         {
             checker = checkerService;
+            uploader = uploaderService;
+
+            checker.DBSetup();
         }
 
         public IActionResult Get()
         {
             return Ok($"{DateTime.Now} Running");
+        }
+
+        [HttpPost]
+        [Route("upload")]
+        public IActionResult Upload(IFormFile file)
+        {
+            var result = uploader.UploadOne(file);
+            return result == "empty" || result.StartsWith("error")
+              ? StatusCode(501, result) : (IActionResult)Ok(result);
         }
     }
 }

@@ -28,6 +28,7 @@ namespace MyBooru
         {
             services.AddControllers();
             services.AddTransient<Contracts.ICheckService, CheckService>();
+            services.AddTransient<Contracts.IUploadService, UploadService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
