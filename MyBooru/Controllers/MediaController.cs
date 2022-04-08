@@ -14,11 +14,16 @@ namespace MyBooru.Controllers
     {
         readonly Contracts.ICheckService checker;
         readonly Contracts.IUploadService uploader;
+        readonly Contracts.IDownloadService downloader;
 
-        public MediaController(Contracts.ICheckService checkerService, Contracts.IUploadService uploaderService)
+        public MediaController(
+            Contracts.ICheckService checkService,
+            Contracts.IUploadService uploadService,
+            Contracts.IDownloadService downloadService)
         {
-            checker = checkerService;
-            uploader = uploaderService;
+            checker = checkService;
+            uploader = uploadService;
+            downloader = downloadService;
 
             checker.DBSetup();
         }
@@ -26,6 +31,25 @@ namespace MyBooru.Controllers
         public IActionResult Get()
         {
             return Ok($"{DateTime.Now} Running");
+        }
+
+        [HttpGet]
+        [Route("download")]
+        public IActionResult Download(string id, bool dl = false)
+        {
+            if (!checker.CheckMediaExists(id))
+                return StatusCode(501);
+
+            var result = downloader.Download(id);
+            if (result != null)
+            {
+                var file = new FileContentResult(result.Binary, result.Type);
+                if (dl)
+                    file.FileDownloadName = result.Name;
+                return file;
+            }
+            else
+                return StatusCode(501);
         }
 
         [HttpPost]

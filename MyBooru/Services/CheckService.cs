@@ -17,19 +17,48 @@ namespace MyBooru.Services
             config = configuration;
         }
 
-        public bool DBSetup()
-        {
-            return (!DbFileExists());
-        }
-
-        bool DbFileExists()
+        public bool CheckMediaExists(string id)
         {
             bool exists = false;
-            if (File.Exists("db.sqlite3"))
-                return true;
-            else
-                SQLiteConnection.CreateFile("db.sqlite3");
+            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
+            connection.Open();
+            string checkExistsQuery = String.Format("SELECT COUNT(*) FROM Medias WHERE Hash = '{0}'", id);
 
+            using (SQLiteCommand checkExists = new SQLiteCommand(checkExistsQuery, connection))
+                exists = Convert.ToBoolean(checkExists.ExecuteScalar());
+
+            connection.Close();
+            return exists;
+        }
+
+        public bool DBSetup()
+        {
+            //no db - ~145ms; db - ~1-6ms
+            CheckDbFileExists();
+            return CreateDbTables();
+        }
+
+        void CheckDbFileExists()
+        {
+            if (File.Exists("db.sqlite3"))
+                return;
+
+            try
+            {
+                SQLiteConnection.CreateFile("db.sqlite3");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
+            }
+        }
+
+        //SELECT COUNT(name) FROM sqlite_master WHERE type='table' AND name='';
+        bool CreateDbTables()
+        {
+            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+            sw.Start();
+            bool created = false;
             using (SQLiteConnection connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value))
             {
                 connection.Open();
@@ -63,12 +92,12 @@ namespace MyBooru.Services
                 {
                     System.Diagnostics.Debug.WriteLine(ex);
                 }
-
+                created = true;
                 connection.Close();
             }
-
-
-            return exists;
+            sw.Stop();
+            System.Diagnostics.Debug.WriteLine($"{sw.ElapsedMilliseconds} -ms : {sw.ElapsedTicks} -ticks");
+            return created;
         }
     }
 }
