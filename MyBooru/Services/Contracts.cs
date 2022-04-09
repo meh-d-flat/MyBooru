@@ -28,5 +28,12 @@ namespace MyBooru.Services
         {
             string Remove(string id);
         }
+
+        public interface ITagsService
+        {
+            void Get();
+            string Get(string name);
+            bool Add(string name);
+        }
     }
 }

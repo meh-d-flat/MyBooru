@@ -33,7 +33,6 @@ namespace MyBooru.Services
 
         public bool DBSetup()
         {
-            //no db - ~145ms; db - ~1-6ms
             CheckDbFileExists();
             return CreateDbTables();
         }
@@ -43,21 +42,12 @@ namespace MyBooru.Services
             if (File.Exists("db.sqlite3"))
                 return;
 
-            try
-            {
-                SQLiteConnection.CreateFile("db.sqlite3");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine(ex);
-            }
+            SQLiteConnection.CreateFile("db.sqlite3");
         }
 
         //SELECT COUNT(name) FROM sqlite_master WHERE type='table' AND name='';
         bool CreateDbTables()
         {
-            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-            sw.Start();
             bool created = false;
             using (SQLiteConnection connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value))
             {
@@ -95,8 +85,6 @@ namespace MyBooru.Services
                 created = true;
                 connection.Close();
             }
-            sw.Stop();
-            System.Diagnostics.Debug.WriteLine($"{sw.ElapsedMilliseconds} -ms : {sw.ElapsedTicks} -ticks");
             return created;
         }
     }

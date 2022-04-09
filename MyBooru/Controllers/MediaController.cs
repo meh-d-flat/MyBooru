@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using MyBooru.Services;
+using System.Net.Http;
+using Microsoft.Net.Http.Headers;
+using System.IO;
 
 namespace MyBooru.Controllers
 {
@@ -27,7 +30,7 @@ namespace MyBooru.Controllers
 
         [HttpGet]
         [Route("download")]
-        public IActionResult Download([FromServices]DownloadService downloader, string id, bool dl = false)
+        public IActionResult Download([FromServices] DownloadService downloader, string id, bool dl = false)
         {
             if (!checker.CheckMediaExists(id))
                 return StatusCode(501);
@@ -46,16 +49,42 @@ namespace MyBooru.Controllers
 
         [HttpPost]
         [Route("upload")]
-        public IActionResult Upload([FromServices]UploadService uploader, IFormFile file)
+        public IActionResult Upload([FromServices] UploadService uploader, IFormFile file)
         {
             var result = uploader.UploadOne(file);
             return result == "empty" || result.StartsWith("error")
               ? StatusCode(501, result) : (IActionResult)Ok(result);
         }
 
+        //https://localhost:44321/api/media/uploadfrom?source=https://i.kym-cdn.com/entries/icons/square/000/021/523/R14kkDj.png
+        [HttpGet]
+        [Route("uploadfrom")]
+        public IActionResult UploadFrom([FromServices] UploadService uploader, string source)
+        {
+            byte[] data;
+            HeaderDictionary headers = new HeaderDictionary();
+            using (var client = new HttpClient())
+            {
+                using (var result = client.GetAsync(source, HttpCompletionOption.ResponseHeadersRead).Result)
+                {
+                    if (!result.IsSuccessStatusCode)
+                        return StatusCode(401);
+                    else
+                    {
+                        data = result.Content.ReadAsByteArrayAsync().Result;
+                        headers.Add(HeaderNames.ContentType, result.Content.Headers.ContentType.ToString());
+                        FormFile formFile = new FormFile((Stream)new MemoryStream(data), 0, data.Length, "file", Path.GetFileName(new Uri(source).AbsolutePath));
+                        formFile.Headers = headers;
+                        var response = Upload(uploader, formFile);
+                        return response;
+                    }
+                }
+            }
+        }
+
         [HttpDelete]
         [Route("remove")]
-        public IActionResult Remove([FromServices]RemoveService remover, string id)
+        public IActionResult Remove([FromServices] RemoveService remover, string id)
         {
             bool exist = checker.CheckMediaExists(id);
             if (!exist)
