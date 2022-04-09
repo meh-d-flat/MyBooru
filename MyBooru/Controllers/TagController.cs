@@ -4,6 +4,7 @@ using MyBooru.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace MyBooru.Controllers
@@ -12,10 +13,9 @@ namespace MyBooru.Controllers
     [ApiController]
     public class TagController : ControllerBase
     {
-        readonly TagsService tagger;
-        readonly char[] illegalChars = "!@#$%^&*()[]{}-_+=~`'\"".ToCharArray();//regex would be better
+        readonly Contracts.ITagsService tagger;
 
-        public TagController(TagsService tagsService)
+        public TagController(Contracts.ITagsService tagsService)
         {
             tagger = tagsService;
         }
@@ -27,15 +27,15 @@ namespace MyBooru.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get(string tagName = "")
+        public IActionResult Get(string tagName)
         {
             return default;
         }
 
         [HttpPost]
-        public IActionResult Post(string newTag = "")
+        public IActionResult Post(string newTag)
         {
-            if (illegalChars.Any(x => newTag.Contains(x)))
+            if (!Regex.Match(newTag, @"^[ a-zA-Z0-9]+$").Success)
                 return StatusCode(501, "Tag contains illegal characters");
             if (newTag.Length > 32)
                 return StatusCode(501, "Tag's too long, be more concise");

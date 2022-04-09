@@ -56,7 +56,6 @@ namespace MyBooru.Controllers
               ? StatusCode(501, result) : (IActionResult)Ok(result);
         }
 
-        //https://localhost:44321/api/media/uploadfrom?source=https://i.kym-cdn.com/entries/icons/square/000/021/523/R14kkDj.png
         [HttpGet]
         [Route("uploadfrom")]
         public IActionResult UploadFrom([FromServices] UploadService uploader, string source)
