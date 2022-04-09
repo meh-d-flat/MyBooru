@@ -53,7 +53,7 @@ namespace MyBooru.Services
             catch (SQLiteException ex)
             {
                 Console.WriteLine(ex);
-                fileHash = String.Format("error: {0} {1}", ex.GetType(), ex.Message);
+                fileHash = $"error: {ex.GetType()} {ex.Message}";
             }
             finally
             {

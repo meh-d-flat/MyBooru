@@ -13,18 +13,10 @@ namespace MyBooru.Controllers
     public class MediaController : ControllerBase
     {
         readonly Contracts.ICheckService checker;
-        readonly Contracts.IUploadService uploader;
-        readonly Contracts.IDownloadService downloader;
 
-        public MediaController(
-            Contracts.ICheckService checkService,
-            Contracts.IUploadService uploadService,
-            Contracts.IDownloadService downloadService)
+        public MediaController(Contracts.ICheckService checkService)
         {
             checker = checkService;
-            uploader = uploadService;
-            downloader = downloadService;
-
             checker.DBSetup();
         }
 
@@ -35,7 +27,7 @@ namespace MyBooru.Controllers
 
         [HttpGet]
         [Route("download")]
-        public IActionResult Download(string id, bool dl = false)
+        public IActionResult Download([FromServices]DownloadService downloader, string id, bool dl = false)
         {
             if (!checker.CheckMediaExists(id))
                 return StatusCode(501);
@@ -54,11 +46,24 @@ namespace MyBooru.Controllers
 
         [HttpPost]
         [Route("upload")]
-        public IActionResult Upload(IFormFile file)
+        public IActionResult Upload([FromServices]UploadService uploader, IFormFile file)
         {
             var result = uploader.UploadOne(file);
             return result == "empty" || result.StartsWith("error")
               ? StatusCode(501, result) : (IActionResult)Ok(result);
+        }
+
+        [HttpDelete]
+        [Route("remove")]
+        public IActionResult Remove([FromServices]RemoveService remover, string id)
+        {
+            bool exist = checker.CheckMediaExists(id);
+            if (!exist)
+                return StatusCode(501);
+
+            var result = remover.Remove(id);
+            return result.StartsWith("error")
+                ? StatusCode(501, result) : (IActionResult)Ok(result);
         }
     }
 }

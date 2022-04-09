@@ -23,5 +23,10 @@ namespace MyBooru.Services
         {
             Media Download(string id);
         }
+
+        public interface IRemoveService
+        {
+            string Remove(string id);
+        }
     }
 }

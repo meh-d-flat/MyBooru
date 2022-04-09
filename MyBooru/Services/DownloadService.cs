@@ -31,23 +31,8 @@ namespace MyBooru.Services
                 if (result.HasRows)
                 {
                     while (result.Read())
-                    {
                         file = TableCell.MakeEntity<Media>(TableCell.GetRow(result));
-                        //int size = result.GetInt32(3);
-                        //byte[] bytes = new byte[size];
-                        ////returns number of bytes in blob
-                        //result.GetBytes(5, 0, bytes, 0, size);
 
-                        //file = new Media
-                        //{
-                        //    Id = result.GetInt32(0),
-                        //    Name = result.GetString(1),
-                        //    Hash = result.GetString(2),
-                        //    Size = size,
-                        //    Type = result.GetString(4),
-                        //    Binary = bytes
-                        //};
-                    }
                 }
                 result.Dispose();
             }

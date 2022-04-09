@@ -53,8 +53,7 @@ namespace MyBooru
             {
                 for (int m = 0; m < cells.Length; m++)
                 {
-                    //.InvariantCultureIgnoreCase .OrdinalIgnoreCase
-                    if (fields[n].Name.Equals(cells[m].ColumnName, StringComparison.InvariantCultureIgnoreCase))
+                    if (fields[n].Name.Equals(cells[m].ColumnName, StringComparison.OrdinalIgnoreCase))
                     {
                         fields[n].SetValue(instance, Convert.ChangeType(cells[m].Value, fields[n].PropertyType));
                         break;
