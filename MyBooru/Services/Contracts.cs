@@ -31,8 +31,7 @@ namespace MyBooru.Services
 
         public interface ITagsService
         {
-            void Get();
-            string Get(string name);
+            List<string> Get(string name);
             bool Add(string name);
         }
     }

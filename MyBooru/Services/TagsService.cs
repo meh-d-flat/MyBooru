@@ -42,32 +42,28 @@ namespace MyBooru.Services
             return result;
         }
 
-        public void Get()
+        public List<string> Get(string name)
         {
-            throw new NotImplementedException();
-        }
-
-        public string Get(string name)
-        {
-            string tag = null;
+            List<string> tags = null;
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             connection.Open();
-            string getFileQuery = "SELECT * FROM Tags WHERE Name = @a";
+            string getTagQuery = "SELECT * FROM Tags WHERE Name LIKE @a";
 
-            using (SQLiteCommand getFile = new SQLiteCommand(getFileQuery, connection))
+            using (SQLiteCommand getTag = new SQLiteCommand(getTagQuery, connection))
             {
-                getFile.Parameters.AddWithValue("@a", name);
-                var result = getFile.ExecuteReader();
+                getTag.Parameters.AddWithValue("@a", $"{name}%");
+                var result = getTag.ExecuteReader();
 
                 if (result.HasRows)
                 {
+                    tags = new List<string>();
                     while (result.Read())
-                        tag = TableCell.MakeEntity<Tag>(TableCell.GetRow(result)).Name;
+                        tags.Add(TableCell.MakeEntity<Tag>(TableCell.GetRow(result)).Name);
                 }
                 result.Dispose();
             }
             connection.Close();
-            return tag;
+            return tags;
         }
     }
 }

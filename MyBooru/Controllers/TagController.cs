@@ -21,30 +21,40 @@ namespace MyBooru.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get()
-        {
-            return default;
-        }
-
-        [HttpGet]
         public IActionResult Get(string tagName)
         {
-            return default;
+            var checkResult = InputCheck(tagName);
+            if (checkResult != null)
+                return checkResult;
+
+            var result = tagger.Get(tagName);
+            return new JsonResult(result);
         }
 
         [HttpPost]
         public IActionResult Post(string newTag)
         {
-            if (!Regex.Match(newTag, @"^[ a-zA-Z0-9]+$").Success)
-                return StatusCode(501, "Tag contains illegal characters");
-            if (newTag.Length > 32)
-                return StatusCode(501, "Tag's too long, be more concise");
+            var checkResult = InputCheck(newTag);
+            if (checkResult != null)
+                return checkResult;
 
             bool added = tagger.Add(newTag);
             if (!added)
                 return StatusCode(501, "Something went wrong");
 
             return Ok();
+        }
+
+        IActionResult InputCheck(string text)
+        {
+            if (text.Length < 3)
+                return StatusCode(501, "Tag's too short");
+            if (text.Length > 32)
+                return StatusCode(501, "Tag's too long");
+            if (!Regex.Match(text, @"^[ a-zA-Z0-9]+$").Success)
+                return StatusCode(501, "Tag contains illegal characters");
+
+            return null;
         }
     }
 }
