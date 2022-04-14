@@ -13,6 +13,7 @@ namespace MyBooru.Models
         public int Size { get; set; }
         public string Type { get; set; }
         public byte[] Binary { get; set; }
+        public string Path { get; set; }
 
         public List<Tag> Tags { get; set; }
     }

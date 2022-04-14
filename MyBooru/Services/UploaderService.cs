@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
@@ -23,7 +24,7 @@ namespace MyBooru.Services
             string fileHash = "empty";
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             connection.Open();
-            string addFileQuery = "INSERT INTO Medias ('Name', 'Hash', 'Size', 'Type', 'Binary') VALUES (@a, @b, @c, @d, @e)";
+            string addFileQuery = "INSERT INTO Medias ('Name', 'Hash', 'Size', 'Type', 'Binary', 'Path') VALUES (@a, @b, @c, @d, @e, @f)";
 
             SQLiteCommand addFile = new SQLiteCommand(addFileQuery, connection);
             addFile.Parameters.AddWithValue("@a", file.FileName);
@@ -43,6 +44,13 @@ namespace MyBooru.Services
                     hash = hash.Replace("-", "");
                     addFile.Parameters.AddWithValue("@b", hash);
                     fileHash = hash;
+                }
+
+                var path = Path.Combine(config.GetValue<string>("FilePath"), file.FileName);
+                addFile.Parameters.AddWithValue("@f", path);
+                using (var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write))
+                {
+                    file.CopyTo(fileStream);
                 }
             }
 

@@ -60,11 +60,12 @@ namespace MyBooru.Services
                     Size INTEGER NOT NULL,
             	    Type VARCHAR(255) NOT NULL,
                     Binary BLOB,
-            	    CONSTRAINT HashAlreadyExists UNIQUE(Hash)
+                    Path VARCHAR(255),
+                    CONSTRAINT HashAlreadyExists UNIQUE(Hash)
                 );
                 CREATE TABLE IF NOT EXISTS Tags (
                     ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                	Name VARCHAR(255) NOT NULL
+                	Name VARCHAR(255) NOT NULL UNIQUE
                 ); 
                 CREATE TABLE IF NOT EXISTS MediasTags (
                     MediaID INTEGER,

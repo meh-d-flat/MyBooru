@@ -29,6 +29,14 @@ namespace MyBooru.Controllers
         }
 
         [HttpGet]
+        [Route("byTag")]
+        public IActionResult GetByTag([FromServices] TagsService tagger, string tags)
+        {
+            var result = tagger.GetByTag(tags);
+            return new JsonResult(result);
+        }
+
+        [HttpGet]
         [Route("download")]
         public IActionResult Download([FromServices] DownloadService downloader, string id, bool dl = false)
         {

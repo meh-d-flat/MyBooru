@@ -32,6 +32,7 @@ namespace MyBooru
             services.AddTransient<DownloadService>();
             services.AddTransient<RemoveService>();
             services.AddTransient<Contracts.ITagsService, TagsService>();
+            services.AddTransient<TagsService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

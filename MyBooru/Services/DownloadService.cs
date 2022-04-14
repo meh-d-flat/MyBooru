@@ -38,7 +38,7 @@ namespace MyBooru.Services
             }
 
             string getTagsQuery =
-                @"SELECT Tags.Name FROM Medias 
+                @"SELECT Tags.ID, Tags.Name FROM Medias 
                 JOIN MediasTags ON Medias.id = MediasTags.MediaID
                 JOIN Tags ON Tags.ID = MediasTags.TagID
                 Where Hash = @a;";

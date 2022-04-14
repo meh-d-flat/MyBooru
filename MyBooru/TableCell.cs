@@ -26,7 +26,7 @@ namespace MyBooru
             for (int i = 0; i < cells.Length; i++)
             {
                 cells[i] = new TableCell()
-                {
+                { 
                     ColumnName = sqlReader.GetName(i),
                     ColumnNumber = sqlReader.GetOrdinal(sqlReader.GetName(i)),
                     Type = sqlReader.GetFieldType(i),

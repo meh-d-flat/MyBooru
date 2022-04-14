@@ -31,6 +31,12 @@ namespace MyBooru.Controllers
             return new JsonResult(result);
         }
 
+        //[HttpGet]
+        //public IActionResult GetMediasByTag(string tags)
+        //{
+        //    return Ok();
+        //}
+
         [HttpPost]
         public IActionResult Post(string newTag)
         {
@@ -40,7 +46,7 @@ namespace MyBooru.Controllers
 
             bool added = tagger.Add(newTag);
             if (!added)
-                return StatusCode(501, "Something went wrong");
+                return StatusCode(501, "Something went wrong");//change it!
 
             return Ok();
         }
