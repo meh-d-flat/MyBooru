@@ -32,7 +32,8 @@ namespace MyBooru.Services
         public interface ITagsService
         {
             List<Tag> Get(string name);
-            bool Add(string name);
+            Tag Add(string name);
+            List<Tag> AddWithCheck(string tags);
             List<Media> GetByTag(string tags);
         }
     }

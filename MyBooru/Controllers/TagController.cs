@@ -31,12 +31,6 @@ namespace MyBooru.Controllers
             return new JsonResult(result);
         }
 
-        //[HttpGet]
-        //public IActionResult GetMediasByTag(string tags)
-        //{
-        //    return Ok();
-        //}
-
         [HttpPost]
         public IActionResult Post(string newTag)
         {
@@ -44,8 +38,8 @@ namespace MyBooru.Controllers
             if (checkResult != null)
                 return checkResult;
 
-            bool added = tagger.Add(newTag);
-            if (!added)
+            var added = tagger.Add(newTag);
+            if (added == null)
                 return StatusCode(501, "Something went wrong");//change it!
 
             return Ok();
@@ -54,11 +48,11 @@ namespace MyBooru.Controllers
         IActionResult InputCheck(string text)
         {
             if (text.Length < 3)
-                return StatusCode(501, "Tag's too short");
+                return StatusCode(400, "Tag's too short");
             if (text.Length > 32)
-                return StatusCode(501, "Tag's too long");
+                return StatusCode(400, "Tag's too long");
             if (!Regex.Match(text, @"^[ a-zA-Z0-9]+$").Success)
-                return StatusCode(501, "Tag contains illegal characters");
+                return StatusCode(400, "Tag contains illegal characters");
 
             return null;
         }

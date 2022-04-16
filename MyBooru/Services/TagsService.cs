@@ -17,8 +17,9 @@ namespace MyBooru.Services
             config = configuration;
         }
 
-        public bool Add(string name)
+        public Tag Add(string name)
         {
+            Tag tag = null;
             bool rowsChanged = false;
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             connection.Open();
@@ -37,16 +38,13 @@ namespace MyBooru.Services
             {
                 addTag.Dispose();
             }
-            //(int)connection.LastInsertRowId
+
+            if (rowsChanged)
+                tag = new Tag() { Id = (int)connection.LastInsertRowId, Name = name };
             connection.Close();
-            return rowsChanged;
+            return tag;
         }
-        /*
-         * select last_insert_rowid(); connection.LastInsertRowId
-         * 
-         * insert into Users ("id", "username", "password") values (333, "user", 123);
-         * insert into Users ("id", "username", "password") values (222, last_insert_rowid(), 123);
-         */
+
         public List<Tag> Get(string name)
         {
             List<Tag> tags = null;
@@ -71,21 +69,8 @@ namespace MyBooru.Services
         public List<Media> GetByTag(string tags)
         {
             var medias = new List<Media>();
-            var delimitedTags = tags.Split(',');
-            var nameTypeValueDict = new Dictionary<string, SQLiteParameter>(delimitedTags.Length);
-
-            for (int i = 0; i < delimitedTags.Length; i++)
-                nameTypeValueDict.Add($"@p{i}", new SQLiteParameter(System.Data.DbType.String, value: delimitedTags[i]));
-            
-            string paramsForQuery = "";
-            var paramNames = nameTypeValueDict.Keys.ToList();
-            for (int i = 0; i < paramNames.Count; i++)
-            {
-                if (i == paramNames.Count - 1)
-                    paramsForQuery += paramNames[i];
-                else
-                    paramsForQuery += $"{paramNames[i]},";
-            }
+            var parameters = MakeParamsList(tags);
+            string paramsForQuery = ParamsIntoQuery(parameters);
 
             string byTagsQuery =
                 $@"SELECT m.*
@@ -94,17 +79,13 @@ namespace MyBooru.Services
                 AND(t.name IN({paramsForQuery}))
                 AND m.id = mt.MediaID
                 GROUP BY m.id
-                HAVING COUNT(m.id) = {delimitedTags.Length};";
+                HAVING COUNT(m.id) = {parameters.Count};";
 
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
 
             using (SQLiteCommand byTag = new SQLiteCommand(byTagsQuery, connection))
             {
-                foreach (var item in nameTypeValueDict)
-                {
-                    item.Value.ParameterName = item.Key;
-                    byTag.Parameters.Add(item.Value);
-                }
+                byTag.Parameters.AddRange(parameters.ToArray());
                 connection.Open();
                 var result = byTag.ExecuteReader();
 
@@ -114,6 +95,72 @@ namespace MyBooru.Services
                 connection.Close();
             }
             return medias;
+        }
+
+        public List<SQLiteParameter> MakeParamsList(string tags)
+        {
+            var delimited = tags.Split(',');
+            var parameters = new List<SQLiteParameter>(delimited.Length);
+            for (int i = 0; i < delimited.Length; i++)
+            {
+                parameters.Add(new SQLiteParameter()
+                {
+                    ParameterName = $"@p{i}",
+                    DbType = System.Data.DbType.String,
+                    Value = delimited[i]
+                });
+            }
+            return parameters;
+        }
+
+        public string ParamsIntoQuery(List<SQLiteParameter> parameters)
+        {
+            string paramsForQuery = "";
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                if (i == parameters.Count - 1)
+                    paramsForQuery += $"'{parameters[i].Value}'";
+                else
+                    paramsForQuery += $"'{parameters[i].Value}',";
+            }
+            return paramsForQuery;
+        }
+
+        public List<Tag> AddWithCheck(string tags)
+        {
+            var delimited = tags.Split(',').ToList();
+            List<Tag> tagList = null;
+            var parameters = MakeParamsList(tags);
+            string paramsForQuery = ParamsIntoQuery(parameters);
+            var checkTagsQuery = $"SELECT * FROM Tags WHERE Name IN ({paramsForQuery})";
+
+            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
+
+            using (SQLiteCommand checkTags = new SQLiteCommand(checkTagsQuery, connection))
+            {
+                checkTags.Parameters.AddRange(parameters.ToArray());
+                connection.Open();
+                var result = checkTags.ExecuteReader();
+
+                if (result.HasRows)
+                    tagList = TableCell.MakeEntities<Tag>(TableCell.GetRows(result));
+
+                connection.Close();
+            }
+
+            if (delimited.Count > tagList.Count)
+            {
+                var tagNames = tagList.Select(x => x.Name).ToList();
+                var outliers = delimited.Except(tagNames).ToList();
+
+                foreach (var item in outliers)
+                {
+                    var newTag = Add(item);
+                    if(newTag != null)
+                        tagList.Add(Add(item));
+                }
+            }
+            return tagList;
         }
     }
 }

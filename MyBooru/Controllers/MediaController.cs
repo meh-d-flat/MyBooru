@@ -29,8 +29,17 @@ namespace MyBooru.Controllers
         }
 
         [HttpGet]
+        [Route("addTags")]
+        public IActionResult AddTags([FromServices] TagsService tagger, string id, string tags)
+        {
+            var tagsList = tagger.AddWithCheck(tags);
+            //add relationship to MediasTags table
+            return new EmptyResult();
+        }
+
+        [HttpGet]
         [Route("byTag")]
-        public IActionResult GetByTag([FromServices] TagsService tagger, string tags)
+        public IActionResult GetByTags([FromServices] TagsService tagger, string tags)
         {
             var result = tagger.GetByTag(tags);
             return new JsonResult(result);
@@ -41,7 +50,7 @@ namespace MyBooru.Controllers
         public IActionResult Download([FromServices] DownloadService downloader, string id, bool dl = false)
         {
             if (!checker.CheckMediaExists(id))
-                return StatusCode(501);
+                return StatusCode(400);
 
             var result = downloader.Download(id);
             if (result != null)
@@ -75,7 +84,7 @@ namespace MyBooru.Controllers
                 using (var result = client.GetAsync(source, HttpCompletionOption.ResponseHeadersRead).Result)
                 {
                     if (!result.IsSuccessStatusCode)
-                        return StatusCode(401);
+                        return StatusCode(400);
                     else
                     {
                         data = result.Content.ReadAsByteArrayAsync().Result;
@@ -95,7 +104,7 @@ namespace MyBooru.Controllers
         {
             bool exist = checker.CheckMediaExists(id);
             if (!exist)
-                return StatusCode(501);
+                return StatusCode(400);
 
             var result = remover.Remove(id);
             return result.StartsWith("error")
