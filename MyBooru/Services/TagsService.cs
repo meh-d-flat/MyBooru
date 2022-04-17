@@ -70,7 +70,7 @@ namespace MyBooru.Services
         {
             var medias = new List<Media>();
             var parameters = MakeParamsList(tags);
-            string paramsForQuery = ParamsIntoQuery(parameters);
+            string paramsForQuery = ParamsString(parameters);
 
             string byTagsQuery =
                 $@"SELECT m.*
@@ -113,15 +113,14 @@ namespace MyBooru.Services
             return parameters;
         }
 
-        public string ParamsIntoQuery(List<SQLiteParameter> parameters)
+        public string ParamsString(List<SQLiteParameter> parameters)
         {
             string paramsForQuery = "";
             for (int i = 0; i < parameters.Count; i++)
             {
-                if (i == parameters.Count - 1)
-                    paramsForQuery += $"'{parameters[i].Value}'";
-                else
-                    paramsForQuery += $"'{parameters[i].Value}',";
+                paramsForQuery += $"'{parameters[i].Value}'";
+                if (i < parameters.Count - 1)
+                    paramsForQuery += ",";
             }
             return paramsForQuery;
         }
@@ -129,9 +128,9 @@ namespace MyBooru.Services
         public List<Tag> AddWithCheck(string tags)
         {
             var delimited = tags.Split(',').ToList();
-            List<Tag> tagList = null;
+            List<Tag> tagList = new List<Tag>();
             var parameters = MakeParamsList(tags);
-            string paramsForQuery = ParamsIntoQuery(parameters);
+            string paramsForQuery = ParamsString(parameters);
             var checkTagsQuery = $"SELECT * FROM Tags WHERE Name IN ({paramsForQuery})";
 
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
@@ -157,10 +156,44 @@ namespace MyBooru.Services
                 {
                     var newTag = Add(item);
                     if(newTag != null)
-                        tagList.Add(Add(item));
+                        tagList.Add(newTag);
                 }
             }
             return tagList;
+        }
+
+        public void AddToMedia(string id, List<Tag> tags)
+        {
+            int mediaId = -1;
+            string fetchIdQuery = $"SELECT Id FROM Medias WHERE Hash = '{id}'";
+            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
+
+            using (var fetchId = new SQLiteCommand(fetchIdQuery, connection))
+            {
+                connection.Open();
+                var result = fetchId.ExecuteReader();
+                if (result.HasRows)
+                    while(result.Read())
+                        mediaId = result.GetInt32(0);
+                connection.Close();
+            }
+
+            string values = "";
+            for (int i = 0; i < tags.Count; i++)
+            {
+                values += $"({mediaId}, {tags[i].Id})";
+                if (i < tags.Count - 1)
+                    values += ",";
+            }
+            string addTagsQuery = $"INSERT INTO MediasTags VALUES {values}";
+
+            using (var addTags = new SQLiteCommand(addTagsQuery, connection))
+            {
+                connection.Open();
+                addTags.ExecuteNonQuery();
+                connection.Close();
+            }
+
         }
     }
 }

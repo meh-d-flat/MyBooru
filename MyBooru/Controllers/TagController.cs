@@ -40,7 +40,7 @@ namespace MyBooru.Controllers
 
             var added = tagger.Add(newTag);
             if (added == null)
-                return StatusCode(501, "Something went wrong");//change it!
+                return StatusCode(501, "Something went wrong");
 
             return Ok();
         }

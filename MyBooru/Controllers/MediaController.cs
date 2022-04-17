@@ -32,9 +32,13 @@ namespace MyBooru.Controllers
         [Route("addTags")]
         public IActionResult AddTags([FromServices] TagsService tagger, string id, string tags)
         {
+            if (!checker.CheckMediaExists(id))
+                return StatusCode(400);
+
             var tagsList = tagger.AddWithCheck(tags);
-            //add relationship to MediasTags table
-            return new EmptyResult();
+            tagger.AddToMedia(id, tagsList);
+
+            return Ok();
         }
 
         [HttpGet]

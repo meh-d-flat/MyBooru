@@ -22,10 +22,18 @@ namespace MyBooru.Services
             bool exists = false;
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             connection.Open();
-            string checkExistsQuery = String.Format("SELECT COUNT(*) FROM Medias WHERE Hash = '{0}'", id);
+            string checkExistsQuery = "SELECT COUNT(*) FROM Medias WHERE Hash = @p";
 
             using (SQLiteCommand checkExists = new SQLiteCommand(checkExistsQuery, connection))
+            {
+                checkExists.Parameters.Add(new SQLiteParameter()
+                {
+                    ParameterName = "@p",
+                    DbType = System.Data.DbType.String,
+                    Value = id 
+                });
                 exists = Convert.ToBoolean(checkExists.ExecuteScalar());
+            }
 
             connection.Close();
             return exists;
