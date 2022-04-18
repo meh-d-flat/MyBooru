@@ -29,7 +29,7 @@ namespace MyBooru.Services
             SQLiteCommand addFile = new SQLiteCommand(addFileQuery, connection);
             addFile.Parameters.AddWithValue("@a", file.FileName);
             addFile.Parameters.AddWithValue("@d", file.ContentType);
-
+            
             using (var stream = file.OpenReadStream())
             {
                 int size = (int)file.Length;
@@ -46,8 +46,12 @@ namespace MyBooru.Services
                     fileHash = hash;
                 }
 
-                var path = Path.Combine(config.GetValue<string>("FilePath"), file.FileName);
+                var guid = Guid.NewGuid().ToString();
+                var directoryPath = Path.Combine(config.GetValue<string>("FilePath"), guid);
+                Directory.CreateDirectory(directoryPath);
+                var path = Path.Combine(directoryPath, file.FileName);
                 addFile.Parameters.AddWithValue("@f", path);
+
                 using (var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write))
                 {
                     file.CopyTo(fileStream);
