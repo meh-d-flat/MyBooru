@@ -8,6 +8,7 @@ using MyBooru.Services;
 using System.Net.Http;
 using Microsoft.Net.Http.Headers;
 using System.IO;
+using static MyBooru.Services.Contracts;
 
 namespace MyBooru.Controllers
 {
@@ -35,8 +36,7 @@ namespace MyBooru.Controllers
             if (!checker.CheckMediaExists(id))
                 return StatusCode(400);
 
-            var tagsList = tagger.AddWithCheck(tags);
-            tagger.AddToMedia(id, tagsList);
+            tagger.AddTagsToMedia(id, tags);
 
             return Ok();
         }
@@ -45,7 +45,7 @@ namespace MyBooru.Controllers
         [Route("byTag")]
         public IActionResult GetByTags([FromServices] TagsService tagger, string tags)
         {
-            var result = tagger.GetByTag(tags);
+            var result = tagger.GetMediasByTags(tags);//rewrite to get only ids by tag then go through download
             return new JsonResult(result);
         }
 

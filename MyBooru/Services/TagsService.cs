@@ -45,7 +45,7 @@ namespace MyBooru.Services
             return tag;
         }
 
-        public List<Tag> Get(string name)
+        public List<Tag> SearchTag(string name)
         {
             List<Tag> tags = null;
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
@@ -66,7 +66,7 @@ namespace MyBooru.Services
             return tags;
         }
 
-        public List<Media> GetByTag(string tags)
+        public List<Media> GetMediasByTags(string tags)
         {
             var medias = new List<Media>();
             var parameters = MakeParamsList(tags);
@@ -123,6 +123,12 @@ namespace MyBooru.Services
                     paramsForQuery += ",";
             }
             return paramsForQuery;
+        }
+
+        public void AddTagsToMedia(string id, string tags)
+        {
+            var tagsList = AddWithCheck(tags);
+            AddToMedia(id, tagsList);
         }
 
         public List<Tag> AddWithCheck(string tags)
@@ -185,7 +191,7 @@ namespace MyBooru.Services
                 if (i < tags.Count - 1)
                     values += ",";
             }
-            string addTagsQuery = $"INSERT INTO MediasTags VALUES {values}";
+            string addTagsQuery = $"INSERT OR IGNORE INTO MediasTags VALUES {values}";
 
             using (var addTags = new SQLiteCommand(addTagsQuery, connection))
             {

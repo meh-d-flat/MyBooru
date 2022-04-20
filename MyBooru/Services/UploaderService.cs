@@ -27,22 +27,22 @@ namespace MyBooru.Services
             string addFileQuery = "INSERT INTO Medias ('Name', 'Hash', 'Size', 'Type', 'Binary', 'Path') VALUES (@a, @b, @c, @d, @e, @f)";
 
             SQLiteCommand addFile = new SQLiteCommand(addFileQuery, connection);
-            addFile.Parameters.AddWithValue("@a", file.FileName);
-            addFile.Parameters.AddWithValue("@d", file.ContentType);
+            addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = file.FileName, DbType = System.Data.DbType.String });
+            addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@d", Value = file.ContentType, DbType = System.Data.DbType.String });
             
             using (var stream = file.OpenReadStream())
             {
                 int size = (int)file.Length;
-                addFile.Parameters.AddWithValue("@c", size);
+                addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@c", Value = size, DbType = System.Data.DbType.Int32 });
                 byte[] bytes = new byte[size];
                 stream.Read(bytes, 0, (int)file.Length);
-                addFile.Parameters.AddWithValue("@e", bytes);
+                addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@e", Value = bytes, DbType = System.Data.DbType.Object });
 
                 using (SHA256 SHA256 = SHA256Managed.Create())
                 {
                     string hash = BitConverter.ToString(SHA256.ComputeHash(bytes));
                     hash = hash.Replace("-", "");
-                    addFile.Parameters.AddWithValue("@b", hash);
+                    addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@b", Value = hash, DbType = System.Data.DbType.String });
                     fileHash = hash;
                 }
 
@@ -50,7 +50,7 @@ namespace MyBooru.Services
                 var directoryPath = Path.Combine(config.GetValue<string>("FilePath"), guid);
                 Directory.CreateDirectory(directoryPath);
                 var path = Path.Combine(directoryPath, file.FileName);
-                addFile.Parameters.AddWithValue("@f", path);
+                addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@f", Value = path, DbType = System.Data.DbType.String });
 
                 using (var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write))
                 {

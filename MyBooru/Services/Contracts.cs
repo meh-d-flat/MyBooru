@@ -31,11 +31,10 @@ namespace MyBooru.Services
 
         public interface ITagsService
         {
-            List<Tag> Get(string name);
             Tag Add(string name);
-            List<Tag> AddWithCheck(string tags);
-            void AddToMedia(string id, List<Tag> tags);
-            List<Media> GetByTag(string tags);
+            List<Tag> SearchTag(string name);
+            List<Media> GetMediasByTags(string tags);
+            void AddTagsToMedia(string id, string tags);
         }
     }
 }
