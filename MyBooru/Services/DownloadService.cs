@@ -54,5 +54,27 @@ namespace MyBooru.Services
             connection.Close();
             return file;
         }
+
+        public List<Media> Download(int page)
+        {
+            List<Media> files = new List<Media>();
+            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
+            connection.Open();
+            string getFilesQuery = $"SELECT * FROM Medias LIMIT 20 OFFSET { 20 * page }";
+
+            using (SQLiteCommand getFiles = new SQLiteCommand(getFilesQuery, connection))
+            {
+                getFiles.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = page, DbType = System.Data.DbType.Int32 });
+                var result = getFiles.ExecuteReader();
+
+                if (result.HasRows)
+                    files = TableCell.MakeEntities<Media>(TableCell.GetRows(result));
+
+                result.Dispose();
+            }
+
+            connection.Close();
+            return files;
+        }
     }
 }

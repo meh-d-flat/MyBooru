@@ -22,6 +22,7 @@ namespace MyBooru.Services
         public interface IDownloadService
         {
             Media Download(string id);
+            List<Media> Download(int page);
         }
 
         public interface IRemoveService

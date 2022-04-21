@@ -59,15 +59,13 @@ namespace MyBooru.Services
             bool created = false;
             using (SQLiteConnection connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value))
             {
-                connection.Open();
+                connection.Open();//Size INTEGER NOT NULL, Binary BLOB,
                 string createTableQuery =
                 @"CREATE TABLE IF NOT EXISTS Medias (
                     ID INTEGER PRIMARY KEY AUTOINCREMENT,
             	    Name VARCHAR(255),
             	    Hash VARCHAR(255) NOT NULL,
-                    Size INTEGER NOT NULL,
             	    Type VARCHAR(255) NOT NULL,
-                    Binary BLOB,
                     Path VARCHAR(255),
                     CONSTRAINT HashAlreadyExists UNIQUE(Hash)
                 );

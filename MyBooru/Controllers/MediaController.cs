@@ -24,9 +24,10 @@ namespace MyBooru.Controllers
             checker.DBSetup();
         }
 
-        public IActionResult Get()
+        public IActionResult Get([FromServices] DownloadService downloader, int page)
         {
-            return Ok($"{DateTime.Now} Running");
+            var results = downloader.Download(page);
+            return new JsonResult(results);
         }
 
         [HttpGet]
@@ -59,7 +60,8 @@ namespace MyBooru.Controllers
             var result = downloader.Download(id);
             if (result != null)
             {
-                var file = new FileContentResult(result.Binary, result.Type);
+                //var file = new FileContentResult((result.Binary, result.Type);
+                var file = new PhysicalFileResult(result.Path, result.Type);
                 if (dl)
                     file.FileDownloadName = result.Name;
                 return file;
