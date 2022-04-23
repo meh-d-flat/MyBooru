@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using MyBooru.Middleware;
 using MyBooru.Services;
 using System;
 using System.Collections.Generic;
@@ -29,6 +30,7 @@ namespace MyBooru
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            services.AddSingleton<LimitService>();
             services.AddTransient<Contracts.ICheckService, CheckService>();
             services.AddTransient<UploadService>();
             services.AddTransient<DownloadService>();
@@ -56,6 +58,8 @@ namespace MyBooru
             app.UseRouting();
 
             //app.UseAuthorization();
+
+            app.UseMiddleware<RequestLimitMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {
