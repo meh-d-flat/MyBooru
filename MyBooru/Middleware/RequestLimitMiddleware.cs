@@ -7,6 +7,7 @@ using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
 using MyBooru.Services;
+using Microsoft.Extensions.Configuration;
 
 namespace MyBooru.Middleware
 {
@@ -14,40 +15,43 @@ namespace MyBooru.Middleware
     public class RequestLimitMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly IConfiguration _config;
+        private readonly int numOfRequests;
+        private readonly int requestsIntevalMs;
 
-        public RequestLimitMiddleware(RequestDelegate next)
+
+        public RequestLimitMiddleware(RequestDelegate next, IConfiguration config)
         {
             _next = next;
+            _config = config;
+            requestsIntevalMs = config.GetValue<int>("Limiter:RequestsIntevalMs");
+            numOfRequests = config.GetValue<int>("Limiter:RequestsNumber");
         }
 
         public async Task Invoke(HttpContext context, LimitService limiter)
         {
-            IPAddressRecord olderVisitor = null;
-            IPAddressRecord freshVisitor = new IPAddressRecord(context.Connection.RemoteIpAddress, context.Connection.LocalIpAddress, DateTime.Now);
+            var ipString = context.Connection.LocalIpAddress.ToString();
+            var recordExists = limiter.AllRecords.Any(x => x.LocalIP.ToString() == ipString);
 
-            if (!CheckIsVisitorFresh(limiter, freshVisitor.LocalIP, freshVisitor.RemoteIP))
-                limiter.AllRecords.Add(freshVisitor);
-            else
-            {
-                olderVisitor = limiter.AllRecords.Find(x => x.LocalIP.ToString() == freshVisitor.LocalIP.ToString());
-                olderVisitor.NumberOfRequests++;
+            var record = recordExists
+                ? limiter.AllRecords.Find(x => x.LocalIP.ToString() == ipString)
+                : new IPAddressRecord(context);
 
-                if (olderVisitor.NumberOfRequests > 25)
-                    await TooManyRequestsResponse(context);
+            if (!recordExists)
+                limiter.AllRecords.Add(record);
+            
+            if (record.NumberOfRequests > numOfRequests)
+                await TooManyRequestsResponse(context);
 
-                if ((DateTime.Now - olderVisitor.LastRequestTime).Milliseconds < 70)
-                    await TooManyRequestsResponse(context);
+            if ((DateTime.Now - record.LastRequestTime).Milliseconds < requestsIntevalMs)
+                await TooManyRequestsResponse(context);
+            
+            record.NumberOfRequests++;
+            record.LastRequestTime = DateTime.Now;
 
-                olderVisitor.LastRequestTime = DateTime.Now;
-            }
-
-            if (olderVisitor == null || olderVisitor.NumberOfRequests <= 25)
+            if (record.NumberOfRequests <= 25)
                 await _next(context);
-        }
 
-        bool CheckIsVisitorFresh(LimitService limiter, IPAddress localIP, IPAddress remoteIP)
-        {
-            return limiter.AllRecords.Any(x => x.LocalIP.ToString() == localIP.ToString());
         }
 
         async Task TooManyRequestsResponse(HttpContext context)

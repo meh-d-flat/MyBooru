@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Net;
 
 namespace MyBooru
@@ -7,20 +8,18 @@ namespace MyBooru
     {
         public IPAddress RemoteIP { get; }
         public IPAddress LocalIP { get; }
-        public DateTime InitialRequestTime { get; }
         public DateTime LastRequestTime { get; set; }
         public int NumberOfRequests { get; set; }
 
-        public IPAddressRecord(IPAddress remote, IPAddress local, DateTime initial)
+        public IPAddressRecord(HttpContext context)
         {
-            RemoteIP = remote;
-            LocalIP = local;
-            InitialRequestTime = initial;
+            RemoteIP = context.Connection.RemoteIpAddress;
+            LocalIP = context.Connection.LocalIpAddress;
         }
 
         public override string ToString()
         {
-            return $"remote|local : {RemoteIP}|{LocalIP}\ninitial|last|amount : {InitialRequestTime}|{LastRequestTime}|{NumberOfRequests}";
+            return $"remote|local : {RemoteIP}|{LocalIP}\nlast|amount : {LastRequestTime}|{NumberOfRequests}";
         }
     }
 }

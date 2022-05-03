@@ -5,11 +5,13 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
+using Microsoft.Extensions.Configuration;
 
 namespace MyBooru.Services
 {
     public class LimitService
     {
+        private readonly IConfiguration config;
         List<IPAddressRecord> all;
 
         Timer cleanup;
@@ -19,11 +21,12 @@ namespace MyBooru.Services
             get { return all; }
         }
 
-        public LimitService()
+        public LimitService(IConfiguration configuration)
         {
+            config = configuration;
             all = new List<IPAddressRecord>();
 
-            cleanup = new Timer(60000);//5400000 - 90 minutes
+            cleanup = new Timer(config.GetValue<int>("Limiter:CleanupIntervalMs"));//5400000 - 90 minutes
             cleanup.AutoReset = true;
             cleanup.Elapsed += OldRecordsCleanup;
             cleanup.Start();
@@ -31,25 +34,18 @@ namespace MyBooru.Services
 
         private void OldRecordsCleanup(object sender, ElapsedEventArgs e)
         {
-            Debug.WriteLine("[CLEANING RECORDS]-{0} - Start", DateTime.Now);
-
             var cleanupTime = DateTime.Now;
-            var toRemove = new List<IPAddressRecord>();
+            Debug.WriteLine("[CLEANING RECORDS]-{0} - Start", DateTime.Now);
 
             foreach (var record in all)
             {
-                if ((cleanupTime - record.LastRequestTime).Minutes > 1)
+                var total = (cleanupTime - record.LastRequestTime).TotalMilliseconds > cleanup.Interval;
+                if (total)
                 {
-                    Debug.WriteLine("{1} - cleaning up record:\n{0}", record.ToString(), DateTime.Now);
+                    Debug.WriteLine($"{DateTime.Now} - cleaning up record:\n{record.ToString()}");
                     record.NumberOfRequests = 0;
-                    toRemove.Add(record);
                 }
             }
-
-            foreach (var oldRecord in toRemove)
-                all.Remove(oldRecord);
-
-            toRemove = null;
 
             Debug.WriteLine("[CLEANING RECORDS] - Finish");
         }
