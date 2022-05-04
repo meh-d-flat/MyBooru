@@ -37,6 +37,7 @@ namespace MyBooru
             services.AddTransient<RemoveService>();
             services.AddTransient<Contracts.ITagsService, TagsService>();
             services.AddTransient<TagsService>();
+            services.AddMvc();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -58,7 +59,7 @@ namespace MyBooru
             app.UseRouting();
 
             //app.UseAuthorization();
-
+            
             app.UseMiddleware<RequestLimitMiddleware>();
 
             app.UseEndpoints(endpoints =>

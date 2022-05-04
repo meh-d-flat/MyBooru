@@ -15,7 +15,6 @@ namespace MyBooru.Middleware
     public class RequestLimitMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly IConfiguration _config;
         private readonly int numOfRequests;
         private readonly int requestsIntevalMs;
 
@@ -23,7 +22,6 @@ namespace MyBooru.Middleware
         public RequestLimitMiddleware(RequestDelegate next, IConfiguration config)
         {
             _next = next;
-            _config = config;
             requestsIntevalMs = config.GetValue<int>("Limiter:RequestsIntevalMs");
             numOfRequests = config.GetValue<int>("Limiter:RequestsNumber");
         }

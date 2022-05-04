@@ -1,0 +1,38 @@
+﻿@model System.String
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Picture</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!--base is set like this so ajax request gets the right path-->
+    <base href="/"/>
+</head>
+<body>
+    <div id="base">
+    </div>
+    <ul id="tags"></ul>
+    <script>
+        $(document).ready(function () {
+            $.ajax({
+                url: "api/media/details",
+                data: {
+                    id: '@Model'
+                },
+                success: function (response) {
+                    for (var i = 0; i < response.tags.length; i++) {
+                        $("#tags").append("<li>" + response.tags[i].name + "</li>");
+                    }
+                    $("#base").append("<img src='" + response.path + "' width=33%>");
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -27,7 +27,18 @@ namespace MyBooru.Controllers
         public IActionResult Get([FromServices] DownloadService downloader, int page)
         {
             var results = downloader.Download(page);
-            return new JsonResult(results);
+            return new JsonResult(new { items = results });
+        }
+
+        [HttpGet]
+        [Route("details")]
+        public IActionResult Details([FromServices] DownloadService downloader, [FromQuery]string id)
+        {
+            if (!checker.CheckMediaExists(id))
+                return BadRequest();
+
+            var result = downloader.Download(id);
+            return new JsonResult(result);
         }
 
         [HttpGet]
