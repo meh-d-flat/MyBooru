@@ -48,9 +48,9 @@ namespace MyBooru.Controllers
             if (!checker.CheckMediaExists(id))
                 return StatusCode(400);
 
-            tagger.AddTagsToMedia(id, tags);
+            var newTags = tagger.AddTagsToMedia(id, tags);
 
-            return Ok();
+            return new JsonResult(new { items = newTags });
         }
 
         [HttpGet]
@@ -86,8 +86,9 @@ namespace MyBooru.Controllers
         public IActionResult Upload([FromServices] UploadService uploader, IFormFile file)
         {
             var result = uploader.UploadOne(file);
+            var response = new JsonResult(new { item = result });
             return result == "empty" || result.StartsWith("error")
-              ? StatusCode(501, result) : (IActionResult)Ok(result);
+              ? StatusCode(501, response) : (IActionResult)Ok(response);
         }
 
         [HttpGet]

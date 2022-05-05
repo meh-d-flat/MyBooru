@@ -125,10 +125,11 @@ namespace MyBooru.Services
             return paramsForQuery;
         }
 
-        public void AddTagsToMedia(string id, string tags)
+        public List<Tag> AddTagsToMedia(string id, string tags)
         {
             var tagsList = AddWithCheck(tags);
             AddToMedia(id, tagsList);
+            return tagsList;
         }
 
         public List<Tag> AddWithCheck(string tags)

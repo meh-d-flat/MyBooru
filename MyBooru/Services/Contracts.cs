@@ -35,7 +35,7 @@ namespace MyBooru.Services
             Tag Add(string name);
             List<Tag> SearchTag(string name);
             List<Media> GetMediasByTags(string tags);
-            void AddTagsToMedia(string id, string tags);
+            List<Tag> AddTagsToMedia(string id, string tags);
         }
     }
 }

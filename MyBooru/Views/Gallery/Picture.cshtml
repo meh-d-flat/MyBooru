@@ -18,6 +18,15 @@
     <div id="base">
     </div>
     <ul id="tags"></ul>
+
+    <form onsubmit="return false;" method="get">
+        <div style="margin-top: 10px">
+            <label for="tags">Add tag</label>
+            <input name="tags" id="tags-to-add" type="text" />
+        </div>
+        <button type="submit" class="btn btn-primary" onclick="addTag()">Upload</button>
+    </form>
+
     <script>
         $(document).ready(function () {
             $.ajax({
@@ -28,7 +37,7 @@
                 success: function (response) {
                     $("#base").append("<img src='" + response.path + "' width=33%>");
 
-                    if (response.tags.length = 0)
+                    if (response.tags.length == 0)
                         return;
 
                     for (var i = 0; i < response.tags.length; i++) {
@@ -37,6 +46,26 @@
                 }
             });
         });
+
+
+        function addTag() {
+            $.ajax({
+                url: "api/media/addTags",
+                method: "GET",
+                data: {
+                    id: '@Model',
+                    tags: $("#tags-to-add").val()
+                },
+                success: function (response) {
+                    if (response.items.length == 0)
+                        return;
+
+                    for (var i = 0; i < response.items.length; i++) {
+                        $("#tags").append("<li>" + response.items[i].name + "</li>");
+                    }
+                }
+            })
+        }
     </script>
 </body>
 </html>
