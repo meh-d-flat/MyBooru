@@ -21,5 +21,11 @@ namespace MyBooru.Controllers
         {
             return View(model: id);
         }
+
+        [Route("upload")]
+        public ActionResult Upload()
+        {
+            return View();
+        }
     }
 }
