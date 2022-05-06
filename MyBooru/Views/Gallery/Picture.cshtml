@@ -36,13 +36,7 @@
                 },
                 success: function (response) {
                     $("#base").append("<img src='" + response.path + "' width=33%>");
-
-                    if (response.tags.length == 0)
-                        return;
-
-                    for (var i = 0; i < response.tags.length; i++) {
-                        $("#tags").append("<li>" + response.tags[i].name + "</li>");
-                    }
+                    makeList(response.tags);
                 }
             });
         });
@@ -57,14 +51,18 @@
                     tags: $("#tags-to-add").val()
                 },
                 success: function (response) {
-                    if (response.items.length == 0)
-                        return;
-
-                    for (var i = 0; i < response.items.length; i++) {
-                        $("#tags").append("<li>" + response.items[i].name + "</li>");
-                    }
+                    makeList(response.items);
                 }
-            })
+            });
+        }
+
+        function makeList(responseItems) {
+            if (responseItems.length == 0)
+                return;
+
+            for (var i = 0; i < responseItems.length; i++) {
+                $("#tags").append("<li><a href='/gallery/search?tags=" + responseItems[i].name + "'>" + responseItems[i].name + "</a></li>");
+            }
         }
     </script>
 </body>

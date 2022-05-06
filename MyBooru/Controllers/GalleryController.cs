@@ -12,7 +12,6 @@ namespace MyBooru.Controllers
     {
         public ActionResult Index()
         {
-            //return Ok("hello there!");
             return View();
         }
 
@@ -26,6 +25,12 @@ namespace MyBooru.Controllers
         public ActionResult Upload()
         {
             return View();
+        }
+
+        [Route("search")]
+        public ActionResult Search(string tags)
+        {
+            return View(model: tags);
         }
     }
 }
