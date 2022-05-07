@@ -47,6 +47,7 @@ namespace MyBooru.Middleware
             record.NumberOfRequests++;
             record.LastRequestTime = DateTime.Now;
 
+            //inverse this
             if (record.NumberOfRequests <= 25)
                 await _next(context);
 

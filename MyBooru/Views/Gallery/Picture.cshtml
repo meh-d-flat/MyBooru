@@ -27,6 +27,14 @@
         <button type="submit" class="btn btn-primary" onclick="addTag()">Upload</button>
     </form>
 
+    <form action="api/media/delete" method="get">
+        <div style="margin-top: 10px">
+            <label for="tags">Delete</label>
+            <input name="tags" id="tags-to-add" type="text" />
+        </div>
+        <button type="submit" class="btn btn-primary" value="@Model">Upload</button>
+    </form>
+
     <script>
         $(document).ready(function () {
             $.ajax({

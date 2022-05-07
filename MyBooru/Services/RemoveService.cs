@@ -21,7 +21,9 @@ namespace MyBooru.Services
             string removed = "deleted";
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             connection.Open();
-            string removeFileQuery = "DELETE FROM Medias WHERE Hash = @a";
+            string removeFileQuery = 
+                @"DELETE FROM MediasTags WHERE MediaID in (SELECT ID FROM Medias WHERE Hash = @a) 
+                  DELETE FROM Medias WHERE Hash = @a";
             using (SQLiteCommand removeFile = new SQLiteCommand(removeFileQuery, connection))
             {
                 removeFile.Parameters.AddWithValue("@a", id);
