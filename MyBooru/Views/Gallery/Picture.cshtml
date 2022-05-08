@@ -27,12 +27,8 @@
         <button type="submit" class="btn btn-primary" onclick="addTag()">Upload</button>
     </form>
 
-    <form action="api/media/delete" method="get">
-        <div style="margin-top: 10px">
-            <label for="tags">Delete</label>
-            <input name="tags" id="tags-to-add" type="text" />
-        </div>
-        <button type="submit" class="btn btn-primary" value="@Model">Upload</button>
+    <form onsubmit="return false;" method="get">
+        <button type="submit" class="btn btn-primary" onclick="remove()">Delete</button>
     </form>
 
     <script>
@@ -64,8 +60,20 @@
             });
         }
 
+        function remove() {
+            $.ajax({
+                url: "api/media/remove",
+                data: {
+                    id: '@Model'
+                },
+                success: function () {
+                    location.replace("gallery");
+                }
+            })
+        }
+
         function makeList(responseItems) {
-            if (responseItems.length == 0)
+            if (responseItems == null)
                 return;
 
             for (var i = 0; i < responseItems.length; i++) {

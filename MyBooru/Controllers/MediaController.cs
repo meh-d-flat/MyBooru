@@ -116,7 +116,6 @@ namespace MyBooru.Controllers
             }
         }
 
-        [HttpDelete]
         [Route("remove")]
         public IActionResult Remove([FromServices] RemoveService remover, string id)
         {
