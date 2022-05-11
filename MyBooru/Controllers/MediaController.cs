@@ -9,6 +9,7 @@ using System.Net.Http;
 using Microsoft.Net.Http.Headers;
 using System.IO;
 using static MyBooru.Services.Contracts;
+using System.Text.RegularExpressions;
 
 namespace MyBooru.Controllers
 {
@@ -47,6 +48,12 @@ namespace MyBooru.Controllers
         {
             if (!checker.CheckMediaExists(id))
                 return StatusCode(400);
+
+            foreach (var item in tags.Split(","))
+            {
+                if(!Regex.Match(item, @"[ a-zA-Z0-9]{3,32}$").Success)
+                    return BadRequest(new JsonResult(new { bad_tag = item }));
+            }
 
             var newTags = tagger.AddTagsToMedia(id, tags);
 
