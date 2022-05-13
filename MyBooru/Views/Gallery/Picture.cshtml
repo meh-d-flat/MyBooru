@@ -24,7 +24,7 @@
             <label for="tags">Add tag</label>
             <input name="tags" id="tags-to-add" type="text" />
         </div>
-        <button type="submit" class="btn btn-primary" onclick="addTag()">Upload</button>
+        <button type="submit" class="btn btn-primary" onclick="addTag()">Add Tags</button>
     </form>
 
     <form onsubmit="return false;" method="get">
@@ -57,8 +57,8 @@
                 success: function (response) {
                     makeList(response.items);
                 },
-                error: function (response) {
-                    alert(response.bad_tag);
+                error: function (jqXHR) {
+                    alert(jQuery.parseJSON(jqXHR.responseText).value.bad_tag);
                 }
             });
         }
