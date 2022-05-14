@@ -29,6 +29,15 @@ namespace MyBooru
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(
+                    policy =>
+                    {
+                        policy.WithOrigins("https://localhost:44353").
+                            AllowAnyHeader().AllowAnyMethod();
+                    });
+            });
             services.AddControllers();
             services.AddSingleton<LimitService>();
             services.AddTransient<Contracts.ICheckService, CheckService>();
@@ -57,6 +66,8 @@ namespace MyBooru
             });
 
             app.UseRouting();
+
+            app.UseCors();
 
             //app.UseAuthorization();
             

@@ -1,0 +1,38 @@
+﻿@*@model System.Int32*@
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <base href="/" />
+</head>
+<body>
+
+    <form action="gallery/search" method="get">
+        <input name="tags" id="tags-to-add" type="text" />
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    <ul id="smth"></ul>
+    <script>
+        $(document).ready(function () {
+            $.ajax({
+                url: "https://localhost:44321/api/media",
+                success: function (response) {
+                    for (var i = 0; i < response.items.length; i++) {
+                        //$("#smth").append("<li><a href='/api/media/details?id=" + response.items[i].hash + "'>" + response.items[i].name + "</a></li>");
+                        $("#smth").append("<li><a href='/gallery/picture?id=" + response.items[i].hash + "'>" + response.items[i].name + "</a></li>");
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

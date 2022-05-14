@@ -1,0 +1,88 @@
+﻿@model System.String
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Picture</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!--base is set like this so ajax request gets the right path-->
+    <base href="/"/>
+</head>
+<body>
+    <div id="base">
+    </div>
+    <ul id="tags"></ul>
+
+    <form onsubmit="return false;" method="get">
+        <div style="margin-top: 10px">
+            <label for="tags">Add tag</label>
+            <input name="tags" id="tags-to-add" type="text" />
+        </div>
+        <button type="submit" class="btn btn-primary" onclick="addTag()">Add Tags</button>
+    </form>
+
+    <form onsubmit="return false;" method="get">
+        <button type="submit" class="btn btn-primary" onclick="remove()">Delete</button>
+    </form>
+
+    <script>
+        $(document).ready(function () {
+            $.ajax({
+                url: "https://localhost:44321/api/media/details",
+                data: {
+                    id: '@Model'
+                },
+                success: function (response) {
+                    $("#base").append("<img src='https://localhost:44321/" + response.path + "' width=33%>");
+                    makeList(response.tags);
+                }
+            });
+        });
+
+
+        function addTag() {
+            $.ajax({
+                url: "https://localhost:44321/api/media/addTags",
+                method: "GET",
+                data: {
+                    id: '@Model',
+                    tags: $("#tags-to-add").val()
+                },
+                success: function (response) {
+                    makeList(response.items);
+                },
+                error: function (jqXHR) {
+                    alert(jQuery.parseJSON(jqXHR.responseText).value.bad_tag);
+                }
+            });
+        }
+
+        function remove() {
+            $.ajax({
+                url: "https://localhost:44321/api/media/remove",
+                data: {
+                    id: '@Model'
+                },
+                success: function () {
+                    location.replace("gallery");
+                }
+            })
+        }
+
+        function makeList(responseItems) {
+            if (responseItems == null)
+                return;
+
+            for (var i = 0; i < responseItems.length; i++) {
+                $("#tags").append("<li><a href='/gallery/search?tags=" + responseItems[i].name + "'>" + responseItems[i].name + "</a></li>");
+            }
+        }
+    </script>
+</body>
+</html>
