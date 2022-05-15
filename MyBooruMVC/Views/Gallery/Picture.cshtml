@@ -1,4 +1,6 @@
-﻿@model System.String
+﻿@using Microsoft.Extensions.Configuration;
+@inject IConfiguration config
+@model System.String
 
 @{
     Layout = null;
@@ -12,7 +14,7 @@
     <title>Picture</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <!--base is set like this so ajax request gets the right path-->
-    <base href="/"/>
+    <base href="/" />
 </head>
 <body>
     <div id="base">
@@ -34,12 +36,12 @@
     <script>
         $(document).ready(function () {
             $.ajax({
-                url: "https://localhost:44321/api/media/details",
+                url: "@config["ApiHost"]/api/media/details",
                 data: {
                     id: '@Model'
                 },
                 success: function (response) {
-                    $("#base").append("<img src='https://localhost:44321/" + response.path + "' width=33%>");
+                    $("#base").append("<img src='@config["ApiHost"]/" + response.path + "' width=33%>");
                     makeList(response.tags);
                 }
             });
@@ -48,7 +50,7 @@
 
         function addTag() {
             $.ajax({
-                url: "https://localhost:44321/api/media/addTags",
+                url: "@config["ApiHost"]/api/media/addTags",
                 method: "GET",
                 data: {
                     id: '@Model',
@@ -56,16 +58,17 @@
                 },
                 success: function (response) {
                     makeList(response.items);
+                    $("#tags-to-add").val("");
                 },
                 error: function (jqXHR) {
-                    alert(jQuery.parseJSON(jqXHR.responseText).value.bad_tag);
+                    alert("Can't add tag: " + jQuery.parseJSON(jqXHR.responseText).value.bad_tag);
                 }
             });
         }
 
         function remove() {
             $.ajax({
-                url: "https://localhost:44321/api/media/remove",
+                url: "@config["ApiHost"]/api/media/remove",
                 data: {
                     id: '@Model'
                 },

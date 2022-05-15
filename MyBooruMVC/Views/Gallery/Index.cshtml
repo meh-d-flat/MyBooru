@@ -1,4 +1,6 @@
-﻿@*@model System.Int32*@
+﻿@using Microsoft.Extensions.Configuration;
+@inject IConfiguration config
+@*@model System.Int32*@
 
 @{
     Layout = null;
@@ -14,7 +16,6 @@
     <base href="/" />
 </head>
 <body>
-
     <form action="gallery/search" method="get">
         <input name="tags" id="tags-to-add" type="text" />
         <button type="submit" class="btn btn-primary">Search</button>
@@ -24,7 +25,7 @@
     <script>
         $(document).ready(function () {
             $.ajax({
-                url: "https://localhost:44321/api/media",
+                url: "@config["ApiHost"]/api/media",
                 success: function (response) {
                     for (var i = 0; i < response.items.length; i++) {
                         //$("#smth").append("<li><a href='/api/media/details?id=" + response.items[i].hash + "'>" + response.items[i].name + "</a></li>");

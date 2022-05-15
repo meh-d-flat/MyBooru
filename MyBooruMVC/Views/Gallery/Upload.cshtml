@@ -1,4 +1,6 @@
-﻿@{
+﻿@using Microsoft.Extensions.Configuration;
+@inject IConfiguration config
+@{
     Layout = null;
 }
 
@@ -13,14 +15,14 @@
     <base href="/" />
 </head>
 <body>
-    <form action="https://localhost:44321/api/media/upload" method="post" enctype="multipart/form-data">
+    <form action="@config["ApiHost"]/api/media/upload" method="post" enctype="multipart/form-data">
         <div style="padding-top: 1em">
             <label for="file">Upload File</label>
             <input name="file" type="file" />
         </div>
         <button type="submit" class="btn btn-primary">Upload</button>
     </form>
-    <form action="https://localhost:44321/api/media/uploadfrom" method="get">
+    <form action="@config["ApiHost"]/api/media/uploadfrom" method="get">
         <div style="margin-top: 10px">
             <label for="source">Url from web</label>
             <input name="source" type="text" />

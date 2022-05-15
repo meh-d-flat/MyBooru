@@ -1,4 +1,6 @@
-﻿@model System.String
+﻿@using Microsoft.Extensions.Configuration;
+@inject IConfiguration config
+@model System.String
 @{
     Layout = null;
 }
@@ -18,7 +20,7 @@
     <script>
         $(document).ready(function () {
             $.ajax({
-                url: "https://localhost:44321/api/media/byTag",
+                url: "@config["ApiHost"]/api/media/byTag",
                 method: "GET",
                 data: {
                     tags: '@Model',
