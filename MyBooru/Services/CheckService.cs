@@ -67,6 +67,7 @@ namespace MyBooru.Services
             	    Hash VARCHAR(255) NOT NULL,
             	    Type VARCHAR(255) NOT NULL,
                     Path VARCHAR(255),
+                    Thumb VARCHAR(255),
                     CONSTRAINT HashAlreadyExists UNIQUE(Hash)
                 );
                 CREATE TABLE IF NOT EXISTS Tags (

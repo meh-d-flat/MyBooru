@@ -25,7 +25,7 @@ namespace MyBooru.Services
             string fileHash = "empty";
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             connection.Open();
-            string addFileQuery = "INSERT INTO Medias ('Name', 'Hash', 'Type', 'Path') VALUES (@a, @b, @c, @d)";//('Name', 'Hash', 'Size', 'Type', 'Binary', 'Path') VALUES (@a, @b, @c, @d, @e, @f)
+            string addFileQuery = "INSERT INTO Medias ('Name', 'Hash', 'Type', 'Path', 'Thumb') VALUES (@a, @b, @c, @d, @e)";//('Name', 'Hash', 'Size', 'Type', 'Binary', 'Path') VALUES (@a, @b, @c, @d, @e, @f)
 
             SQLiteCommand addFile = new SQLiteCommand(addFileQuery, connection);
             addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = file.FileName, DbType = System.Data.DbType.String });
@@ -34,10 +34,8 @@ namespace MyBooru.Services
             using (var stream = file.OpenReadStream())
             {
                 int size = (int)file.Length;
-                //addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@c", Value = size, DbType = System.Data.DbType.Int32 });
                 byte[] bytes = new byte[size];
                 stream.Read(bytes, 0, (int)file.Length);
-                //addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@e", Value = bytes, DbType = System.Data.DbType.Object });
 
                 using (SHA256 SHA256 = SHA256Managed.Create())
                 {
@@ -46,8 +44,6 @@ namespace MyBooru.Services
                     addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@b", Value = hash, DbType = System.Data.DbType.String });
                     fileHash = hash;
                 }
-
-                
 
                 var guid = Guid.NewGuid().ToString();
                 var directoryPath = Path.Combine(config.GetValue<string>("FilePath"), guid);
@@ -62,9 +58,23 @@ namespace MyBooru.Services
                 }
 
                 var img = Image.FromStream(stream);
-                var thumb = img.GetThumbnailImage(img.Width / 2, img.Height / 2, () => false, IntPtr.Zero);
-                var thumbPath = Path.GetFullPath(path).Replace(Path.GetFileNameWithoutExtension(path), Path.GetFileNameWithoutExtension(path) + "_t");
+                int newWidth, newHeight;
+                if (img.Width > img.Height)
+                {
+                    newWidth = 300;
+                    newHeight = (300 * img.Height) / img.Width;
+                }
+                else 
+                {
+                    newHeight = 300;
+                    newWidth = (300 * img.Width) / img.Height;
+                }
+                var thumb = img.GetThumbnailImage(newWidth, newHeight, () => false, IntPtr.Zero);
+                var thumbPath = path.Replace(Path.GetFileNameWithoutExtension(path), Path.GetFileNameWithoutExtension(path) + "_t");
+                var webThumbPath = path.Replace(Path.GetFileNameWithoutExtension(path), Path.GetFileNameWithoutExtension(path) + "_t").Replace(@"\", "/");
                 thumb.Save(thumbPath);
+
+                addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@e", Value = webThumbPath, DbType = System.Data.DbType.String });
             }
 
             try
