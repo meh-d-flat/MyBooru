@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
+using System.Drawing;
 
 namespace MyBooru.Services
 {
@@ -46,6 +47,8 @@ namespace MyBooru.Services
                     fileHash = hash;
                 }
 
+                
+
                 var guid = Guid.NewGuid().ToString();
                 var directoryPath = Path.Combine(config.GetValue<string>("FilePath"), guid);
                 Directory.CreateDirectory(directoryPath);
@@ -57,6 +60,11 @@ namespace MyBooru.Services
                 {
                     file.CopyTo(fileStream);
                 }
+
+                var img = Image.FromStream(stream);
+                var thumb = img.GetThumbnailImage(img.Width / 2, img.Height / 2, () => false, IntPtr.Zero);
+                var thumbPath = Path.GetFullPath(path).Replace(Path.GetFileNameWithoutExtension(path), Path.GetFileNameWithoutExtension(path) + "_t");
+                thumb.Save(thumbPath);
             }
 
             try
