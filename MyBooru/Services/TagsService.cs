@@ -66,7 +66,7 @@ namespace MyBooru.Services
             return tags;
         }
 
-        public List<Media> GetMediasByTags(string tags)
+        public List<Media> GetMediasByTags(string tags, int page = 0)
         {
             var medias = new List<Media>();
             var parameters = MakeParamsList(tags);
