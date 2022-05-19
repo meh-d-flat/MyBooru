@@ -17,6 +17,22 @@ namespace MyBooru.Services
             config = configuration;
         }
 
+        public int MediasCount()
+        {
+            int count = 0;
+            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
+            connection.Open();
+            string mediasNumberQuery = "SELECT COUNT(*) FROM Medias";
+
+            using (SQLiteCommand mediasNumber = new SQLiteCommand(mediasNumberQuery, connection))
+            {
+                count = Convert.ToInt32(mediasNumber.ExecuteScalar());
+            }
+
+            connection.Close();
+            return count;
+        }
+
         public bool CheckMediaExists(string id)
         {
             bool exists = false;

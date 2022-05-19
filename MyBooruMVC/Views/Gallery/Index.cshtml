@@ -1,6 +1,6 @@
 ﻿@using Microsoft.Extensions.Configuration;
 @inject IConfiguration config
-@*@model System.Int32*@
+@model System.Int32
 
 @{
     Layout = null;
@@ -26,6 +26,9 @@
         $(document).ready(function () {
             $.ajax({
                 url: "@config["ApiHost"]/api/media",
+                data: {
+                    page: @Model
+                },
                 success: function (response) {
                     for (var i = 0; i < response.items.length; i++) {
                         $("#smth").append("<li><a href='/gallery/picture?id=" + response.items[i].hash + "'>" + "<img src='@config["ApiHost"]/" + response.items[i].thumb + "'>" + "</a></li>");

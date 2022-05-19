@@ -60,7 +60,7 @@ namespace MyBooru.Services
             List<Media> files = new List<Media>();
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             connection.Open();
-            string getFilesQuery = $"SELECT * FROM Medias LIMIT 20 OFFSET { 20 * page }";
+            string getFilesQuery = $"SELECT * FROM Medias LIMIT 20 OFFSET { 20 * (page - 1) }";
 
             using (SQLiteCommand getFiles = new SQLiteCommand(getFilesQuery, connection))
             {

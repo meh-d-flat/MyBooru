@@ -25,10 +25,17 @@ namespace MyBooru.Controllers
             checker.DBSetup();
         }
 
-        public IActionResult Get([FromServices] DownloadService downloader, int page = 0)
+        public IActionResult Get([FromServices] DownloadService downloader, int page = 1)
         {
+            var mediasCount = checker.MediasCount();
             var results = downloader.Download(page);
-            return new JsonResult(new { page = page, items = results });
+            return new JsonResult(new
+            { 
+                page = page,
+                total = mediasCount,
+                count = results.Count,
+                items = results
+            });
         }
 
         [HttpGet]
@@ -62,10 +69,17 @@ namespace MyBooru.Controllers
 
         [HttpGet]
         [Route("byTag")]
-        public IActionResult GetByTags([FromServices] TagsService tagger, string tags, int page = 0)
+        public IActionResult GetByTags([FromServices] TagsService tagger, string tags, int page = 1)
         {
-            var result = tagger.GetMediasByTags(tags);//rewrite to get only ids by tag then go through download
-            return new JsonResult(new { page = page, items = result });
+            var mediasCount = checker.MediasCount();
+            var result = tagger.GetMediasByTags(tags, page);//rewrite to get only ids by tag then go through download
+            return new JsonResult(new
+            { 
+                page = page,
+                total = mediasCount,
+                count = result.Count,
+                items = result 
+            });
         }
 
         [HttpGet]

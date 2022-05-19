@@ -9,6 +9,7 @@ namespace MyBooru.Services
     {
         public interface ICheckService
         {
+            int MediasCount();
             bool DBSetup();
             bool CheckMediaExists(string id);
         }

@@ -10,9 +10,9 @@ namespace MyBooruMVC.Controllers
     [Route("Gallery/")]
     public class GalleryController : Controller
     {
-        public ActionResult Index()
+        public ActionResult Index(int page = 0)
         {
-            return View();
+            return View(model: page);
         }
 
         [Route("picture")]
@@ -28,9 +28,9 @@ namespace MyBooruMVC.Controllers
         }
 
         [Route("search")]
-        public ActionResult Search(string tags)
+        public ActionResult Search(string tags, int page = 0)
         {
-            return View(model: tags);
+            return View(model: (tags, page));
         }
     }
 }

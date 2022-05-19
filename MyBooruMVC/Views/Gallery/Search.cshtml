@@ -1,7 +1,6 @@
 ﻿@using Microsoft.Extensions.Configuration;
 @inject IConfiguration config
-@model System.String
-@*@model System.Int32*@
+@model (string id, int page)
 @{
     Layout = null;
 }
@@ -24,7 +23,8 @@
                 url: "@config["ApiHost"]/api/media/byTag",
                 method: "GET",
                 data: {
-                    tags: '@Model',
+                    tags: '@Model.id',
+                    page: @Model.page
                 },
                 success: function (response) {
                     if (response.length == 0)
