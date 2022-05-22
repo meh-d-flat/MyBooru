@@ -8,12 +8,8 @@
 }
 
 <body>
-    <form action="gallery/search" method="get">
-        <input name="tags" id="tags-to-add" type="text" />
-        <button type="submit" class="btn btn-primary">Search</button>
-    </form>
-
-    <ul id="smth"></ul>
+    @*<ul id="smth"></ul>*@
+    <p id="smth"></p>
     <script>
         $(document).ready(function () {
             $.ajax({
@@ -23,7 +19,8 @@
                 },
                 success: function (response) {
                     for (var i = 0; i < response.items.length; i++) {
-                        $("#smth").append("<li><a href='/gallery/picture?id=" + response.items[i].hash + "'>" + "<img src='@config["ApiHost"]/" + response.items[i].thumb + "'>" + "</a></li>");
+                        //$("#smth").append("<li><a href='/gallery/picture?id=" + response.items[i].hash + "'>" + "<img src='@config["ApiHost"]/" + response.items[i].thumb + "'>" + "</a></li>");
+                        $("#smth").append("<a href='/gallery/picture?id=" + response.items[i].hash + "'>" + "<img src='@config["ApiHost"]/" + response.items[i].thumb + "'>" + "</a>");
                     }
                 }
             });

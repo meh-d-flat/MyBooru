@@ -25,6 +25,8 @@
     </form>
 
     <script>
+        var pic = false;
+
         $(document).ready(function () {
             $.ajax({
                 url: "@config["ApiHost"]/api/media/details",
@@ -32,7 +34,7 @@
                     id: '@Model'
                 },
                 success: function (response) {
-                    $("#base").append("<img src='@config["ApiHost"]/" + response.path + "' width=33%>");
+                    $("#base").append("<img id='picture' src='@config["ApiHost"]/" + response.path + "' width=33% onclick='minmax()'>");
                     makeList(response.tags);
                 }
             });
@@ -52,7 +54,7 @@
                     $("#tags-to-add").val("");
                 },
                 error: function (jqXHR) {
-                    alert("Can't add tag: " + jQuery.parseJSON(jqXHR.responseText).value.bad_tag);
+                    alert("Can't add tag: " + jQuery.parseJSON(jqXHR.responseText).value.bad_tag + "\nTags should only contain letters and numbers\nAnd be 3 to 32 characters long");
                 }
             });
         }
@@ -76,6 +78,11 @@
             for (var i = 0; i < responseItems.length; i++) {
                 $("#tags").append("<li><a href='/gallery/search?tags=" + responseItems[i].name + "'>" + responseItems[i].name + "</a></li>");
             }
+        }
+
+        function minmax() {
+            $("#picture").attr("width", pic ? '33%' : '100%');
+            pic = !pic;
         }
     </script>
 </body>
