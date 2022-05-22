@@ -1,19 +1,10 @@
 ﻿@using Microsoft.Extensions.Configuration;
 @inject IConfiguration config
 @{
-    Layout = null;
+    ViewBag.Title = "Upload";
+    Layout = "_Layout";
 }
 
-<!DOCTYPE html>
-
-<html>
-<head>
-    <meta name="viewport" content="width=device-width" />
-    <title>Upload</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <!--base is set like this so forms get the right path-->
-    <base href="/" />
-</head>
 <body>
     <form action="@config["ApiHost"]/api/media/upload" method="post" enctype="multipart/form-data">
         <div style="padding-top: 1em">
@@ -30,4 +21,3 @@
         <button type="submit" class="btn btn-primary">Upload</button>
     </form>
 </body>
-</html>

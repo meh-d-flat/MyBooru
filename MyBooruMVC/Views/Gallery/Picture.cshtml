@@ -3,19 +3,10 @@
 @model System.String
 
 @{
-    Layout = null;
+    ViewBag.Title = "Picture";
+    Layout = "_Layout";
 }
 
-<!DOCTYPE html>
-
-<html>
-<head>
-    <meta name="viewport" content="width=device-width" />
-    <title>Picture</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <!--base is set like this so ajax request gets the right path-->
-    <base href="/" />
-</head>
 <body>
     <div id="base">
     </div>
@@ -88,4 +79,3 @@
         }
     </script>
 </body>
-</html>

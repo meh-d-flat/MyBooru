@@ -3,18 +3,10 @@
 @model System.Int32
 
 @{
-    Layout = null;
+    ViewBag.Title = "Index";
+    Layout = "_Layout";
 }
 
-<!DOCTYPE html>
-
-<html>
-<head>
-    <meta name="viewport" content="width=device-width" />
-    <title>Index</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <base href="/" />
-</head>
 <body>
     <form action="gallery/search" method="get">
         <input name="tags" id="tags-to-add" type="text" />
@@ -38,4 +30,3 @@
         });
     </script>
 </body>
-</html>

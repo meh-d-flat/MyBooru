@@ -2,19 +2,10 @@
 @inject IConfiguration config
 @model (string id, int page)
 @{
-    Layout = null;
+    ViewBag.Title = "Search";
+    Layout = "_Layout";
 }
 
-<!DOCTYPE html>
-
-<html>
-<head>
-    <meta name="viewport" content="width=device-width" />
-    <title>Search</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <!--base is set like this so ajax request gets the right path-->
-    <base href="/" />
-</head>
 <body>
     <ul id="smth"></ul>
     <script>
@@ -38,4 +29,4 @@
         });
     </script>
 </body>
-</html>
+
