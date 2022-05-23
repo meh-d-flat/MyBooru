@@ -66,6 +66,34 @@ namespace MyBooru.Services
             return tags;
         }
 
+        public int MediasCount(string tags)
+        {
+            int count = 0;
+            var parameters = MakeParamsList(tags);
+            string paramsForQuery = ParamsString(parameters);
+
+            string byTagsQuery =
+                $@"SELECT COUNT(*)
+                FROM MediasTags as mt, Medias as m, Tags as t
+                WHERE mt.TagID = t.ID
+                AND(t.name IN({paramsForQuery}))
+                AND m.id = mt.MediaID
+                GROUP BY m.id
+                HAVING COUNT(m.id) = {parameters.Count}";
+
+            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
+
+            using (SQLiteCommand byTag = new SQLiteCommand(byTagsQuery, connection))
+            {
+                byTag.Parameters.AddRange(parameters.ToArray());
+                connection.Open();
+                count = Convert.ToInt32(byTag.ExecuteScalar());
+
+                connection.Close();
+            }
+            return count;
+        }
+
         public List<Media> GetMediasByTags(string tags, int page)
         {
             var medias = new List<Media>();

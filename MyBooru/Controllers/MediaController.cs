@@ -32,6 +32,8 @@ namespace MyBooru.Controllers
             return new JsonResult(new
             { 
                 page = page,
+                prevPage = page - 1 != 0,
+                nextPage = mediasCount - (20 * page) > 0,
                 total = mediasCount,
                 count = results.Count,
                 items = results
@@ -71,11 +73,13 @@ namespace MyBooru.Controllers
         [Route("byTag")]
         public IActionResult GetByTags([FromServices] TagsService tagger, string tags, int page = 1)
         {
-            var mediasCount = checker.MediasCount();
+            var mediasCount = tagger.MediasCount(tags);
             var result = tagger.GetMediasByTags(tags, page);//rewrite to get only ids by tag then go through download
             return new JsonResult(new
             { 
                 page = page,
+                prevPage = page - 1 != 0,
+                nextPage = mediasCount - (20 * page) > 0,
                 total = mediasCount,
                 count = result.Count,
                 items = result 

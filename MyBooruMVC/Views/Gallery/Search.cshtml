@@ -24,6 +24,18 @@
                     for (var i = 0; i < response.items.length; i++) {
                             $("#smth").append("<li><a href='/gallery/picture?id=" + response.items[i].hash + "'>" + "<img src='@config["ApiHost"]/" + response.items[i].thumb + "'>" + "</a></li>");
                     }
+
+                    if (response.prevPage) {
+                        var currentPage = @Model;
+                        var prevPage = @Model - 1;
+                        $("#pages").append("<a href='/gallery?page=" + prevPage + "'>Previous</a>")
+                    }
+
+                    if (response.nextPage) {
+                        var currentPage = @Model;
+                        var nextPage = @Model + 1;
+                        $("#pages").append("<a href='/gallery?page=" + nextPage + "'>Next</a>")
+                    }
                 }
             })
         });
