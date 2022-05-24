@@ -55,12 +55,13 @@ namespace MyBooru.Services
             return file;
         }
 
-        public List<Media> Download(int page)
+        public List<Media> Download(int page, int reverse)
         {
             List<Media> files = new List<Media>();
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             connection.Open();
-            string getFilesQuery = $"SELECT * FROM Medias LIMIT 20 OFFSET { 20 * (page - 1) }";
+            //string getFilesQuery = $"SELECT * FROM Medias LIMIT 20 OFFSET { 20 * (page - 1) }" + (reverse == 1 ? " ORDER BY Id DESC" : "");
+            string getFilesQuery = "SELECT * FROM Medias" + (reverse == 1 ? " ORDER BY Id DESC " : " ") +  $"LIMIT 20 OFFSET { 20 * (page - 1) }";
 
             using (SQLiteCommand getFiles = new SQLiteCommand(getFilesQuery, connection))
             {

@@ -23,7 +23,7 @@ namespace MyBooru.Services
         public interface IDownloadService
         {
             Media Download(string id);
-            List<Media> Download(int page);
+            List<Media> Download(int page, int reverse);
         }
 
         public interface IRemoveService
@@ -36,7 +36,7 @@ namespace MyBooru.Services
             Tag Add(string name);
             List<Tag> SearchTag(string name);
             int MediasCount(string tags);
-            List<Media> GetMediasByTags(string tags, int page);
+            List<Media> GetMediasByTags(string tags, int page, int reverse);
             List<Tag> AddTagsToMedia(string id, string tags);
         }
     }

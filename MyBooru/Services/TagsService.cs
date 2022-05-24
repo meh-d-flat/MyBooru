@@ -94,7 +94,7 @@ namespace MyBooru.Services
             return count;
         }
 
-        public List<Media> GetMediasByTags(string tags, int page)
+        public List<Media> GetMediasByTags(string tags, int page, int reverse)
         {
             var medias = new List<Media>();
             var parameters = MakeParamsList(tags);
@@ -108,6 +108,7 @@ namespace MyBooru.Services
                 AND m.id = mt.MediaID
                 GROUP BY m.id
                 HAVING COUNT(m.id) = {parameters.Count}
+                {(reverse == 1 ? "ORDER BY m.Id DESC" : "")}
                 LIMIT 20 OFFSET { 20 * (page - 1) };";
 
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
