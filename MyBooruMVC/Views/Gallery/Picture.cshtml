@@ -8,21 +8,72 @@
 }
 
 <body>
-    <div id="base">
+
+    <style>
+        #base {
+            height: 100%;
+            text-align: center;
+        }
+
+            #base img {
+                max-height: 95vh;
+            }
+
+        .sidenav {
+          margin-top: 45px;
+          width: 200px;
+          position: fixed;
+          z-index: 1;
+          top: 0px;
+          left: 0px;
+          background: #333;
+          overflow-x: hidden;
+          padding: 8px 0;
+        }
+
+        .sidenav a {
+          padding: 0px 16px;
+          text-decoration: none;
+          color: #fff;
+          display: block;
+        }
+
+            .sidenav form {
+                margin: 5px;
+            }
+
+            .sidenav a:hover {
+                background-color: #ddd;
+                color: black;
+            }
+
+        .main {
+          margin-left: 200px;
+          /*padding: 0px 10px;*/
+        }
+
+        @@media screen and (max-height: 450px) {
+          .sidenav {padding-top: 15px;}
+          .sidenav a {font-size: 18px;}
+        }
+    </style>
+
+    <div class="sidenav">
+        <form onsubmit="addTag(); return false;" method="get">
+            <div style="margin-top: 10px">
+                <input name="tags" id="tags-to-add" type="text" />
+            </div>
+        </form>
+        <div id="tags"></div>
+        <form onsubmit="return false;" method="get">
+            <button type="submit" class="btn btn-primary" onclick="remove()">Delete</button>
+        </form>
     </div>
-    <ul id="tags"></ul>
 
-    <form onsubmit="return false;" method="get">
-        <div style="margin-top: 10px">
-            <label for="tags">Add tag</label>
-            <input name="tags" id="tags-to-add" type="text" />
+    <div class="main">
+        <div id="base">
         </div>
-        <button type="submit" class="btn btn-primary" onclick="addTag()">Add Tags</button>
-    </form>
-
-    <form onsubmit="return false;" method="get">
-        <button type="submit" class="btn btn-primary" onclick="remove()">Delete</button>
-    </form>
+    </div>
 
     <script>
         var pic = false;
@@ -34,7 +85,8 @@
                     id: '@Model'
                 },
                 success: function (response) {
-                    $("#base").append("<img id='picture' src='@config["ApiHost"]/" + response.path + "' width=33% onclick='minmax()'>");
+                    //$("#base").append("<img id='picture' src='@config["ApiHost"]/" + response.path + "' width=33% onclick='minmax()'>");
+                    $("#base").append("<img src='@config["ApiHost"]/" + response.path + "'>");
                     makeList(response.tags);
                 }
             });
@@ -76,7 +128,7 @@
                 return;
 
             for (var i = 0; i < responseItems.length; i++) {
-                $("#tags").append("<li><a href='/gallery/search?tags=" + responseItems[i].name + "'>" + responseItems[i].name + "</a></li>");
+                $("#tags").append("<a href='/gallery/search?tags=" + responseItems[i].name + "'>" + responseItems[i].name + "</a>");
             }
         }
 

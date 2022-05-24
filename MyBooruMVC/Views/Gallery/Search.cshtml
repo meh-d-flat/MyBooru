@@ -7,7 +7,10 @@
 }
 
 <body>
-    <ul id="smth"></ul>
+    <p id="smth"></p>
+    <center id="pages">
+
+    </center>
     <script>
         $(document).ready(function () {
             $.ajax({
@@ -22,18 +25,18 @@
                         return;
 
                     for (var i = 0; i < response.items.length; i++) {
-                            $("#smth").append("<li><a href='/gallery/picture?id=" + response.items[i].hash + "'>" + "<img src='@config["ApiHost"]/" + response.items[i].thumb + "'>" + "</a></li>");
+                            $("#smth").append("<a href='/gallery/picture?id=" + response.items[i].hash + "'>" + "<img src='@config["ApiHost"]/" + response.items[i].thumb + "'>" + "</a>");
                     }
 
                     if (response.prevPage) {
-                        var currentPage = @Model;
-                        var prevPage = @Model - 1;
+                        var currentPage = @Model.page;
+                        var prevPage = @Model.page - 1;
                         $("#pages").append("<a href='/gallery?page=" + prevPage + "'>Previous</a>")
                     }
 
                     if (response.nextPage) {
-                        var currentPage = @Model;
-                        var nextPage = @Model + 1;
+                        var currentPage = @Model.page;
+                        var nextPage = @Model.page + 1;
                         $("#pages").append("<a href='/gallery?page=" + nextPage + "'>Next</a>")
                     }
                 }

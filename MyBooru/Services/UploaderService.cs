@@ -8,6 +8,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Drawing;
+using System.Net.Mime;
 
 namespace MyBooru.Services
 {
@@ -23,6 +24,10 @@ namespace MyBooru.Services
         public string UploadOne(IFormFile file)
         {
             string fileHash = "empty";
+
+            if (!file.ContentType.Contains("image"))
+                return fileHash;
+
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             connection.Open();
             string addFileQuery = "INSERT INTO Medias ('Name', 'Hash', 'Type', 'Path', 'Thumb') VALUES (@a, @b, @c, @d, @e)";//('Name', 'Hash', 'Size', 'Type', 'Binary', 'Path') VALUES (@a, @b, @c, @d, @e, @f)
@@ -30,7 +35,7 @@ namespace MyBooru.Services
             SQLiteCommand addFile = new SQLiteCommand(addFileQuery, connection);
             addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = file.FileName, DbType = System.Data.DbType.String });
             addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@c", Value = file.ContentType, DbType = System.Data.DbType.String });
-            
+
             using (var stream = file.OpenReadStream())
             {
                 int size = (int)file.Length;
@@ -64,7 +69,7 @@ namespace MyBooru.Services
                     newWidth = 300;
                     newHeight = (300 * img.Height) / img.Width;
                 }
-                else 
+                else
                 {
                     newHeight = 300;
                     newWidth = (300 * img.Width) / img.Height;
@@ -73,6 +78,7 @@ namespace MyBooru.Services
                 var thumbPath = path.Replace(Path.GetFileNameWithoutExtension(path), Path.GetFileNameWithoutExtension(path) + "_t");
                 var webThumbPath = path.Replace(Path.GetFileNameWithoutExtension(path), Path.GetFileNameWithoutExtension(path) + "_t").Replace(@"\", "/");
                 thumb.Save(thumbPath);
+
 
                 addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@e", Value = webThumbPath, DbType = System.Data.DbType.String });
             }
@@ -94,7 +100,7 @@ namespace MyBooru.Services
 
             return fileHash;
         }
-        
+
         public List<string> UploadMany(ICollection<IFormFile> files)
         {
             var hashes = new List<string>();
