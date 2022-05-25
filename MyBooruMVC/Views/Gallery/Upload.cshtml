@@ -6,10 +6,10 @@
 }
 
 <body>
-    <form action="@config["ApiHost"]/api/media/upload" method="post" enctype="multipart/form-data">
+    <form action="@config["ApiHost"]/api/media/upload" method="post" enctype="multipart/form-data" id="file-form">
         <div style="padding-top: 1em">
             <label for="file">Upload File</label>
-            <input name="file" type="file" />
+            <input name="file" type="file" id="file-input"/>
         </div>
         <button type="submit" class="btn btn-primary">Upload</button>
     </form>

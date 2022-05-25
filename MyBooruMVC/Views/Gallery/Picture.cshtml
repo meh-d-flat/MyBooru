@@ -12,11 +12,17 @@
     <style>
         #base {
             height: 100%;
-            text-align: center;
+            /*text-align: center;*/
         }
 
             #base img {
                 max-height: 95vh;
+                max-width: 87vw;
+            }
+
+            #base video {
+                max-height: 95vh;
+                max-width: 87vw;
             }
 
         .sidenav {
@@ -86,7 +92,11 @@
                 },
                 success: function (response) {
                     //$("#base").append("<img id='picture' src='@config["ApiHost"]/" + response.path + "' width=33% onclick='minmax()'>");
-                    $("#base").append("<img src='@config["ApiHost"]/" + response.path + "'>");
+                    if(response.type.includes("image"))
+                        $("#base").append("<img src='@config["ApiHost"]/" + response.path + "'>");
+                    if (response.type.includes("video"))
+                        $("#base").append("<video preload='metadata' loop controls autoplay muted src='@config["ApiHost"]/" + response.path + "'>");
+
                     makeList(response.tags);
                 }
             });
