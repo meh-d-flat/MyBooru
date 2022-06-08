@@ -34,7 +34,7 @@ namespace MyBooru
                 options.AddDefaultPolicy(
                     policy =>
                     {
-                        policy.WithOrigins("https://localhost:44353").
+                        policy.WithOrigins(Configuration["ApiConsumerAddressPort"]).
                             AllowAnyHeader().AllowAnyMethod();
                     });
             });
