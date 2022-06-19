@@ -129,6 +129,9 @@
                 },
                 success: function () {
                     location.replace("gallery");
+                },
+                error: function (jqXHR) {
+                    alert(jQuery.parseJSON(jqXHR.responseText).result);
                 }
             })
         }

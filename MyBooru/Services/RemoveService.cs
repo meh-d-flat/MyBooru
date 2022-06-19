@@ -40,8 +40,14 @@ namespace MyBooru.Services
                 result.Dispose();
             }
 
-            //File.Delete(Path.GetFullPath(file.Path).Replace(Path.GetFileName(file.Path), ""));
-            Directory.Delete(Path.GetFullPath(file.Path).Replace(Path.GetFileName(file.Path), ""), true);
+            try
+            {
+                Directory.Delete(Path.GetFullPath(file.Path).Replace(Path.GetFileName(file.Path), ""), true);
+            }
+            catch (Exception ex)
+            {
+                removed = $"error: {ex.GetType()} {ex.Message}";
+            }
 
             string removeEntryQuery = "DELETE FROM MediasTags WHERE MediaID = (SELECT ID FROM Medias WHERE Hash = @a);DELETE FROM Medias WHERE Hash = @b;";
             using (SQLiteCommand removeEntry = new SQLiteCommand(removeEntryQuery, connection))
