@@ -24,9 +24,13 @@ namespace MyBooru.Services
         public string UploadOne(IFormFile file)
         {
             string fileHash = "empty";
+            string webPath, webThumbPath;
 
             if (!(file.ContentType.Contains("image") | file.ContentType.Contains("video")))
                 return fileHash;
+
+            if (!File.Exists(config["FFMpegExecPath"]))
+                return "error: ffmpeg not found";
 
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             connection.Open();
@@ -54,7 +58,7 @@ namespace MyBooru.Services
                 var directoryPath = Path.Combine(config.GetValue<string>("FilePath"), guid);
                 Directory.CreateDirectory(directoryPath);
                 var path = Path.Combine(directoryPath, file.FileName);
-                var webPath = path.Replace(@"\", "/");
+                webPath = path.Replace(@"\", "/");
                 addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@d", Value = webPath, DbType = System.Data.DbType.String });
 
                 using (var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write))
@@ -64,13 +68,20 @@ namespace MyBooru.Services
 
                 var fullPath = Path.GetFullPath(path);
                 var thumbPath = Path.GetFullPath(path).Replace(Path.GetFileName(path), "thumbnail.jpeg");
-                var webThumbPath = path.Replace(Path.GetFileName(path), "thumbnail.jpeg").Replace(@"\", "/");
+                webThumbPath = path.Replace(Path.GetFileName(path), "thumbnail.jpeg").Replace(@"\", "/");
                 var ffmpeg = new System.Diagnostics.Process();
-                //ffmpeg.StartInfo.FileName = @"ffmpeg\bin\ffmpeg.exe";
                 ffmpeg.StartInfo.FileName = config["FFMpegExecPath"];
                 ffmpeg.StartInfo.Arguments = file.ContentType.Contains("video") ? $"-i {fullPath} -ss 00:00:00.001 -vframes 1 -vf scale=300:-1 {thumbPath}" : $"-i {fullPath} -vf scale=300:-1 {thumbPath}";
-                ffmpeg.Start();
-                ffmpeg.WaitForExit();
+
+                try
+                {
+                    ffmpeg.Start();
+                    ffmpeg.WaitForExit();
+                }
+                catch
+                {
+                    fileHash = "thumb creation error";
+                }
 
                 addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@e", Value = webThumbPath, DbType = System.Data.DbType.String });
             }
@@ -81,7 +92,7 @@ namespace MyBooru.Services
             }
             catch (SQLiteException ex)
             {
-                Console.WriteLine(ex);
+                Directory.Delete(Path.GetDirectoryName(webPath), true);
                 fileHash = $"error: {ex.GetType()} {ex.Message}";
             }
             finally
