@@ -4,6 +4,54 @@
     ViewBag.Title = "Upload";
     Layout = "_Layout";
 }
+<style>
+    *, *::after, *::before {
+        box-sizing: border-box;
+    }
+
+    .modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        transition: 200ms ease-in-out;
+        border: 1px solid white;
+        z-index: 10;
+        background-color: #414141;
+        width: 500px;
+        max-width: 80%;
+    }
+
+        .modal.active {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+    .modal-header {
+        padding: 10px 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid white;
+    }
+
+        .modal-header .title {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .modal-header .close-button {
+            cursor: pointer;
+            border: none;
+            outline: none;
+            background: none;
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+    .modal-body {
+        padding: 10px 15px;
+    }
+</style>
 
 <body>
     <form action="@config["ApiHost"]/api/media/upload" method="post" enctype="multipart/form-data" id="file-form">
@@ -20,18 +68,29 @@
         </div>
         <button type="submit" class="btn btn-primary">Upload</button>
     </form>
+
+
+    <div class="modal" id="modal">
+        <div class="modal-header">
+            <div class="title">Upload successful!</div>
+            <button data-close-button class="close-button">&times;</button>
+        </div>
+        <div class="modal-body">
+        </div>
+    </div>
+
+
     <script>
         const form = document.getElementById("file-form");
         const fileInput = document.getElementById("file-input");
 
-        fileInput.addEventListener('change', () => {
-            form.submit();
-        });
-
         window.addEventListener('paste', e => {
             fileInput.files = e.clipboardData.files;
             alert("File successfully pasted!");
-            //fileInput.onchange();
+        });
+
+        $(".close-button").on("click", function () {
+            $("#modal").removeClass("active");
         });
 
 
@@ -48,10 +107,13 @@
                 processData: false,
                 contentType: false,
                 success: function (response) {
-                    alert(response.value.item);
+                    $(".modal-body").append("<a href='/gallery/picture?id=" + response.value.item + "'> Click to see upload </a>");
+                    $("#modal").addClass("active");
                 },
                 error: function (jqXHR) {
-                    alert(jQuery.parseJSON(jqXHR.responseText).value.item);
+                    //alert(jQuery.parseJSON(jqXHR.responseText).value.item);
+                    $(".modal-body").append(jQuery.parseJSON(jqXHR.responseText).value.item);
+                    $("#modal").addClass("active");
                 }
             });
         });
