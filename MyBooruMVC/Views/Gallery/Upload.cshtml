@@ -13,7 +13,7 @@
         </div>
         <button type="submit" class="btn btn-primary">Upload</button>
     </form>
-    <form action="@config["ApiHost"]/api/media/uploadfrom" method="get">
+    <form action="@config["ApiHost"]/api/media/uploadfrom" method="get" id="uploadfrom-form">
         <div style="margin-top: 10px">
             <label for="source">Url from web</label>
             <input name="source" type="text" />
@@ -21,16 +21,6 @@
         <button type="submit" class="btn btn-primary">Upload</button>
     </form>
     <script>
-        ////$(document).ready(function () {
-        //    $("#file-input").on('change', function () {
-        //        $("#file-form").submit();
-        //    });
-
-        //    $("window").on('paste', function (e) {
-        //        $("#file-input").prop('files') = e.originalEvent.clipboardData.files;
-        //    });
-        ////});
-
         const form = document.getElementById("file-form");
         const fileInput = document.getElementById("file-input");
 
@@ -40,6 +30,30 @@
 
         window.addEventListener('paste', e => {
             fileInput.files = e.clipboardData.files;
+            alert("File successfully pasted!");
+            //fileInput.onchange();
+        });
+
+
+        $(document).on("submit", "#file-form", function (e) {
+            e.preventDefault(); //important
+            var formData = new FormData(this);
+
+            $.ajax({
+                url: "@config["ApiHost"]/api/media/upload",
+                method: "POST",
+                type: "POST",
+                cache: false,
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    alert(response.value.item);
+                },
+                error: function (jqXHR) {
+                    alert(jQuery.parseJSON(jqXHR.responseText).value.item);
+                }
+            });
         });
     </script>
 </body>
