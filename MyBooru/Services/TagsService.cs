@@ -98,34 +98,25 @@ namespace MyBooru.Services
         {
             var medias = new List<Media>();
             var parameters = MakeParamsList(tags);
-            string tagQuery = Decorate(tags);
-
-            string tempTableQuery =
-                $@"CREATE TEMP TABLE Search(tag);
-                INSERT INTO Search VALUES {tagQuery};";
+            string paramsForQuery = ParamsString(parameters);
 
             string byTagsQuery =
-                $@"SELECT *
-                FROM Medias
-                JOIN MediasTags on Medias.ID = MediasTags.MediaID
-                JOIN Tags on Tags.ID = MediasTags.TagID
-                JOIN Search on Tags.name = Search.tag
-                GROUP BY Medias.ID
-                HAVING COUNT(Medias.id) = {parameters.Count}
-                {(reverse == 1 ? "ORDER BY Medias.Id DESC" : "")}
+                $@"SELECT m.*
+                FROM MediasTags as mt, Medias as m, Tags as t
+                WHERE mt.TagID = t.ID
+                AND(t.name IN({paramsForQuery}))
+                AND m.id = mt.MediaID
+                GROUP BY m.id
+                HAVING COUNT(m.id) = {parameters.Count}
+                {(reverse == 1 ? "ORDER BY m.Id DESC" : "")}
                 LIMIT 20 OFFSET { 20 * (page - 1) };";
 
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
 
-            using (SQLiteCommand tempTable = new SQLiteCommand(tempTableQuery, connection))
-            {
-                connection.Open();//temp table is wiped upon closing connection
-                tempTable.ExecuteNonQuery();
-            }
-
             using (SQLiteCommand byTag = new SQLiteCommand(byTagsQuery, connection))
             {
                 byTag.Parameters.AddRange(parameters.ToArray());
+                connection.Open();
                 var result = byTag.ExecuteReader();
 
                 if (result.HasRows)
@@ -150,15 +141,6 @@ namespace MyBooru.Services
                 });
             }
             return parameters;
-        }
-
-        public string Decorate(string tags)
-        {
-            var delimited = tags.Split(',');
-            for (int i = 0; i < delimited.Length; i++)
-                delimited[i] = $"('{delimited[i]}')";
-
-            return String.Join(",", delimited);
         }
 
         public string ParamsString(List<SQLiteParameter> parameters)
