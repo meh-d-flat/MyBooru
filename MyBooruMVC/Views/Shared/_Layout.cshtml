@@ -6,10 +6,8 @@
 <head>
     <meta name="viewport" content="width=device-width" />
     <title>@ViewBag.Title</title>
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
     @*<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>*@
     <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
     <base href="/" />
     <!--so ajax requests get the right path-->
 
@@ -64,11 +62,73 @@
         @Html.ActionLink("Upload", "Upload", "Gallery")
         <form action="/gallery/search">
             <input name="tags" type="text" id="search" />
+            <ul id="results"></ul>
         </form>
     </div>
 
     <div>
         @RenderBody()
     </div>
+
+    <script>
+        const autocomplete = document.getElementById("search");
+        const resultsHTML = document.getElementById("results");
+        var data = [];
+        var prevLength = -1;
+        var enteredChars = "";
+
+        resultsHTML.onclick = function (event) {
+            const setValue = event.target.innerText;
+            a = autocomplete.value;
+            autocomplete.value = a.slice(0, a.lastIndexOf(",")+1) + a.slice(a.lastIndexOf(",") + 1, a.length).replace(enteredChars, "");//yeah...
+            autocomplete.value += setValue + ",";
+            prevLength = setValue.length;
+            enteredChars = "";
+            this.innerHTML = "";
+        };
+
+        function getResults(input) {
+            const results = [];
+            retrieve(input);
+            for (i = 0; i < data.length; i++) {
+                if (input === data[i].slice(0, input.length)) {
+                    results.push(data[i]);
+                }
+            }
+            return results;
+        }
+
+        function retrieve(str) {
+            var result = [];
+            $.ajax({
+                url: "@config["ApiHost"]/api/tag",
+                data: {
+                    tagName: str
+                },
+                success: function (response) {
+                    data = response;
+                }
+            });
+            return result;
+        }
+        //deleteContentBackward, deleteContentForward, insertFromPaste, insertText
+        autocomplete.oninput = function (e) {
+            let results = [];
+            if (e.inputType == "insertText" || e.inputType == "insertFromPaste")
+                enteredChars += e.data;
+            if (e.inputType == "deleteContentBackward")
+                enteredChars = enteredChars.slice(0, enteredChars.length - 1);
+
+            const userInput = this.value;
+            resultsHTML.innerHTML = "";
+            if (userInput.length > 0 || userInput.length > prevLength) {
+                results = getResults(enteredChars);
+                resultsHTML.style.display = "block";
+                for (i = 0; i < results.length; i++) {
+                    resultsHTML.innerHTML += "<li>" + results[i] + "</li>";
+                }
+            }
+        };
+    </script>
 </body>
 </html>

@@ -45,7 +45,7 @@ namespace MyBooru.Controllers
 
         bool InputCheck(string text)
         {
-            return Regex.Match(text, @"[ a-zA-Z0-9]{3,32}$").Success;
+            return Regex.Match(text, @"[ a-zA-Z0-9]{2,32}$").Success;
         }
     }
 }

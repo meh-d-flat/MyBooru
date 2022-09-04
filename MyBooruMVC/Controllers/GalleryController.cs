@@ -30,6 +30,9 @@ namespace MyBooruMVC.Controllers
         [Route("search")]
         public ActionResult Search(string tags, int page = 1)
         {
+            if (tags.EndsWith(","))
+                tags = tags.Remove(tags.Length - 1, 1);
+
             return View(model: (tags, page));
         }
     }
