@@ -129,6 +129,9 @@ namespace MyBooru.Services
 
         public List<SQLiteParameter> MakeParamsList(string tags)
         {
+            if (tags.EndsWith(","))
+                tags = tags.Remove(tags.Length - 1, 1);
+
             var delimited = tags.Split(',');
             var parameters = new List<SQLiteParameter>(delimited.Length);
             for (int i = 0; i < delimited.Length; i++)
@@ -141,6 +144,18 @@ namespace MyBooru.Services
                 });
             }
             return parameters;
+        }
+
+        public string Decorate(string tags)
+        {
+            if (tags.EndsWith(","))
+                tags = tags.Remove(tags.Length - 1, 1);
+
+            var delimited = tags.Split(',');
+            for (int i = 0; i < delimited.Length; i++)
+                delimited[i] = $"('{delimited[i]}')";
+
+            return String.Join(",", delimited);
         }
 
         public string ParamsString(List<SQLiteParameter> parameters)
