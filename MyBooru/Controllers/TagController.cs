@@ -26,7 +26,7 @@ namespace MyBooru.Controllers
             if (!InputCheck(tagName))
                 return StatusCode(400, "Bad tag");
 
-            var result = tagger.SearchTag(tagName);
+            var result = tagger.SearchTag(tagName).Select(x => x.Name);
             return new JsonResult(result);
         }
 
