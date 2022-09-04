@@ -59,7 +59,8 @@ namespace MyBooru.Controllers
         {
             if (!checker.CheckMediaExists(id))
                 return StatusCode(400);
-
+            
+            //validate the tags
             foreach (var item in tags.Split(","))
             {
                 if(!Regex.Match(item, @"[ a-zA-Z0-9]{3,32}$").Success)
@@ -75,6 +76,7 @@ namespace MyBooru.Controllers
         [Route("byTag")]
         public IActionResult GetByTags([FromServices] TagsService tagger, string tags, int page = 1, int reverse = 1)
         {
+            //validate the tags
             var mediasCount = tagger.MediasCount(tags);
             var result = tagger.GetMediasByTags(tags, page, reverse);//rewrite to get only ids by tag then go through download
 
