@@ -63,11 +63,11 @@ namespace MyBooru.Controllers
             //validate the tags
             foreach (var item in tags.Split(","))
             {
-                if(!Regex.Match(item, @"[ a-zA-Z0-9]{3,32}$").Success)
+                if(!Regex.Match(item, @"[ a-zA-Z0-9]{2,32}$").Success)
                     return BadRequest(new JsonResult(new { bad_tag = item }));
             }
 
-            var newTags = tagger.AddTagsToMedia(id, tags);
+            var newTags = tagger.AddTagsToMedia(id, tags.ToLower());
 
             return new JsonResult(new { items = newTags });
         }

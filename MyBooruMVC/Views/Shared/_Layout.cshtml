@@ -60,7 +60,7 @@
     <div class="nav">
         @Html.ActionLink("Home", "Index", "Gallery")
         @Html.ActionLink("Upload", "Upload", "Gallery")
-        <form action="/gallery/search">
+        <form action="/gallery/search" id="search-form">
             <input name="tags" type="text" id="search" />
             <ul id="results"></ul>
         </form>
@@ -71,35 +71,44 @@
     </div>
 
     <script>
-        const autocomplete = document.getElementById("search");
-        const resultsHTML = document.getElementById("results");
+        const searchForm = document.getElementById("search-form");
+        const searchInput = document.getElementById("search");
+        const suggestions = document.getElementById("results");
+
         var data = [];
         var prevLength = -1;
         var enteredChars = "";
 
-        resultsHTML.onclick = function (event) {
-            const setValue = event.target.innerText;
-            a = autocomplete.value;
-            autocomplete.value = a.slice(0, a.lastIndexOf(",")+1) + a.slice(a.lastIndexOf(",") + 1, a.length).replace(enteredChars, "");//yeah...
-            autocomplete.value += setValue + ",";
+        searchInput.addEventListener("input", (e) => search(e, suggestions, retrieve));
+        searchForm.addEventListener("submit", () => formSubmit(searchInput));
+        suggestions.addEventListener("click", (e) => submitEntry(e, searchInput));
+
+        function formSubmit(input) {
+            if (input.value.endsWith(","))
+                input.value = input.value.slice(0, -1);
+        };
+
+        function submitEntry(e, input) {
+            const setValue = e.target.innerText;
+            a = input.value;
+            input.value = a.slice(0, a.lastIndexOf(",") + 1) + a.slice(a.lastIndexOf(",") + 1, a.length).replace(enteredChars, "");//yeah...
+            input.value += setValue + ",";
             prevLength = setValue.length;
             enteredChars = "";
             this.innerHTML = "";
-        };
+        }
 
-        function getResults(input) {
+        function getResults(input, func) {
             const results = [];
-            retrieve(input);
+            func(input);
             for (i = 0; i < data.length; i++) {
-                if (input === data[i].slice(0, input.length)) {
+                if (input.localeCompare(data[i].slice(0, input.length), undefined, { sensitivity: 'accent' }) == 0)
                     results.push(data[i]);
-                }
             }
             return results;
         }
 
         function retrieve(str) {
-            var result = [];
             $.ajax({
                 url: "@config["ApiHost"]/api/tag",
                 data: {
@@ -109,26 +118,25 @@
                     data = response;
                 }
             });
-            return result;
         }
         //deleteContentBackward, deleteContentForward, insertFromPaste, insertText
-        autocomplete.oninput = function (e) {
+        function search(e, suggest, func) {
             let results = [];
             if (e.inputType == "insertText" || e.inputType == "insertFromPaste")
                 enteredChars += e.data;
             if (e.inputType == "deleteContentBackward")
                 enteredChars = enteredChars.slice(0, enteredChars.length - 1);
 
-            const userInput = this.value;
-            resultsHTML.innerHTML = "";
+            const userInput = e.target.value;
+            suggest.innerHTML = "";
             if (userInput.length > 0 || userInput.length > prevLength) {
-                results = getResults(enteredChars);
-                resultsHTML.style.display = "block";
+                results = getResults(enteredChars, func);
+                suggest.style.display = "block";
                 for (i = 0; i < results.length; i++) {
-                    resultsHTML.innerHTML += "<li>" + results[i] + "</li>";
+                    suggest.innerHTML += "<li>" + results[i] + "</li>";
                 }
             }
-        };
+        }
     </script>
 </body>
 </html>
