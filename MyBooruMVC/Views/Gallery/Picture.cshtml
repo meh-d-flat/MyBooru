@@ -65,7 +65,7 @@
     </style>
 
     <div class="sidenav">
-        <form onsubmit="addTag(); return false;" method="get" id="tag-form">
+        <form onsubmit="addTag(); return false;" method="get" id="tag-form" autocomplete="off">
             <div style="margin-top: 10px">
                 <input name="tags" id="tags-to-add" type="text" />
             </div>
@@ -84,17 +84,15 @@
 
     <script>
         var pic = false;
-        var tagData;
-        var tagPrevLength = -1;
-        var tagEnteredChars = "";
+        var tagThing = { length: -1, chars: "", data: [], isPerioded: false };
 
         const tagSearchForm = document.getElementById("tag-form");
         const tagSearchInput = document.getElementById("tags-to-add");
         const tagSuggestions = document.getElementById("tag-results");
 
-        tagSearchInput.addEventListener("input", (e) => tagSearch(e, tagSuggestions, tagRetrieve));
+        tagSearchInput.addEventListener("input", (e) => search(e, tagSuggestions, tagRetrieve, tagThing));
         tagSearchForm.addEventListener("submit", () => tagFormSubmit(tagSearchInput));
-        tagSuggestions.addEventListener("click", (e) => tagSubmitEntry(e, tagSearchInput));
+        tagSuggestions.addEventListener("click", (e) => submitEntry(e, tagSearchInput, tagThing));
 
         function tagRetrieve(str) {
             $.ajax({
@@ -103,52 +101,13 @@
                     tagName: str
                 },
                 success: function (response) {
-                    tagData = response;
+                    tagThing.data = response;
                 }
             });
         }
 
         function tagFormSubmit(self) {
             self.value = "";
-        }
-
-        function tagSubmitEntry(e, input) {
-            const setValue = e.target.innerText;
-            a = input.value;
-            input.value = a.slice(0, a.lastIndexOf(",") + 1) + a.slice(a.lastIndexOf(",") + 1, a.length).replace(tagEnteredChars, "");//yeah...
-            input.value += setValue;
-            tagPrevLength = setValue.length;
-            tagEnteredChars = "";
-            this.innerHTML = "";
-        }
-
-        function tagGetResults(input, func) {
-            const results = [];
-            func(input);
-            for (i = 0; i < tagData.length; i++) {
-                if (input.localeCompare(tagData[i].slice(0, input.length), undefined, { sensitivity: 'accent' }) == 0)
-                    results.push(tagData[i]);
-            }
-            return results;
-        }
-
-        function tagSearch(e, suggest, func) {
-            let results = [];
-            if (e.inputType == "insertText" || e.inputType == "insertFromPaste")
-                tagEnteredChars += e.data;
-            if (e.inputType == "deleteContentBackward")
-                tagEnteredChars = tagEnteredChars.slice(0, tagEnteredChars.length - 1);
-
-            const userInput = e.target.value;
-            suggest.innerHTML = "";
-            if (userInput.length > 0 || userInput.length > tagPrevLength) {
-                results = tagGetResults(tagEnteredChars, func);
-                console.log("hi after results length: " + results.length);
-                //suggest.style.display = "block";
-                for (i = 0; i < results.length; i++) {
-                    suggest.innerHTML += "<li>" + results[i] + "</li>";
-                }
-            }
         }
 
         $(document).ready(function () {

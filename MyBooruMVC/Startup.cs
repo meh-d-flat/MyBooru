@@ -48,9 +48,10 @@ namespace MyBooruMVC
 
             app.UseEndpoints(endpoints =>
             {
+                //endpoints.MapControllers();
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller=Gallery}/{action=Index}");
+                    pattern: "{controller=Gallery}");
             });
         }
     }

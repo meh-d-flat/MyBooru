@@ -54,13 +54,18 @@
                     background-color: #ddd;
                     color: black;
                 }
+
+        ul {
+            list-style-type: none;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <div class="nav">
         @Html.ActionLink("Home", "Index", "Gallery")
         @Html.ActionLink("Upload", "Upload", "Gallery")
-        <form action="/gallery/search" id="search-form">
+        <form action="/gallery/search" id="search-form" autocomplete="off">
             <input name="tags" type="text" id="search" />
             <ul id="results"></ul>
         </form>
@@ -75,65 +80,63 @@
         const searchInput = document.getElementById("search");
         const suggestions = document.getElementById("results");
 
-        var data = [];
-        var prevLength = -1;
-        var enteredChars = "";
+        var thing = { length: -1, chars: "", data: [], isPerioded: true};
 
-        searchInput.addEventListener("input", (e) => search(e, suggestions, retrieve));
+        searchInput.addEventListener("input", (e) => search(e, suggestions, retrieve, thing));
         searchForm.addEventListener("submit", () => formSubmit(searchInput));
-        suggestions.addEventListener("click", (e) => submitEntry(e, searchInput));
+        suggestions.addEventListener("click", (e) => submitEntry(e, searchInput, thing));
 
         function formSubmit(input) {
             if (input.value.endsWith(","))
                 input.value = input.value.slice(0, -1);
         };
 
-        function submitEntry(e, input) {
+        function submitEntry(e, input, obj) {
             const setValue = e.target.innerText;
             a = input.value;
-            input.value = a.slice(0, a.lastIndexOf(",") + 1) + a.slice(a.lastIndexOf(",") + 1, a.length).replace(enteredChars, "");//yeah...
-            input.value += setValue + ",";
-            prevLength = setValue.length;
-            enteredChars = "";
-            this.innerHTML = "";
+            input.value = a.slice(0, a.lastIndexOf(",") + 1) + a.slice(a.lastIndexOf(",") + 1, a.length).replace(obj.chars, "");//yeah...
+            input.value += setValue + (obj.isPerioded ? "," : "");
+            obj.length = setValue.length;
+            obj.chars = "";
+            e.target.remove();
         }
 
-        function getResults(input, func) {
+        function getResults(input, func, obj) {
             const results = [];
-            func(input);
-            for (i = 0; i < data.length; i++) {
-                if (input.localeCompare(data[i].slice(0, input.length), undefined, { sensitivity: 'accent' }) == 0)
-                    results.push(data[i]);
+            func(input, obj);
+            for (i = 0; i < obj.data.length; i++) {
+                if (input.localeCompare(obj.data[i].slice(0, input.length), undefined, { sensitivity: 'accent' }) == 0)
+                    results.push(obj.data[i]);
             }
             return results;
         }
 
-        function retrieve(str) {
+        function retrieve(str, obj) {
             $.ajax({
                 url: "@config["ApiHost"]/api/tag",
                 data: {
                     tagName: str
                 },
                 success: function (response) {
-                    data = response;
+                    obj.data = response;
                 }
             });
         }
         //deleteContentBackward, deleteContentForward, insertFromPaste, insertText
-        function search(e, suggest, func) {
+        function search(e, suggest, func, obj) {
             let results = [];
             if (e.inputType == "insertText" || e.inputType == "insertFromPaste")
-                enteredChars += e.data;
+                obj.chars += e.data;
             if (e.inputType == "deleteContentBackward")
-                enteredChars = enteredChars.slice(0, enteredChars.length - 1);
+                obj.chars = obj.chars.slice(0, obj.chars.length - 1);
 
             const userInput = e.target.value;
             suggest.innerHTML = "";
-            if (userInput.length > 0 || userInput.length > prevLength) {
-                results = getResults(enteredChars, func);
+            if (userInput.length > 0 || userInput.length > obj.length) {
+                results = getResults(obj.chars, func, obj);
                 suggest.style.display = "block";
                 for (i = 0; i < results.length; i++) {
-                    suggest.innerHTML += "<li>" + results[i] + "</li>";
+                    suggest.innerHTML += "<li style='border-bottom: 1px solid white;'>" + results[i] + "</li>";
                 }
             }
         }

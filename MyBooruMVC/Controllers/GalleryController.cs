@@ -10,6 +10,7 @@ namespace MyBooruMVC.Controllers
     [Route("Gallery/")]
     public class GalleryController : Controller
     {
+        [Route("")]
         public ActionResult Index(int page = 1)
         {
             return View(model: page);
