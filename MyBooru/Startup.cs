@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -29,6 +30,13 @@ namespace MyBooru
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options => 
+                {
+                    options.LoginPath = "/api/user/signin";
+                    options.Cookie.Name = "SESSION";
+                    //options.SlidingExpiration = true;
+                });
             services.AddCors(options =>
             {
                 options.AddDefaultPolicy(
@@ -69,7 +77,8 @@ namespace MyBooru
 
             app.UseCors();
 
-            //app.UseAuthorization();
+            app.UseAuthentication();
+            app.UseAuthorization();
             
             app.UseMiddleware<RequestLimitMiddleware>();
 
