@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using MyBooru.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
@@ -21,15 +22,33 @@ namespace MyBooru.Controllers
     {
         static User user = new User();
 
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         public IActionResult Get()
         {
+            //HttpContext.Request.Cookies.ToList().ForEach(x => Debug.WriteLine($"Cookie - {x.Key} : {x.Value}"));
+            //Debug.WriteLine($"Auth type {HttpContext.User.Identity.AuthenticationType}");
+            //Debug.WriteLine($"{HttpContext.User.Identity.IsAuthenticated}");
             return Ok("Login successful");
+        }
+
+        [HttpGet, Route("details"), Authorize]
+        public IActionResult Details()
+        {
+            return Ok("User details");
         }
 
         [HttpPost, Route("signup")]
         async public Task<IActionResult> SignUp([FromForm] string username, [FromForm] string email, [FromForm] string password, [FromForm] string passwordRepeat)
         {
+            if (HttpContext.User.Identity.IsAuthenticated)
+                return RedirectToAction("Details");
+
+            if (username == user.Username)
+                return BadRequest("Username already exists!");
+
+            if (email == user.Email)
+                return BadRequest("Email's already registered!");
+
             if (password != passwordRepeat)//check whether username already exists
                 return BadRequest("Password mismatch!");
 
@@ -80,7 +99,17 @@ namespace MyBooru.Controllers
                     new ClaimsPrincipal(claimsIdentity),
                     authProperties);
 
-            return RedirectToAction("Get");
+            return RedirectToAction("Details");
+        }
+
+        [HttpPost, Route("signoff")]
+        public async Task<IActionResult> SignOff()
+        {
+            //close session
+            user = new User();
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            return RedirectToAction("SignIn");
         }
     }
 }

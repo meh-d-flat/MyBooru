@@ -96,6 +96,15 @@ namespace MyBooru.Services
                     FOREIGN KEY(MediaID) REFERENCES Medias(ID),
                     FOREIGN KEY(TagID) REFERENCES Tags(ID),
                     CONSTRAINT OnlyOneOccurenceOfTagOnFile UNIQUE(MediaID, TagID)
+                );
+                CREATE TABLE IF NOT EXISTS Users(
+                    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Username VARCHAR(255) NOT NULL UNIQUE,
+                    Email VARCHAR(255) NOT NULL UNIQUE,
+                    PasswordHash BLOB NOT NULL,
+                    PasswordSalt BLOB NOT NULL,                  
+                    Role VARCHAR(255) NOT NULL,
+                    RegisterDateTime INTEGER NOT NULL
                 );";
 
                 try

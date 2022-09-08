@@ -34,8 +34,20 @@ namespace MyBooru
                 .AddCookie(options => 
                 {
                     options.LoginPath = "/api/user/signin";
+                    options.AccessDeniedPath = "/api/user/details";//doesn't really work?
                     options.Cookie.Name = "SESSION";
                     //options.SlidingExpiration = true;
+                    options.Events.OnRedirectToLogin = context =>
+                    {
+                        context.Response.StatusCode = 401;
+                        return Task.CompletedTask;//this thing
+                    };
+                    options.Events.OnRedirectToAccessDenied = context =>
+                    {
+                        context.Response.StatusCode = 403;
+                        context.Response.Redirect("/api/user/details");
+                        return Task.CompletedTask;
+                    };
                 });
             services.AddCors(options =>
             {
