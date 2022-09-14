@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MyBooru.Models;
+using MyBooru.Services;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -20,7 +21,7 @@ namespace MyBooru.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        static User user = new User();
+        //static User user = new User();
 
         [Authorize(Roles = "Admin")]
         public IActionResult Get()
@@ -38,49 +39,38 @@ namespace MyBooru.Controllers
         }
 
         [HttpPost, Route("signup")]
-        async public Task<IActionResult> SignUp([FromForm] string username, [FromForm] string email, [FromForm] string password, [FromForm] string passwordRepeat)
+        async public Task<IActionResult> SignUp([FromServices] UserService userService,[FromForm] string username, [FromForm] string email, [FromForm] string password, [FromForm] string passwordRepeat)
         {
             if (HttpContext.User.Identity.IsAuthenticated)
                 return RedirectToAction("Details");
 
-            if (username == user.Username)
-                return BadRequest("Username already exists!");
-
-            if (email == user.Email)
-                return BadRequest("Email's already registered!");
-
-            if (password != passwordRepeat)//check whether username already exists
+            if (password != passwordRepeat)
                 return BadRequest("Password mismatch!");
 
-            using (var hmac = new HMACSHA512())
-            {
-                user.PasswordSalt = hmac.Key;
-                user.PasswordHash = await hmac.ComputeHashAsync(new MemoryStream(Encoding.UTF8.GetBytes(password)));
-            }
+            if (await userService.CheckUsernameAsync(username))
+                return BadRequest("Username already exists!");
 
-            user.Username = username;
-            user.RegisterDateTime = DateTime.Now;
-            user.Email = email;//validate this
+            if (await userService.CheckEmailAsync(email))
+                return BadRequest("Email's already registered!");
+
+            var user = await userService.PersistUserAsync(username, password, email);
 
             return Ok(user);//go into sign in
         }
 
         [HttpPost, Route("signin")]
-        async public Task<IActionResult> SignIn([FromForm] string username, [FromForm] string password)
+        async public Task<IActionResult> SignIn([FromServices] UserService userService, [FromForm] string username, [FromForm] string password)
         {
-            bool passwordChecksOut = false;
-            if (user.Username != username)
+            if (HttpContext.User.Identity.IsAuthenticated)
+                return RedirectToAction("Details");
+
+            if (!await userService.CheckUsernameAsync(username))
                 return BadRequest("User not found");
 
-            using (var hmac = new HMACSHA512(user.PasswordSalt))
-            {
-                var passwordBytes = Encoding.UTF8.GetBytes(password);
-                var computedHash = await hmac.ComputeHashAsync(new MemoryStream(passwordBytes));
-                passwordChecksOut = computedHash.SequenceEqual(user.PasswordHash);
-            }
-
-            if (!passwordChecksOut)
+            if (!await userService.CheckPasswordAsync(username, password))
                 return BadRequest("Wrong password");
+
+            var user = await userService.GetUserAsync(username);
 
             var claims = new List<Claim>
                 {
@@ -102,11 +92,9 @@ namespace MyBooru.Controllers
             return RedirectToAction("Details");
         }
 
-        [HttpPost, Route("signoff")]
+        [Route("signoff")]
         public async Task<IActionResult> SignOff()
         {
-            //close session
-            user = new User();
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
             return RedirectToAction("SignIn");

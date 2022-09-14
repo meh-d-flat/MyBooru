@@ -36,6 +36,22 @@ namespace MyBooru
             return cells;
         }
 
+        public static TableCell[] GetRow(System.Data.Common.DbDataReader sqlReader)
+        {
+            var cells = new TableCell[sqlReader.FieldCount];
+            for (int i = 0; i < cells.Length; i++)
+            {
+                cells[i] = new TableCell()
+                {
+                    ColumnName = sqlReader.GetName(i),
+                    ColumnNumber = sqlReader.GetOrdinal(sqlReader.GetName(i)),
+                    Type = sqlReader.GetFieldType(i),
+                    Value = sqlReader[i]
+                };
+            }
+            return cells;
+        }
+
         public static List<TableCell[]> GetRows(SQLiteDataReader sqlReader)
         {
             var rows = new List<TableCell[]>();

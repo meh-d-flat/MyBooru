@@ -2,6 +2,7 @@
 using MyBooru.Models;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace MyBooru.Services
 {
@@ -38,6 +39,15 @@ namespace MyBooru.Services
             int MediasCount(string tags);
             List<Media> GetMediasByTags(string tags, int page, int reverse);
             List<Tag> AddTagsToMedia(string id, string tags);
+        }
+
+        public interface IUserService
+        {
+            Task<User> PersistUserAsync(string username, string password, string email);
+            Task<User> GetUserAsync(string username);
+            Task<bool> CheckEmailAsync(string email);
+            Task<bool> CheckUsernameAsync(string username);
+            Task<bool> CheckPasswordAsync(string username, string password);
         }
     }
 }

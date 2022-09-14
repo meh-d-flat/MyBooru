@@ -74,6 +74,7 @@ namespace MyBooru
             services.AddTransient<RemoveService>();
             services.AddTransient<Contracts.ITagsService, TagsService>();
             services.AddTransient<TagsService>();
+            services.AddTransient<UserService>();
             services.AddMvc();
         }
 
