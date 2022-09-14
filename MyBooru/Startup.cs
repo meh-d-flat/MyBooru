@@ -41,6 +41,7 @@ namespace MyBooru
                     options.LoginPath = "/api/user/signin";
                     options.AccessDeniedPath = "/api/user/details";//doesn't really work?
                     options.Cookie.Name = "SESSION";
+                    //options.SessionStore make my own
                     //options.SlidingExpiration = true;
                     options.Events.OnRedirectToLogin = context =>
                     {

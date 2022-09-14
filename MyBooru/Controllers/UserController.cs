@@ -35,7 +35,7 @@ namespace MyBooru.Controllers
         [HttpGet, Route("details"), Authorize]
         public IActionResult Details()
         {
-            return Ok("User details");
+            return Ok($"Signed in as: {HttpContext.User.Identity.Name}");
         }
 
         [HttpPost, Route("signup")]
@@ -48,14 +48,14 @@ namespace MyBooru.Controllers
                 return BadRequest("Password mismatch!");
 
             if (await userService.CheckUsernameAsync(username))
-                return BadRequest("Username already exists!");
+                return BadRequest("Username/Email already registered!");
 
             if (await userService.CheckEmailAsync(email))
-                return BadRequest("Email's already registered!");
+                return BadRequest("Username/Email already registered!");
 
             var user = await userService.PersistUserAsync(username, password, email);
 
-            return Ok(user);//go into sign in
+            return await this.SignIn(userService, username, password);
         }
 
         [HttpPost, Route("signin")]
@@ -65,10 +65,10 @@ namespace MyBooru.Controllers
                 return RedirectToAction("Details");
 
             if (!await userService.CheckUsernameAsync(username))
-                return BadRequest("User not found");
+                return BadRequest("Wrong Username/Password combination");
 
             if (!await userService.CheckPasswordAsync(username, password))
-                return BadRequest("Wrong password");
+                return BadRequest("Wrong Username/Password combination");
 
             var user = await userService.GetUserAsync(username);
 
@@ -96,7 +96,7 @@ namespace MyBooru.Controllers
         public async Task<IActionResult> SignOff()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
+            HttpContext.Response.Cookies.Delete("SESSION");
             return RedirectToAction("SignIn");
         }
     }
