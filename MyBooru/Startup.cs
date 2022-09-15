@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -31,6 +32,8 @@ namespace MyBooru
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddHttpContextAccessor();
+
             services.AddDataProtection()
                 .PersistKeysToFileSystem(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent)
                 .SetApplicationName("MyBooru");
@@ -41,7 +44,7 @@ namespace MyBooru
                     options.LoginPath = "/api/user/signin";
                     options.AccessDeniedPath = "/api/user/details";//doesn't really work?
                     options.Cookie.Name = "SESSION";
-                    //options.SessionStore make my own
+                    options.SessionStore = new SessionTicketStore(Configuration, services.BuildServiceProvider().GetService<IHttpContextAccessor>());
                     //options.SlidingExpiration = true;
                     options.Events.OnRedirectToLogin = context =>
                     {

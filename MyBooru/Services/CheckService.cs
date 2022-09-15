@@ -105,6 +105,14 @@ namespace MyBooru.Services
                     PasswordSalt BLOB NOT NULL,                  
                     Role VARCHAR(255) NOT NULL,
                     RegisterDateTime INTEGER NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS Tickets(
+                    ID VARCHAR(255) PRIMARY KEY,
+                    Username VARCHAR(255) NOT NULL,
+                    Value BLOB,
+                    LastActivity INTEGER,
+                    UserAgent VARCHAR(255),
+                    IP VARCHAR(255)
                 );";
 
                 try
