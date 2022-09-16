@@ -23,22 +23,23 @@ namespace MyBooru.Controllers
 
         [HttpGet]
         [Authorize(Roles = "User")]
-        public IActionResult Get(string tagName)
+        public async Task<IActionResult> Get(string tagName)
         {
             if (!InputCheck(tagName))
                 return StatusCode(400, "Bad tag");
 
-            var result = tagger.SearchTag(tagName).Select(x => x.Name);
+            var resultCollection = await tagger.SearchTagAsync(tagName);
+            var result = resultCollection.Select(x => x.Name);
             return new JsonResult(result);
         }
 
         [HttpPost]
-        public IActionResult Post(string newTag)
+        public async Task<IActionResult> Post(string newTag)
         {
             if (!InputCheck(newTag))
                 return StatusCode(400, "Bad tag");
 
-            var added = tagger.Add(newTag);
+            var added = await tagger.AddTagAsync(newTag);
             if (added == null)
                 return StatusCode(501, "Something went wrong");
 

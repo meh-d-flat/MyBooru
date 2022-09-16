@@ -8,8 +8,7 @@ using System.Threading.Tasks;
 namespace MyBooru
 {
     /// <summary>
-    /// Poor man's entity framework, 
-    /// i've decided to check out
+    /// Poor man's entity framework 
     /// </summary>
     public class TableCell
     {
@@ -53,6 +52,15 @@ namespace MyBooru
         }
 
         public static List<TableCell[]> GetRows(SQLiteDataReader sqlReader)
+        {
+            var rows = new List<TableCell[]>();
+            while (sqlReader.Read())
+                rows.Add(GetRow(sqlReader));
+
+            return rows;
+        }
+
+        public static List<TableCell[]> GetRows(System.Data.Common.DbDataReader sqlReader)
         {
             var rows = new List<TableCell[]>();
             while (sqlReader.Read())

@@ -17,24 +17,24 @@ namespace MyBooru.Services
             config = configuration;
         }
 
-        public Media Download(string id)
+        public async Task<Media> DownloadAsync(string id)
         {
             Media file = null;
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-            connection.Open();
+            await connection.OpenAsync();
             string getFileQuery = "SELECT * FROM Medias WHERE Hash = @a";
 
             using (SQLiteCommand getFile = new SQLiteCommand(getFileQuery, connection))
             {
-                getFile.Parameters.AddWithValue("@a", id);
-                var result = getFile.ExecuteReader();
+                getFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = id, DbType = System.Data.DbType.String });
+                var result = await getFile.ExecuteReaderAsync();
 
                 if (result.HasRows)
                 {
-                    while (result.Read())
+                    while (await result.ReadAsync())
                         file = TableCell.MakeEntity<Media>(TableCell.GetRow(result));
                 }
-                result.Dispose();
+                await result.DisposeAsync();
             }
 
             string getTagsQuery =
@@ -44,37 +44,37 @@ namespace MyBooru.Services
                 Where Hash = @a;";
             using (SQLiteCommand getTags = new SQLiteCommand(getTagsQuery, connection))
             {
-                getTags.Parameters.AddWithValue("@a", id);
-                var result = getTags.ExecuteReader();
+                getTags.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = id, DbType = System.Data.DbType.String });
+                var result = await getTags.ExecuteReaderAsync();
+
                 if (result.HasRows)
-                {
                     file.Tags = TableCell.MakeEntities<Tag>(TableCell.GetRows(result));
-                }
+
+                await result.DisposeAsync();
             }
-            connection.Close();
+            await connection.CloseAsync();
             return file;
         }
 
-        public List<Media> Download(int page, int reverse)
+        public async Task<List<Media>> DownloadAsync(int page, int reverse)
         {
             List<Media> files = new List<Media>();
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-            connection.Open();
-            //string getFilesQuery = $"SELECT * FROM Medias LIMIT 20 OFFSET { 20 * (page - 1) }" + (reverse == 1 ? " ORDER BY Id DESC" : "");
+            await connection.OpenAsync();
             string getFilesQuery = "SELECT * FROM Medias" + (reverse == 1 ? " ORDER BY Id DESC " : " ") +  $"LIMIT 20 OFFSET { 20 * (page - 1) }";
 
             using (SQLiteCommand getFiles = new SQLiteCommand(getFilesQuery, connection))
             {
                 getFiles.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = page, DbType = System.Data.DbType.Int32 });
-                var result = getFiles.ExecuteReader();
+                var result = await getFiles.ExecuteReaderAsync();
 
                 if (result.HasRows)
                     files = TableCell.MakeEntities<Media>(TableCell.GetRows(result));
 
-                result.Dispose();
+                await result.DisposeAsync();
             }
 
-            connection.Close();
+            await connection.CloseAsync();
             return files;
         }
     }

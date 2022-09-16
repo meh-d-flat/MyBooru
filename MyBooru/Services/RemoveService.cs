@@ -18,31 +18,31 @@ namespace MyBooru.Services
             config = configuration;
         }
 
-        public string Remove(string id)
+        public async Task<string> RemoveAsync(string id)
         {
             string removed = "deleted";
             Media file = null;
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-            connection.Open();
+            await connection.OpenAsync();
 
             string readPathQuery = "SELECT * FROM Medias WHERE Hash = @a";
 
             using (SQLiteCommand removeFile = new SQLiteCommand(readPathQuery, connection))
             {
                 removeFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = id, DbType = System.Data.DbType.String });
-                var result = removeFile.ExecuteReader();
+                var result = await removeFile.ExecuteReaderAsync();
 
                 if (result.HasRows)
                 {
-                    while (result.Read())
+                    while (await result.ReadAsync())
                         file = TableCell.MakeEntity<Media>(TableCell.GetRow(result));
                 }
-                result.Dispose();
+                await result.DisposeAsync();
             }
 
             try
             {
-                Directory.Delete(Path.GetFullPath(file.Path).Replace(Path.GetFileName(file.Path), ""), true);
+                await Task.Run(() => Directory.Delete(Path.GetFullPath(file.Path).Replace(Path.GetFileName(file.Path), ""), true));
             }
             catch (Exception ex)
             {
@@ -56,7 +56,7 @@ namespace MyBooru.Services
                 removeEntry.Parameters.Add(new SQLiteParameter() { ParameterName = "@b", Value = id, DbType = System.Data.DbType.String });
                 try
                 {
-                    removeEntry.ExecuteNonQuery();//5012FF14CA8720E590B14326E2356CC8E7A98D2C9E1F887A47AA7683A5DD71D8
+                    await removeEntry .ExecuteNonQueryAsync();
                 }
                 catch (SQLiteException ex)
                 {
@@ -64,9 +64,9 @@ namespace MyBooru.Services
                 }
                 finally
                 {
-                    removeEntry.Dispose();
+                    await removeEntry.DisposeAsync();
                 }
-                connection.Close();
+                await connection.CloseAsync();
             }
 
                 return removed;

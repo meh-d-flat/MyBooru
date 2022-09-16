@@ -21,7 +21,7 @@ namespace MyBooru.Services
             config = configuration;
         }
 
-        public string UploadOne(IFormFile file)
+        public async Task<string> UploadOneAsync(IFormFile file)
         {
             string fileHash = "empty";
             string webPath, webThumbPath;
@@ -33,7 +33,7 @@ namespace MyBooru.Services
                 return "error: ffmpeg not found";
 
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-            connection.Open();
+            await connection.OpenAsync();
             string addFileQuery = "INSERT INTO Medias ('Name', 'Hash', 'Type', 'Path', 'Thumb') VALUES (@a, @b, @c, @d, @e)";//('Name', 'Hash', 'Size', 'Type', 'Binary', 'Path') VALUES (@a, @b, @c, @d, @e, @f)
 
             SQLiteCommand addFile = new SQLiteCommand(addFileQuery, connection);
@@ -42,13 +42,13 @@ namespace MyBooru.Services
 
             using (var stream = file.OpenReadStream())
             {
-                int size = (int)file.Length;
-                byte[] bytes = new byte[size];
-                stream.Read(bytes, 0, (int)file.Length);
+                //int size = (int)file.Length;
+                //byte[] bytes = new byte[size];
+                //await stream.ReadAsync(bytes, 0, (int)file.Length);
 
                 using (SHA256 SHA256 = SHA256Managed.Create())
                 {
-                    string hash = BitConverter.ToString(SHA256.ComputeHash(bytes));
+                    string hash = BitConverter.ToString(await SHA256.ComputeHashAsync(stream));
                     hash = hash.Replace("-", "");
                     addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@b", Value = hash, DbType = System.Data.DbType.String });
                     fileHash = hash;
@@ -56,14 +56,14 @@ namespace MyBooru.Services
 
                 var guid = Guid.NewGuid().ToString();
                 var directoryPath = Path.Combine(config.GetValue<string>("FilePath"), guid);
-                Directory.CreateDirectory(directoryPath);
+                await Task.Run(() => Directory.CreateDirectory(directoryPath));
                 var path = Path.Combine(directoryPath, file.FileName);
                 webPath = path.Replace(@"\", "/");
                 addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@d", Value = webPath, DbType = System.Data.DbType.String });
 
                 using (var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write))
                 {
-                    file.CopyTo(fileStream);
+                    await file.CopyToAsync(fileStream);
                 }
 
                 var fullPath = Path.GetFullPath(path);
@@ -71,12 +71,16 @@ namespace MyBooru.Services
                 webThumbPath = path.Replace(Path.GetFileName(path), "thumbnail.jpeg").Replace(@"\", "/");
                 var ffmpeg = new System.Diagnostics.Process();
                 ffmpeg.StartInfo.FileName = config["FFMpegExecPath"];
-                ffmpeg.StartInfo.Arguments = file.ContentType.Contains("video") ? $"-i {fullPath} -ss 00:00:00.001 -vframes 1 -vf scale=300:-1 {thumbPath}" : $"-i {fullPath} -vf scale=300:-1 {thumbPath}";
+                ffmpeg.StartInfo.Arguments = file.ContentType.Contains("video") ? $"-i \"{fullPath}\" -ss 00:00:00.001 -vframes 1 -vf scale=300:-1 \"{thumbPath}\"" : $"-i \"{fullPath}\" -vf scale=300:-1 \"{thumbPath}\"";
 
                 try
                 {
                     ffmpeg.Start();
-                    ffmpeg.WaitForExit();
+                    if (!ffmpeg.WaitForExit(3000))
+                    {
+                        ffmpeg.Close();
+                        await Task.Run(() => Directory.Delete(Path.GetDirectoryName(webPath), true));
+                    }
                 }
                 catch
                 {
@@ -88,28 +92,28 @@ namespace MyBooru.Services
 
             try
             {
-                addFile.ExecuteNonQuery();
+                await addFile.ExecuteNonQueryAsync();
             }
             catch (SQLiteException ex)
             {
-                Directory.Delete(Path.GetDirectoryName(webPath), true);
+                await Task.Run(() => Directory.Delete(Path.GetDirectoryName(webPath), true));
                 fileHash = $"error: {ex.GetType()} {ex.Message}";
             }
             finally
             {
-                addFile.Dispose();
+                await addFile.DisposeAsync();
             }
-            connection.Close();
+            await connection.CloseAsync();
 
             return fileHash;
         }
 
-        public List<string> UploadMany(ICollection<IFormFile> files)
+        public async Task<List<string>> UploadManyAsync(ICollection<IFormFile> files)
         {
             var hashes = new List<string>();
             foreach (var media in files)
             {
-                var hash = UploadOne(media);
+                var hash = await UploadOneAsync(media);
                 hashes.Add(hash);
             }
             return hashes;

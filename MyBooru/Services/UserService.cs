@@ -21,7 +21,7 @@ namespace MyBooru.Services
             config = configuration;
         }
 
-        async public Task<bool> CheckEmailAsync(string email)
+        public async Task<bool> CheckEmailAsync(string email)
         {
             bool exists = false;
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
@@ -43,7 +43,7 @@ namespace MyBooru.Services
             return exists;
         }
 
-        async public Task<bool> CheckUsernameAsync(string username)
+        public async Task<bool> CheckUsernameAsync(string username)
         {
             bool exists = false;
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
@@ -65,7 +65,7 @@ namespace MyBooru.Services
             return exists;
         }
 
-        async public Task<bool> CheckPasswordAsync(string username, string password)
+        public async Task<bool> CheckPasswordAsync(string username, string password)
         {
             var user = await GetUserAsync(username);
             bool passwordChecksOut = false;
@@ -79,7 +79,7 @@ namespace MyBooru.Services
             return passwordChecksOut;
         }
 
-        async public Task<User> GetUserAsync(string username)
+        public async Task<User> GetUserAsync(string username)
         {
             var user = new User();
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
@@ -104,7 +104,7 @@ namespace MyBooru.Services
             return user;
         }
 
-        async public Task<User> PersistUserAsync(string username, string password, string email)
+        public async Task<User> PersistUserAsync(string username, string password, string email)
         {
             var user = new User();
             byte[] passwordHash = new byte[2];

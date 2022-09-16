@@ -17,18 +17,18 @@ namespace MyBooru.Services
             config = configuration;
         }
 
-        public Tag Add(string name)
+        public async Task<Tag> AddTagAsync(string name)
         {
             Tag tag = null;
             bool rowsChanged = false;
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-            connection.Open();
+            await connection.OpenAsync();
             string addTagQuery = "INSERT OR IGNORE INTO Tags ('Name') VALUES (@a)";
             SQLiteCommand addTag = new SQLiteCommand(addTagQuery, connection);
             addTag.Parameters.AddWithValue("@a", name);
             try
             {
-                rowsChanged = addTag.ExecuteNonQuery() > 0;
+                rowsChanged = await addTag.ExecuteNonQueryAsync() > 0;
             }
             catch (SQLiteException ex)
             {
@@ -36,37 +36,37 @@ namespace MyBooru.Services
             }
             finally
             {
-                addTag.Dispose();
+                await addTag .DisposeAsync();
             }
 
             if (rowsChanged)
                 tag = new Tag() { Id = (int)connection.LastInsertRowId, Name = name };
-            connection.Close();
+            await connection.CloseAsync();
             return tag;
         }
 
-        public List<Tag> SearchTag(string name)
+        public async Task<List<Tag>> SearchTagAsync(string name)
         {
             List<Tag> tags = null;
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-            connection.Open();
+            await connection.OpenAsync();
             string getTagQuery = "SELECT * FROM Tags WHERE Name LIKE @a";
 
             using (SQLiteCommand getTag = new SQLiteCommand(getTagQuery, connection))
             {
                 getTag.Parameters.AddWithValue("@a", $"{name}%");
-                var result = getTag.ExecuteReader();
+                var result = await getTag.ExecuteReaderAsync();
 
                 if (result.HasRows)
                     tags = TableCell.MakeEntities<Tag>(TableCell.GetRows(result));
 
-                result.Dispose();
+                await result.DisposeAsync();
             }
-            connection.Close();
+            await connection.CloseAsync();
             return tags;
         }
 
-        public int MediasCount(string tags)
+        public async Task<int> MediasCountAsync(string tags)
         {
             int count = 0;
             var parameters = MakeParamsList(tags);
@@ -86,15 +86,15 @@ namespace MyBooru.Services
             using (SQLiteCommand byTag = new SQLiteCommand(byTagsQuery, connection))
             {
                 byTag.Parameters.AddRange(parameters.ToArray());
-                connection.Open();
-                count = Convert.ToInt32(byTag.ExecuteScalar());
+                await connection.OpenAsync();
+                count = Convert.ToInt32(await byTag.ExecuteScalarAsync());
 
-                connection.Close();
+                await connection.CloseAsync();
             }
             return count;
         }
 
-        public List<Media> GetMediasByTags(string tags, int page, int reverse)
+        public async Task<List<Media>> GetMediasByTagsAsync(string tags, int page, int reverse)
         {
             var medias = new List<Media>();
             var parameters = MakeParamsList(tags);
@@ -119,19 +119,19 @@ namespace MyBooru.Services
 
             using (SQLiteCommand tempTable = new SQLiteCommand(tempTableQuery, connection))
             {
-                connection.Open();//temp table is wiped upon closing connection
-                tempTable.ExecuteNonQuery();
+                await connection.OpenAsync();//temp table is wiped upon closing connection
+                await tempTable.ExecuteNonQueryAsync();
             }
 
             using (SQLiteCommand byTag = new SQLiteCommand(byTagsQuery, connection))
             {
                 byTag.Parameters.AddRange(parameters.ToArray());
-                var result = byTag.ExecuteReader();
+                var result = await byTag.ExecuteReaderAsync();
 
                 if (result.HasRows)
                     medias = TableCell.MakeEntities<Media>(TableCell.GetRows(result));
 
-                connection.Close();
+                await connection.CloseAsync();
             }
             return medias;
         }
@@ -179,14 +179,14 @@ namespace MyBooru.Services
             return paramsForQuery;
         }
 
-        public List<Tag> AddTagsToMedia(string id, string tags)
+        public async Task<List<Tag>> AddTagsToMediaAsync(string id, string tags)
         {
-            var tagsList = AddWithCheck(tags);
-            AddToMedia(id, tagsList);
+            var tagsList = await AddWithCheckAsync(tags);
+            await AddToMediaAsync(id, tagsList);
             return tagsList;
         }
 
-        public List<Tag> AddWithCheck(string tags)
+        public async Task<List<Tag>> AddWithCheckAsync(string tags)
         {
             var delimited = tags.Split(',').ToList();
             List<Tag> tagList = new List<Tag>();
@@ -199,13 +199,13 @@ namespace MyBooru.Services
             using (SQLiteCommand checkTags = new SQLiteCommand(checkTagsQuery, connection))
             {
                 checkTags.Parameters.AddRange(parameters.ToArray());
-                connection.Open();
-                var result = checkTags.ExecuteReader();
+                await connection.OpenAsync();
+                var result = await checkTags.ExecuteReaderAsync();
 
                 if (result.HasRows)
                     tagList = TableCell.MakeEntities<Tag>(TableCell.GetRows(result));
 
-                connection.Close();
+                await connection.CloseAsync();
             }
 
             if (delimited.Count > tagList.Count)
@@ -215,7 +215,7 @@ namespace MyBooru.Services
 
                 foreach (var item in outliers)
                 {
-                    var newTag = Add(item);
+                    var newTag = await AddTagAsync(item);
                     if(newTag != null)
                         tagList.Add(newTag);
                 }
@@ -223,7 +223,7 @@ namespace MyBooru.Services
             return tagList;
         }
 
-        public void AddToMedia(string id, List<Tag> tags)
+        public async Task AddToMediaAsync(string id, List<Tag> tags)
         {
             int mediaId = -1;
             string fetchIdQuery = $"SELECT Id FROM Medias WHERE Hash = '{id}'";
@@ -231,12 +231,12 @@ namespace MyBooru.Services
 
             using (var fetchId = new SQLiteCommand(fetchIdQuery, connection))
             {
-                connection.Open();
-                var result = fetchId.ExecuteReader();
+                await connection.OpenAsync();
+                var result = await fetchId.ExecuteReaderAsync();
                 if (result.HasRows)
-                    while(result.Read())
+                    while(await result.ReadAsync())
                         mediaId = result.GetInt32(0);
-                connection.Close();
+                await connection.CloseAsync();
             }
 
             string values = "";
@@ -250,9 +250,9 @@ namespace MyBooru.Services
 
             using (var addTags = new SQLiteCommand(addTagsQuery, connection))
             {
-                connection.Open();
-                addTags.ExecuteNonQuery();
-                connection.Close();
+                await connection.OpenAsync();
+                await addTags.ExecuteNonQueryAsync();
+                await connection.CloseAsync();
             }
 
         }

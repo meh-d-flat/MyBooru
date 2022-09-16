@@ -17,27 +17,27 @@ namespace MyBooru.Services
             config = configuration;
         }
 
-        public int MediasCount()
+        public async Task<int> MediasCountAsync()
         {
             int count = 0;
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-            connection.Open();
+            await connection.OpenAsync();
             string mediasNumberQuery = "SELECT COUNT(*) FROM Medias";
 
             using (SQLiteCommand mediasNumber = new SQLiteCommand(mediasNumberQuery, connection))
             {
-                count = Convert.ToInt32(mediasNumber.ExecuteScalar());
+                count = Convert.ToInt32(await mediasNumber.ExecuteScalarAsync());
             }
 
-            connection.Close();
+            await connection.CloseAsync();
             return count;
         }
 
-        public bool CheckMediaExists(string id)
+        public async Task<bool> CheckMediaExistsAsync(string id)
         {
             bool exists = false;
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-            connection.Open();
+            await connection.OpenAsync();
             string checkExistsQuery = "SELECT COUNT(*) FROM Medias WHERE Hash = @p";
 
             using (SQLiteCommand checkExists = new SQLiteCommand(checkExistsQuery, connection))
@@ -48,34 +48,34 @@ namespace MyBooru.Services
                     DbType = System.Data.DbType.String,
                     Value = id 
                 });
-                exists = Convert.ToBoolean(checkExists.ExecuteScalar());
+                exists = Convert.ToBoolean(await checkExists.ExecuteScalarAsync());
             }
 
-            connection.Close();
+            await connection.CloseAsync();
             return exists;
         }
 
-        public bool DBSetup()
+        public async Task<bool> DBSetupAsync()
         {
-            CheckDbFileExists();
-            return CreateDbTables();
+            await CheckDbFileExists();
+            return await CreateDbTablesAsync();
         }
 
-        void CheckDbFileExists()
+        async Task CheckDbFileExists()
         {
             if (File.Exists("db.sqlite3"))
                 return;
 
-            SQLiteConnection.CreateFile("db.sqlite3");
+            await Task.Run(() => SQLiteConnection.CreateFile("db.sqlite3"));
         }
 
         //SELECT COUNT(name) FROM sqlite_master WHERE type='table' AND name='';
-        bool CreateDbTables()
+        async Task<bool> CreateDbTablesAsync()
         {
             bool created = false;
             using (SQLiteConnection connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value))
             {
-                connection.Open();//Size INTEGER NOT NULL, Binary BLOB,
+                await connection.OpenAsync();//Size INTEGER NOT NULL, Binary BLOB,
                 string createTableQuery =
                 @"CREATE TABLE IF NOT EXISTS Medias (
                     ID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -117,14 +117,14 @@ namespace MyBooru.Services
 
                 try
                 {
-                    new SQLiteCommand(createTableQuery, connection).ExecuteNonQuery();
+                    await new SQLiteCommand(createTableQuery, connection).ExecuteNonQueryAsync();
                 }
                 catch (SQLiteException ex)
                 {
                     System.Diagnostics.Debug.WriteLine(ex);
                 }
                 created = true;
-                connection.Close();
+                await connection.CloseAsync();
             }
             return created;
         }

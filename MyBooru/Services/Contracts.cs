@@ -10,35 +10,35 @@ namespace MyBooru.Services
     {
         public interface ICheckService
         {
-            int MediasCount();
-            bool DBSetup();
-            bool CheckMediaExists(string id);
+            Task<int> MediasCountAsync();
+            Task<bool> DBSetupAsync();
+            Task<bool> CheckMediaExistsAsync(string id);
         }
 
         public interface IUploadService
         {
-            string UploadOne(IFormFile file);
-            List<string> UploadMany(ICollection<IFormFile> files);
+            Task<string> UploadOneAsync(IFormFile file);
+            Task<List<string>> UploadManyAsync(ICollection<IFormFile> files);
         }
 
         public interface IDownloadService
         {
-            Media Download(string id);
-            List<Media> Download(int page, int reverse);
+            Task<Media> DownloadAsync(string id);
+            Task<List<Media>> DownloadAsync(int page, int reverse);
         }
 
         public interface IRemoveService
         {
-            string Remove(string id);
+            Task<string> RemoveAsync(string id);
         }
 
         public interface ITagsService
         {
-            Tag Add(string name);
-            List<Tag> SearchTag(string name);
-            int MediasCount(string tags);
-            List<Media> GetMediasByTags(string tags, int page, int reverse);
-            List<Tag> AddTagsToMedia(string id, string tags);
+            Task <Tag> AddTagAsync(string name);
+            Task<List<Tag>> SearchTagAsync(string name);
+            Task<int> MediasCountAsync(string tags);
+            Task<List<Media>> GetMediasByTagsAsync(string tags, int page, int reverse);
+            Task<List<Tag>> AddTagsToMediaAsync(string id, string tags);
         }
 
         public interface IUserService
