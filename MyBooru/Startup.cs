@@ -42,14 +42,13 @@ namespace MyBooru
                 .AddCookie(options => 
                 {
                     options.LoginPath = "/api/user/signin";
-                    options.AccessDeniedPath = "/api/user/details";//doesn't really work?
+                    options.AccessDeniedPath = "/api/user/details";
                     options.Cookie.Name = "SESSION";
-                    options.SessionStore = new SessionTicketStore(Configuration, services.BuildServiceProvider().GetService<IHttpContextAccessor>());
                     //options.SlidingExpiration = true;
                     options.Events.OnRedirectToLogin = context =>
                     {
                         context.Response.StatusCode = 401;
-                        return Task.CompletedTask;//this thing
+                        return Task.CompletedTask;
                     };
                     options.Events.OnRedirectToAccessDenied = context =>
                     {
@@ -59,6 +58,10 @@ namespace MyBooru
                     };
                 });
 
+
+            services.AddOptions<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme)
+                .Configure<ITicketStore>((options, store) => options.SessionStore = store);
+
             services.AddAuthorization();
 
             services.AddCors(options =>
@@ -66,11 +69,14 @@ namespace MyBooru
                 options.AddDefaultPolicy(
                     policy =>
                     {
-                        policy.WithOrigins(Configuration["ApiConsumerAddressPort"]).
-                            AllowAnyHeader().AllowAnyMethod();
+                        policy.WithOrigins(Configuration["ApiConsumerAddressPort"])
+                            .AllowAnyHeader()
+                            .AllowAnyMethod()
+                            .AllowCredentials();
                     });
             });
             services.AddControllers();
+            services.AddSingleton<ITicketStore, SessionTicketStore>();
             services.AddSingleton<LimitService>();
             services.AddTransient<Contracts.ICheckService, CheckService>();
             services.AddTransient<UploadService>();

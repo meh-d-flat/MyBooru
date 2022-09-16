@@ -24,7 +24,7 @@ namespace MyBooruMVC.Controllers
         }
 
         [Route("upload")]
-        [Authorize(Roles = "User")]
+        //[Authorize(Roles = "User")]
         public ActionResult Upload()
         {
             return View();

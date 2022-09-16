@@ -91,7 +91,7 @@ namespace MyBooru
                 addTicket.Parameters.Add(new SQLiteParameter() { ParameterName = "@b", Value = ticket.Principal.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name).Value, DbType = System.Data.DbType.String });
                 addTicket.Parameters.Add(new SQLiteParameter() { ParameterName = "@c", Value = Serialize(ticket), DbType = System.Data.DbType.Binary });
                 addTicket.Parameters.Add(new SQLiteParameter() { ParameterName = "@d", Value = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds, DbType = System.Data.DbType.Int32 });
-                addTicket.Parameters.Add(new SQLiteParameter() { ParameterName = "@e", Value = _contextAccessor.HttpContext.Request.Headers.FirstOrDefault(x => x.Value == "User-Agent").Value, DbType = System.Data.DbType.String });
+                addTicket.Parameters.Add(new SQLiteParameter() { ParameterName = "@e", Value = _contextAccessor.HttpContext.Request.Headers.FirstOrDefault(x => x.Key == "User-Agent").Value, DbType = System.Data.DbType.String });
                 addTicket.Parameters.Add(new SQLiteParameter() { ParameterName = "@f", Value = _contextAccessor.HttpContext.Connection.RemoteIpAddress, DbType = System.Data.DbType.String });
 
                 try

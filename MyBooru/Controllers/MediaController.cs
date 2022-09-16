@@ -10,6 +10,7 @@ using Microsoft.Net.Http.Headers;
 using System.IO;
 using static MyBooru.Services.Contracts;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MyBooru.Controllers
 {
@@ -31,7 +32,7 @@ namespace MyBooru.Controllers
             var result = downloader.Download(page, reverse);
 
             return new JsonResult(new
-            { 
+            {
                 page = page,
                 prevPage = page - 1 != 0,
                 nextPage = mediasCount - (20 * page) > 0,
@@ -44,7 +45,7 @@ namespace MyBooru.Controllers
 
         [HttpGet]
         [Route("details")]
-        public IActionResult Details([FromServices] DownloadService downloader, [FromQuery]string id)
+        public IActionResult Details([FromServices] DownloadService downloader, [FromQuery] string id)
         {
             if (!checker.CheckMediaExists(id))
                 return BadRequest();
@@ -55,15 +56,16 @@ namespace MyBooru.Controllers
 
         [HttpGet]
         [Route("addTags")]
+        [Authorize(Roles = "User")]
         public IActionResult AddTags([FromServices] TagsService tagger, string id, string tags)
         {
             if (!checker.CheckMediaExists(id))
                 return StatusCode(400);
-            
+
             //validate the tags
             foreach (var item in tags.Split(","))
             {
-                if(!Regex.Match(item, @"[ a-zA-Z0-9]{2,32}$").Success)
+                if (!Regex.Match(item, @"[ a-zA-Z0-9]{2,32}$").Success)
                     return BadRequest(new JsonResult(new { bad_tag = item }));
             }
 
@@ -81,7 +83,7 @@ namespace MyBooru.Controllers
             var result = tagger.GetMediasByTags(tags, page, reverse);//rewrite to get only ids by tag then go through download
 
             return new JsonResult(new
-            { 
+            {
                 page = page,
                 prevPage = page - 1 != 0,
                 nextPage = mediasCount - (20 * page) > 0,
@@ -114,6 +116,7 @@ namespace MyBooru.Controllers
 
         [HttpPost]
         [Route("upload")]
+        [Authorize(Roles = "User")]
         public IActionResult Upload([FromServices] UploadService uploader, IFormFile file)
         {
             var result = uploader.UploadOne(file);
@@ -124,6 +127,7 @@ namespace MyBooru.Controllers
 
         [HttpGet]
         [Route("uploadfrom")]
+        [Authorize(Roles = "User")]
         public IActionResult UploadFrom([FromServices] UploadService uploader, string source)
         {
             byte[] data;
@@ -148,6 +152,7 @@ namespace MyBooru.Controllers
         }
 
         [Route("remove")]
+        [Authorize(Roles = "User")]
         public IActionResult Remove([FromServices] RemoveService remover, string id)
         {
             bool exist = checker.CheckMediaExists(id);

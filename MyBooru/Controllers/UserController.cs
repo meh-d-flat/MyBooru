@@ -32,6 +32,15 @@ namespace MyBooru.Controllers
             return Ok("Login successful");
         }
 
+        [HttpGet, Route("checklogin")]
+        public IActionResult Check()
+        {
+            if (HttpContext.User.Identity.IsAuthenticated)
+                return Ok();
+
+            return Unauthorized();
+        }
+
         [HttpGet, Route("details"), Authorize]
         public IActionResult Details()
         {

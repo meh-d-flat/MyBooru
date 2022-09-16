@@ -106,6 +106,9 @@
                 data: formData,
                 processData: false,
                 contentType: false,
+                xhrFields: {
+                    withCredentials: true
+                },
                 success: function (response) {
                     $(".modal-body").append("<a href='/gallery/picture?id=" + response.value.item + "'> Click to see upload </a>");
                     $("#modal").addClass("active");

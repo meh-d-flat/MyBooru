@@ -141,6 +141,9 @@
                     makeList(response.items);
                     $("#tags-to-add").val("");
                 },
+                xhrFields: {
+                    withCredentials: true
+                },
                 error: function (jqXHR) {
                     alert("Can't add tag: " + jQuery.parseJSON(jqXHR.responseText).value.bad_tag + "\nTags should only contain letters and numbers\nAnd be 3 to 32 characters long");
                 }
@@ -152,6 +155,9 @@
                 url: "@config["ApiHost"]/api/media/remove",
                 data: {
                     id: '@Model'
+                },
+                xhrFields: {
+                    withCredentials: true
                 },
                 success: function () {
                     location.replace("gallery");
