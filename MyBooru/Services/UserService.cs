@@ -30,12 +30,7 @@ namespace MyBooru.Services
 
             using (SQLiteCommand checEmailkExists = new SQLiteCommand(checkEmailExistsQuery, connection))
             {
-                checEmailkExists.Parameters.Add(new SQLiteParameter()
-                {
-                    ParameterName = "@p",
-                    DbType = System.Data.DbType.String,
-                    Value = email
-                });
+                checEmailkExists.Parameters.Add(new SQLiteParameter() { ParameterName = "@p", Value = email, DbType = System.Data.DbType.String });
                 exists = Convert.ToBoolean(await checEmailkExists.ExecuteScalarAsync());
             }
 
@@ -52,12 +47,7 @@ namespace MyBooru.Services
 
             using (SQLiteCommand checkUsernameExists = new SQLiteCommand(checkUsernameExistsQuery, connection))
             {
-                checkUsernameExists.Parameters.Add(new SQLiteParameter()
-                {
-                    ParameterName = "@p",
-                    DbType = System.Data.DbType.String,
-                    Value = username
-                });
+                checkUsernameExists.Parameters.Add(new SQLiteParameter() { ParameterName = "@p", Value = username, DbType = System.Data.DbType.String });
                 exists = Convert.ToBoolean(await checkUsernameExists.ExecuteScalarAsync());
             }
 
@@ -84,16 +74,16 @@ namespace MyBooru.Services
             var user = new User();
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             await connection.OpenAsync();
-            string getFileQuery = "SELECT * FROM Users WHERE Username = @a";
+            string getUserQuery = "SELECT * FROM Users WHERE Username = @a";
 
-            using (SQLiteCommand getFile = new SQLiteCommand(getFileQuery, connection))
+            using (SQLiteCommand getUser = new SQLiteCommand(getUserQuery, connection))
             {
-                getFile.Parameters.AddWithValue("@a", username);
-                var result = await getFile.ExecuteReaderAsync();
+                getUser.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = username, DbType = System.Data.DbType.String });
+                var result = await getUser.ExecuteReaderAsync();
 
                 if (result.HasRows)
                 {
-                    while (result.Read())
+                    while (await result.ReadAsync())
                         user = TableCell.MakeEntity<User>(TableCell.GetRow(result));
                 }
                 await result.DisposeAsync();

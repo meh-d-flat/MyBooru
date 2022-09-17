@@ -26,6 +26,9 @@ namespace MyBooru.Services
             string fileHash = "empty";
             string webPath, webThumbPath;
 
+            if (file == null)
+                return fileHash;
+
             if (!(file.ContentType.Contains("image") | file.ContentType.Contains("video")))
                 return fileHash;
 

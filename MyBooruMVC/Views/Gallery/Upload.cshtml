@@ -83,10 +83,14 @@
     <script>
         const form = document.getElementById("file-form");
         const fileInput = document.getElementById("file-input");
+        var hasValue = false;
 
         window.addEventListener('paste', e => {
             fileInput.files = e.clipboardData.files;
-            alert("File successfully pasted!");
+            if (!e.clipboardData.getData("text/plain"))
+                alert("File successfully pasted!");
+
+            hasValue = e.clipboardData.files.length != 0;
         });
 
         $(".close-button").on("click", function () {
@@ -97,6 +101,11 @@
         $(document).on("submit", "#file-form", function (e) {
             e.preventDefault(); //important
             var formData = new FormData(this);
+
+            if (!hasValue) {
+                alert("pasted file is corrupted!");
+                return;
+            }
 
             $.ajax({
                 url: "@config["ApiHost"]/api/media/upload",

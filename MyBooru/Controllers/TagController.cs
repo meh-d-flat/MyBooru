@@ -34,6 +34,7 @@ namespace MyBooru.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> Post(string newTag)
         {
             if (!InputCheck(newTag))

@@ -100,6 +100,9 @@
                 data: {
                     tagName: str
                 },
+                xhrFields: {
+                    withCredentials: true
+                },
                 success: function (response) {
                     tagThing.data = response;
                 }

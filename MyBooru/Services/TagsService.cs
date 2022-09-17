@@ -25,7 +25,7 @@ namespace MyBooru.Services
             await connection.OpenAsync();
             string addTagQuery = "INSERT OR IGNORE INTO Tags ('Name') VALUES (@a)";
             SQLiteCommand addTag = new SQLiteCommand(addTagQuery, connection);
-            addTag.Parameters.AddWithValue("@a", name);
+            addTag.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = name, DbType = System.Data.DbType.String });
             try
             {
                 rowsChanged = await addTag.ExecuteNonQueryAsync() > 0;
@@ -54,7 +54,7 @@ namespace MyBooru.Services
 
             using (SQLiteCommand getTag = new SQLiteCommand(getTagQuery, connection))
             {
-                getTag.Parameters.AddWithValue("@a", $"{name}%");
+                getTag.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = $"{name}%", DbType = System.Data.DbType.String });
                 var result = await getTag.ExecuteReaderAsync();
 
                 if (result.HasRows)
@@ -70,7 +70,7 @@ namespace MyBooru.Services
         {
             int count = 0;
             var parameters = MakeParamsList(tags);
-            string paramsForQuery = ParamsString(parameters);
+            string paramsForQuery = MakeParamsString(parameters, false);
 
             string byTagsQuery =
                 $@"SELECT COUNT(*)
@@ -79,12 +79,13 @@ namespace MyBooru.Services
                 AND(t.name IN({paramsForQuery}))
                 AND m.id = mt.MediaID
                 GROUP BY m.id
-                HAVING COUNT(m.id) = {parameters.Count}";
+                HAVING COUNT(m.id) = @a";
 
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
 
             using (SQLiteCommand byTag = new SQLiteCommand(byTagsQuery, connection))
             {
+                byTag.Parameters.Add(new SQLiteParameter { ParameterName = "@a", Value = parameters.Count, DbType = System.Data.DbType.Int32 });
                 byTag.Parameters.AddRange(parameters.ToArray());
                 await connection.OpenAsync();
                 count = Convert.ToInt32(await byTag.ExecuteScalarAsync());
@@ -98,7 +99,7 @@ namespace MyBooru.Services
         {
             var medias = new List<Media>();
             var parameters = MakeParamsList(tags);
-            string tagQuery = Decorate(tags);
+            string tagQuery = MakeParamsString(parameters, true);
 
             string tempTableQuery =
                 $@"CREATE TEMP TABLE Search(tag);
@@ -111,7 +112,7 @@ namespace MyBooru.Services
                 JOIN Tags on Tags.ID = MediasTags.TagID
                 JOIN Search on Tags.name = Search.tag
                 GROUP BY Medias.ID
-                HAVING COUNT(Medias.id) = {parameters.Count}
+                HAVING COUNT(Medias.id) = @a
                 {(reverse == 1 ? "ORDER BY Medias.Id DESC" : "")}
                 LIMIT 20 OFFSET { 20 * (page - 1) };";
 
@@ -119,12 +120,14 @@ namespace MyBooru.Services
 
             using (SQLiteCommand tempTable = new SQLiteCommand(tempTableQuery, connection))
             {
+                tempTable.Parameters.AddRange(parameters.ToArray());//
                 await connection.OpenAsync();//temp table is wiped upon closing connection
                 await tempTable.ExecuteNonQueryAsync();
             }
 
             using (SQLiteCommand byTag = new SQLiteCommand(byTagsQuery, connection))
             {
+                byTag.Parameters.Add(new SQLiteParameter { ParameterName = "@a", Value = parameters.Count, DbType = System.Data.DbType.Int32 });
                 byTag.Parameters.AddRange(parameters.ToArray());
                 var result = await byTag.ExecuteReaderAsync();
 
@@ -155,27 +158,21 @@ namespace MyBooru.Services
             return parameters;
         }
 
-        public string Decorate(string tags)
+        string MakeParamsString(List<SQLiteParameter> parameters, bool parenthesis)
         {
-            if (tags.EndsWith(","))
-                tags = tags.Remove(tags.Length - 1, 1);
+            string paramsForQuery = string.Empty;
 
-            var delimited = tags.Split(',');
-            for (int i = 0; i < delimited.Length; i++)
-                delimited[i] = $"('{delimited[i]}')";
-
-            return String.Join(",", delimited);
-        }
-
-        public string ParamsString(List<SQLiteParameter> parameters)
-        {
-            string paramsForQuery = "";
             for (int i = 0; i < parameters.Count; i++)
             {
-                paramsForQuery += $"'{parameters[i].Value}'";
+                if (!parenthesis)
+                    paramsForQuery += $"{parameters[i].ParameterName}";
+                else
+                    paramsForQuery += $"({parameters[i].ParameterName})";
+
                 if (i < parameters.Count - 1)
                     paramsForQuery += ",";
             }
+
             return paramsForQuery;
         }
 
@@ -191,7 +188,7 @@ namespace MyBooru.Services
             var delimited = tags.Split(',').ToList();
             List<Tag> tagList = new List<Tag>();
             var parameters = MakeParamsList(tags);
-            string paramsForQuery = ParamsString(parameters);
+            string paramsForQuery = MakeParamsString(parameters, false);
             var checkTagsQuery = $"SELECT * FROM Tags WHERE Name IN ({paramsForQuery})";
 
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
@@ -226,11 +223,12 @@ namespace MyBooru.Services
         public async Task AddToMediaAsync(string id, List<Tag> tags)
         {
             int mediaId = -1;
-            string fetchIdQuery = $"SELECT Id FROM Medias WHERE Hash = '{id}'";
+            string fetchIdQuery = $"SELECT Id FROM Medias WHERE Hash = @a";
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
 
             using (var fetchId = new SQLiteCommand(fetchIdQuery, connection))
             {
+                fetchId.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = id, DbType = System.Data.DbType.String });
                 await connection.OpenAsync();
                 var result = await fetchId.ExecuteReaderAsync();
                 if (result.HasRows)

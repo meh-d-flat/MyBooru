@@ -25,9 +25,9 @@ namespace MyBooru.Services
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             await connection.OpenAsync();
 
-            string readPathQuery = "SELECT * FROM Medias WHERE Hash = @a";
+            string removeFileQuery = "SELECT * FROM Medias WHERE Hash = @a";
 
-            using (SQLiteCommand removeFile = new SQLiteCommand(readPathQuery, connection))
+            using (SQLiteCommand removeFile = new SQLiteCommand(removeFileQuery, connection))
             {
                 removeFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = id, DbType = System.Data.DbType.String });
                 var result = await removeFile.ExecuteReaderAsync();
@@ -49,11 +49,10 @@ namespace MyBooru.Services
                 removed = $"error: {ex.GetType()} {ex.Message}";
             }
 
-            string removeEntryQuery = "DELETE FROM MediasTags WHERE MediaID = (SELECT ID FROM Medias WHERE Hash = @a);DELETE FROM Medias WHERE Hash = @b;";
+            string removeEntryQuery = "DELETE FROM MediasTags WHERE MediaID = (SELECT ID FROM Medias WHERE Hash = @a);DELETE FROM Medias WHERE Hash = @a;";
             using (SQLiteCommand removeEntry = new SQLiteCommand(removeEntryQuery, connection))
             {
                 removeEntry.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = id, DbType = System.Data.DbType.String });
-                removeEntry.Parameters.Add(new SQLiteParameter() { ParameterName = "@b", Value = id, DbType = System.Data.DbType.String });
                 try
                 {
                     await removeEntry .ExecuteNonQueryAsync();

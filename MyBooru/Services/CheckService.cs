@@ -42,12 +42,7 @@ namespace MyBooru.Services
 
             using (SQLiteCommand checkExists = new SQLiteCommand(checkExistsQuery, connection))
             {
-                checkExists.Parameters.Add(new SQLiteParameter()
-                {
-                    ParameterName = "@p",
-                    DbType = System.Data.DbType.String,
-                    Value = id 
-                });
+                checkExists.Parameters.Add(new SQLiteParameter() { ParameterName = "@p", Value = id, DbType = System.Data.DbType.String });
                 exists = Convert.ToBoolean(await checkExists.ExecuteScalarAsync());
             }
 
