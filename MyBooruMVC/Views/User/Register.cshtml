@@ -1,0 +1,50 @@
+﻿@using Microsoft.Extensions.Configuration;
+@inject IConfiguration config
+@{
+    ViewBag.Title = "Register";
+    Layout = "_Layout";
+}
+
+<h1>Register</h1>
+
+<form action="@config["ApiHost"]/api/user/signup" method="post" id="register-form">
+    <label for="username">Username:</label><br>
+    <input type="text" id="username" name="username" required><br>
+    <label for="email">Email:</label><br>
+    <input type="text" id="email" name="email" required><br>
+    <label for="password">Password:</label><br>
+    <input type="password" id="password" name="password" required><br>
+    <label for="passwordRepeat">Repeat password:</label><br>
+    <input type="password" id="passwordRepeat" name="passwordRepeat" required><br><br>
+    <input type="submit" value="Submit">
+</form>
+
+<script>
+    $(document).on("submit", "#register-form", function (e) {
+            e.preventDefault();
+            var formData = new FormData(this);
+
+            //check the form and validate
+
+            $.ajax({
+                url: "@config["ApiHost"]/api/user/signup",
+                method: "POST",
+                type: "POST",
+                cache: false,
+                data: formData,
+                processData: false,
+                contentType: false,
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (response) {
+                    console.log(response);
+                    window.location = "/gallery";
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.log(`$first: ${jqXHR.responseText} second: ${textStatus} third: ${errorThrown}`);
+                }
+            });
+        });
+</script>
+

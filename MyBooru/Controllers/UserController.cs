@@ -98,7 +98,8 @@ namespace MyBooru.Controllers
                     new ClaimsPrincipal(claimsIdentity),
                     authProperties);
 
-            return RedirectToAction("Details");
+            //return RedirectToAction("Details");
+            return Ok();
         }
 
         [Route("signoff")]

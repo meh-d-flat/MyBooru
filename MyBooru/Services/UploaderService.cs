@@ -79,7 +79,7 @@ namespace MyBooru.Services
                 try
                 {
                     ffmpeg.Start();
-                    if (!ffmpeg.WaitForExit(3000))
+                    if (!ffmpeg.WaitForExit(2000))
                     {
                         ffmpeg.Close();
                         await Task.Run(() => Directory.Delete(Path.GetDirectoryName(webPath), true));
