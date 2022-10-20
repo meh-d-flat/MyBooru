@@ -22,7 +22,6 @@ namespace MyBooru.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "User")]
         public async Task<IActionResult> Get(string tagName)
         {
             if (!InputCheck(tagName))

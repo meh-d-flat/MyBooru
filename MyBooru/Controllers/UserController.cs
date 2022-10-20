@@ -23,6 +23,17 @@ namespace MyBooru.Controllers
     {
         //static User user = new User();
 
+        [Authorize(Roles = "User"), Route("getInfo")]
+        public async Task<IActionResult> GetInfo([FromServices] UserService userService)
+        {
+            var user = await userService.GetUserAsync(HttpContext.User.Identity.Name);
+            return new JsonResult(new {
+                username = user.Username,
+                dateRegistered = user.RegisterDateTime,
+                role = user.Role,
+            });
+        }
+
         [Authorize(Roles = "Admin")]
         public IActionResult Get()
         {
