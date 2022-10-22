@@ -114,11 +114,12 @@ namespace MyBooru.Controllers
         }
 
         [Route("signoff")]
-        public async Task<IActionResult> SignOff()
+        public async Task<IActionResult> SignOff(bool fromAJAX)
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             HttpContext.Response.Cookies.Delete("SESSION");
-            return RedirectToAction("SignIn");
+            
+            return fromAJAX ? new EmptyResult() : RedirectToAction("SignIn");
         }
     }
 }

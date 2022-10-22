@@ -1,0 +1,53 @@
+﻿@using Microsoft.Extensions.Configuration;
+@inject IConfiguration config
+@{
+    ViewBag.Title = "Home";
+    Layout = "_Layout";
+}
+<body>
+    <div id="base">
+        <div id="user-info">
+        </div>
+        <button onclick="signOff()">Sign off</button>
+    </div>
+</body>
+<script>
+    $(document).ready(function () {
+        $.ajax({
+            url: "@config["ApiHost"]/api/user/getInfo",
+            method: "GET",
+            type: "GET",
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (response) {
+                $("#user-info").append("<p>" + response.username + "</p>");
+                $("#user-info").append("<p>Registered: " + new Date(response.dateRegistered * 1000) + "</p>");
+                $("#user-info").append("<p>User group: " + response.role + "</p>");
+            },
+            error: function (jqXHR) {
+                window.location.href = "/user/login";
+            }
+        });
+    });
+
+    function signOff() {
+    $.ajax({
+        url: "@config["ApiHost"]/api/user/signoff",
+        method: "GET",
+        type: "GET",
+        data: {
+            fromAJAX: true
+        },
+        xhrFields: {
+            withCredentials: true
+        },
+        success: function () {
+            window.location.href = "/user/login";
+        },
+        error: function () {
+            alert("Something went wrong, try again");
+        }
+    });
+};
+</script>
