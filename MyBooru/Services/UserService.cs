@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Configuration;
 using MyBooru.Models;
 using System;
 using System.Collections.Generic;
@@ -136,6 +137,50 @@ namespace MyBooru.Services
             await connection.CloseAsync();
 
             return await GetUserAsync(username);
+        }
+
+        public async Task<List<Ticket>> GetUserSessionsAsync(string username)
+        {
+            var tickets = new List<Ticket>();
+            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
+            await connection.OpenAsync();
+            string getTicketQuery = "SELECT * FROM Tickets WHERE Username = @a";
+
+            using (SQLiteCommand getTicket = new SQLiteCommand(getTicketQuery, connection))
+            {
+                getTicket.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = username, DbType = System.Data.DbType.String });
+                var result = await getTicket.ExecuteReaderAsync();
+
+                if (result.HasRows)
+                {
+                    while (await result.ReadAsync())
+                        tickets = TableCell.MakeEntities<Ticket>(TableCell.GetRows(result));
+                }
+                await result.DisposeAsync();
+            }
+
+            await connection.CloseAsync();
+
+            return tickets;
+        }
+
+        public async Task<bool> CloseUserSessionAsync(string sessionId)
+        {
+            bool closed = false;
+            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
+            await connection.OpenAsync();
+            string getTicketQuery = "DELETE FROM Tickets WHERE ID = @a";
+
+            using (SQLiteCommand getTicket = new SQLiteCommand(getTicketQuery, connection))
+            {
+                getTicket.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = sessionId, DbType = System.Data.DbType.String });
+                var result = await getTicket.ExecuteNonQueryAsync();
+                closed = Convert.ToBoolean(result);
+            }
+
+            await connection.CloseAsync();
+
+            return closed;
         }
     }
 }

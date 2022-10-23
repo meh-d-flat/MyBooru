@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
 using MyBooru.Models;
 using System;
 using System.Collections.Generic;
@@ -48,6 +49,8 @@ namespace MyBooru.Services
             Task<bool> CheckEmailAsync(string email);
             Task<bool> CheckUsernameAsync(string username);
             Task<bool> CheckPasswordAsync(string username, string password);
+            Task<List<Ticket>> GetUserSessionsAsync(string username);
+            Task<bool> CloseUserSessionAsync(string sessionId);
         }
     }
 }

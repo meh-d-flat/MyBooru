@@ -55,7 +55,7 @@ namespace MyBooru.Services
                 removeEntry.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = id, DbType = System.Data.DbType.String });
                 try
                 {
-                    await removeEntry .ExecuteNonQueryAsync();
+                    await removeEntry.ExecuteNonQueryAsync();
                 }
                 catch (SQLiteException ex)
                 {

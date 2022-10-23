@@ -29,6 +29,24 @@
                 window.location.href = "/user/login";
             }
         });
+
+        $.ajax({
+            url: "@config["ApiHost"]/api/user/getSessions",
+            method: "GET",
+            type: "GET",
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (response) {
+                response.allSessions.reverse();
+                response.allSessions.forEach(function (item) {
+                    $("#base").append("<details><summary>" + item.id + "</summary><p>" + `Last Active: ${item.lastActivity} Ip Address: ${item.ip} UserAgent: ${item.userAgent} ${item.isActiveSession ? "Active" : ""}` + "</p></details>");
+                });
+            },
+            error: function (jqXHR) {
+                window.location.href = "/user/login";
+            }
+        });
     });
 
     function signOff() {
