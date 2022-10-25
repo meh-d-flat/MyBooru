@@ -182,8 +182,6 @@
         </div>
         <div class="topnav-right">
         </div>
-        @*ajax request to api/user/getInfo
-            if we get 401 display signin/signup button*@
     </div>
 
     <div>
@@ -201,27 +199,39 @@
 
         searchInput.addEventListener("input", (e) => search(e, suggestions, retrieve, thing));
         searchForm.addEventListener("submit", () => formSubmit(searchInput));
-        suggestions.addEventListener("click", (e) => submitEntry(e, searchInput, thing));      
+        suggestions.addEventListener("click", (e) => submitEntry(e, searchInput, thing));
 
         $(document).ready(function () {
-            $.ajax({
-                url: "@config["ApiHost"]/api/user/getInfo",
-                method: "GET",
-                type: "GET",
-                xhrFields: {
-                    withCredentials: true
-                },
-                success: function (response) {
+            ajaxGet("@config["ApiHost"]/api/user/getInfo",
+                function (response) {
                     userData = response;
                     isLogged = true;
                     $(".topnav-right").append("<a href='/user'> Hi there, <div id='username'>" + response.username + "</div></a>");
                 },
-                error: function (jqXHR) {
+                function (jqXHR) {
                     isLogged = false;
                     $(".topnav-right").append("<a href='/user/login'>Sign in</a><a href='/user/register'>Sign up</a>");
+                }, true
+            );
+        });
+
+        function ajaxGet(getUrl, successFunc, errorFunc, sendCreds, dataObject) {
+            $.ajax({
+                url: getUrl,
+                method: "GET",
+                type: "GET",
+                data: dataObject,
+                xhrFields: {
+                    withCredentials: sendCreds
+                },
+                success: function (response) {
+                    successFunc(response);
+                },
+                error: function (jqXHR) {
+                    errorFunc(jqXHR);
                 }
             });
-        });
+        }
 
         function formSubmit(input) {
             if (input.value.endsWith(","))
@@ -249,16 +259,9 @@
         }
 
         function retrieve(str, obj) {
-            $.ajax({
-                url: "@config["ApiHost"]/api/tag",
-                data: {
-                    tagName: str
-                },
-                success: function (response) {
-                    obj.data = response;
-                }
-            });
-        }
+            ajaxGet("@config["ApiHost"]/api/tag", x => obj.data = x, null, false, { tagname: str });
+        };
+
         //deleteContentBackward, deleteContentForward, insertFromPaste, insertText
         function search(e, suggest, func, obj) {
             let results = [];
