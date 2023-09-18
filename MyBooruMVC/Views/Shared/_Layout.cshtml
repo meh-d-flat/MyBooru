@@ -216,8 +216,10 @@
 <body>
     @*<div class="nav">*@
     <div class="topnav">
-        @Html.ActionLink("Home", "Index", "Gallery")
-        @Html.ActionLink("Upload", "Upload", "Gallery")
+        <a href="/Gallery" id="button-home">Home</a>
+        
+        @*@Html.ActionLink("Home", "Index", "Gallery")
+        @Html.ActionLink("Upload", "Upload", "Gallery")*@
         <div class="search-container">
             <form action="/gallery/search" id="search-form" autocomplete="off">
                 <input name="tags" type="text" id="search" />
@@ -247,7 +249,6 @@
         const suggestions = document.getElementById("results");
 
         var thing = { length: -1, chars: "", data: [], isPerioded: true };
-        var isLogged = false;
         var userData;
 
         searchInput.addEventListener("input", (e) => search(e, suggestions, retrieve, thing));
@@ -258,13 +259,13 @@
             ajaxGet("@config["ApiHost"]/api/user/getInfo",
                 function (response) {
                     userData = response;
-                    isLogged = true;
+                    $("<a href=\"/Gallery/upload\" id=\"button-upload\">Upload</a>").insertAfter("#button-home");
                     $(".topnav-right").append("<a href='/user'> Hi there, <div id='username'>" + response.username + "</div></a>");
                 },
                 function (jqXHR) {
-                    isLogged = false;
                     $(".topnav-right").append("<a href='/user/login'>Sign in</a><a href='/user/register'>Sign up</a>");
-                }, true
+                },
+                true
             );
         });
 

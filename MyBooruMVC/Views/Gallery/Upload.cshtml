@@ -21,13 +21,14 @@
     <form action="@config["ApiHost"]/api/media/uploadfrom" method="get" id="uploadfrom-form">
         <div style="margin-top: 10px">
             <label for="source">Url from web</label>
-            <input name="source" type="text" />
+            <input name="source" type="text" id="link-input"/>
         </div>
         <button type="submit" class="btn btn-primary">Upload</button>
     </form>
 
     <script>
         const form = document.getElementById("file-form");
+        const formFrom = document.getElementById("uploadfrom-form");
         const fileInput = document.getElementById("file-input");
 
         window.addEventListener('paste', e => {
@@ -54,8 +55,17 @@
                     withCredentials: true
                 },
                 success: function (response) {
-                    $(".modal-body").html("<a href='/gallery/picture?id=" + response.value.item + "'> Click to see upload </a>");
-                    $("#modal").addClass("active");
+
+                    form.reset();
+                    ajaxGet("@config["ApiHost"]/api/media/details",
+                        function (uploadResponse) {
+                            $(".modal-body").html("Uploaded:<br> <a href='/gallery/picture?id=" + uploadResponse.hash + "'>" + "<img src='@config["ApiHost"]/" + uploadResponse.thumb + "'>" + "</a>");
+                            $("#modal").addClass("active");
+                        },
+                        null,
+                        false,
+                        { id: response.value.item}
+                    );
                 },
                 error: function (jqXHR) {
                     if (jqXHR.status == "401"){
@@ -66,6 +76,38 @@
                     $("#modal").addClass("active");
                 }
             });
+        });
+
+        $(document).on("submit", "#uploadfrom-form", function (e) {
+            e.preventDefault(); //important
+            //var formData = new FormData(this);
+
+            ajaxGet(
+                "@config["ApiHost"]/api/media/uploadfrom",
+                function (response) {
+
+                    formFrom.reset();
+                    ajaxGet("@config["ApiHost"]/api/media/details",
+                        function (uploadResponse) {
+                            $(".modal-body").html("Uploaded:<br> <a href='/gallery/picture?id=" + uploadResponse.hash + "'>" + "<img src='@config["ApiHost"]/" + uploadResponse.thumb + "'>" + "</a>");
+                            $("#modal").addClass("active");
+                        },
+                        null,
+                        false,
+                        { id: response.value.item }
+                    );
+                },
+                function (jqXHR) {
+                    if (jqXHR.status == "401") {
+                        $(".modal-body").html("unauthorized");
+                        $("#modal").addClass("active");
+                    };
+                    $(".modal-body").html(jQuery.parseJSON(jqXHR.responseText).value.item);
+                    $("#modal").addClass("active");
+                },
+                true,
+                { source: $("#link-input").val()}
+            );
         });
     </script>
 </body>
