@@ -32,10 +32,19 @@ namespace MyBooruMVC
                 .PersistKeysToFileSystem(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent)
                 .SetApplicationName("MyBooru");
 
-            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(options =>
+            services.AddAuthentication("bla.bla")
+                .AddCookie("bla.bla", options =>
                 {
+                    options.LoginPath = "/user/login";
+                    options.AccessDeniedPath = "/user";
                     options.Cookie.Name = "SESSION";
+                    //options.SlidingExpiration = true;
+                    options.Events.OnRedirectToAccessDenied = context =>
+                    {
+                        context.Response.StatusCode = 403;
+                        context.Response.Redirect("/user");
+                        return Task.CompletedTask;
+                    };
                 });
             services.AddAuthorization();
         }

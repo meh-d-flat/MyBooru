@@ -38,8 +38,8 @@ namespace MyBooru
                 .PersistKeysToFileSystem(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent)
                 .SetApplicationName("MyBooru");
 
-            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-                .AddCookie(options => 
+            services.AddAuthentication("bla.bla")//CookieAuthenticationDefaults.AuthenticationScheme
+                .AddCookie("bla.bla", options => 
                 {
                     options.LoginPath = "/api/user/signin";
                     options.AccessDeniedPath = "/api/user/details";
@@ -97,6 +97,9 @@ namespace MyBooru
             }
 
             app.UseHttpsRedirection();
+
+            if (!System.IO.Directory.Exists("Files"))
+                System.IO.Directory.CreateDirectory("Files");
 
             app.UseFileServer(new FileServerOptions
             {

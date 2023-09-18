@@ -21,8 +21,6 @@ namespace MyBooru.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        //static User user = new User();
-
         [Authorize(Roles = "User"), Route("getInfo")]
         public async Task<IActionResult> GetInfo([FromServices] UserService userService)
         {
@@ -101,12 +99,12 @@ namespace MyBooru.Controllers
                 };
 
             var claimsIdentity = new ClaimsIdentity(
-                claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                claims, "bla.bla");
 
             var authProperties = new AuthenticationProperties();
 
             await HttpContext.SignInAsync(
-                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    "bla.bla",
                     new ClaimsPrincipal(claimsIdentity),
                     authProperties);
 
@@ -117,7 +115,7 @@ namespace MyBooru.Controllers
         [Route("signoff")]
         public async Task<IActionResult> SignOff(bool fromAJAX)
         {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignOutAsync("bla.bla");
             HttpContext.Response.Cookies.Delete("SESSION");
 
             return fromAJAX ? new EmptyResult() : RedirectToAction("SignIn");

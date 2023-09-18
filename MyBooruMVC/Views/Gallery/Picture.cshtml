@@ -127,8 +127,11 @@
                 },
                 success: function (response) {
                     //$("#base").append("<img id='picture' src='@config["ApiHost"]/" + response.path + "' width=33% onclick='minmax()'>");
+                    let tags = "";
+                    if (response.tags != null)
+                        response.tags.forEach(x => tags += x.name + " ");
                     if(response.type.includes("image"))
-                        $("#base").append("<img src='@config["ApiHost"]/" + response.path + "'>");
+                        $("#base").append("<img src='@config["ApiHost"]/" + response.path + "' alt='" + tags + "'>");
                     if (response.type.includes("video"))
                         $("#base").append("<video preload='metadata' loop controls autoplay muted src='@config["ApiHost"]/" + response.path + "'>");
 

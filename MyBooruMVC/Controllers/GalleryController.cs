@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -24,7 +25,7 @@ namespace MyBooruMVC.Controllers
         }
 
         [Route("upload")]
-        //[Authorize(Roles = "User")]
+        [Authorize(Roles = "User")]
         public ActionResult Upload()
         {
             return View();
