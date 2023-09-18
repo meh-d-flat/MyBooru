@@ -87,7 +87,7 @@ namespace MyBooru.Services
                 }
                 catch
                 {
-                    fileHash = "thumb creation error";
+                    fileHash = "error: failed to create thumbnail";
                 }
 
                 addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@e", Value = webThumbPath, DbType = System.Data.DbType.String });
@@ -100,7 +100,7 @@ namespace MyBooru.Services
             catch (SQLiteException ex)
             {
                 await Task.Run(() => Directory.Delete(Path.GetDirectoryName(webPath), true));
-                fileHash = $"error: {ex.GetType()} {ex.Message}";
+                fileHash = "error: failed to upload";
             }
             finally
             {

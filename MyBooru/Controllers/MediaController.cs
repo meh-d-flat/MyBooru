@@ -111,7 +111,7 @@ namespace MyBooru.Controllers
                 return file;
             }
             else
-                return StatusCode(501);
+                return StatusCode(400);
         }
 
         [HttpPost]
@@ -122,7 +122,7 @@ namespace MyBooru.Controllers
             var result = await uploader.UploadOneAsync(file);
             var response = new JsonResult(new { item = result });
             return result == "empty" || result.StartsWith("error")
-              ? StatusCode(501, response) : (IActionResult)Ok(response);
+              ? StatusCode(400, response) : (IActionResult)Ok(response);
         }
 
         [HttpGet]
@@ -130,6 +130,9 @@ namespace MyBooru.Controllers
         [Authorize(Roles = "User")]
         public async Task<IActionResult> UploadFrom([FromServices] UploadService uploader, string source)
         {
+            if (!Uri.TryCreate(source, UriKind.Absolute, out var givenURI) && !(givenURI?.Scheme == Uri.UriSchemeHttp || givenURI?.Scheme == Uri.UriSchemeHttps))
+                return StatusCode(400, "bad url!");
+
             byte[] data;
             HeaderDictionary headers = new HeaderDictionary();
             using (var client = new HttpClient())
@@ -161,7 +164,7 @@ namespace MyBooru.Controllers
 
             var result = await remover.RemoveAsync(id);
             return result.StartsWith("error")
-                ? StatusCode(501, result) : (IActionResult)Ok(result);
+                ? StatusCode(500, result) : (IActionResult)Ok(result);
         }
     }
 }

@@ -8,49 +8,6 @@
     *, *::after, *::before {
         box-sizing: border-box;
     }
-
-    .modal {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(0);
-        transition: 200ms ease-in-out;
-        border: 1px solid white;
-        z-index: 10;
-        background-color: #414141;
-        width: 500px;
-        max-width: 80%;
-    }
-
-        .modal.active {
-            transform: translate(-50%, -50%) scale(1);
-        }
-
-    .modal-header {
-        padding: 10px 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid white;
-    }
-
-        .modal-header .title {
-            font-size: 1.25rem;
-            font-weight: bold;
-        }
-
-        .modal-header .close-button {
-            cursor: pointer;
-            border: none;
-            outline: none;
-            background: none;
-            font-size: 1.25rem;
-            font-weight: bold;
-        }
-
-    .modal-body {
-        padding: 10px 15px;
-    }
 </style>
 
 <body>
@@ -69,43 +26,21 @@
         <button type="submit" class="btn btn-primary">Upload</button>
     </form>
 
-
-    <div class="modal" id="modal">
-        <div class="modal-header">
-            <div class="title">Upload successful!</div>
-            <button data-close-button class="close-button">&times;</button>
-        </div>
-        <div class="modal-body">
-        </div>
-    </div>
-
-
     <script>
         const form = document.getElementById("file-form");
         const fileInput = document.getElementById("file-input");
-        var hasValue = false;
 
         window.addEventListener('paste', e => {
             fileInput.files = e.clipboardData.files;
-            if (!e.clipboardData.getData("text/plain"))
-                alert("File successfully pasted!");
-
-            hasValue = e.clipboardData.files.length != 0;
+            if (!e.clipboardData.getData("text/plain") && e.clipboardData.files.length != 0) {
+                $(".modal-body").html("File pasted successfully!");
+                $("#modal").addClass("active");
+            }
         });
-
-        $(".close-button").on("click", function () {
-            $("#modal").removeClass("active");
-        });
-
 
         $(document).on("submit", "#file-form", function (e) {
             e.preventDefault(); //important
             var formData = new FormData(this);
-
-            if (!hasValue) {
-                alert("pasted file is corrupted!");
-                return;
-            }
 
             $.ajax({
                 url: "@config["ApiHost"]/api/media/upload",
@@ -119,12 +54,15 @@
                     withCredentials: true
                 },
                 success: function (response) {
-                    $(".modal-body").append("<a href='/gallery/picture?id=" + response.value.item + "'> Click to see upload </a>");
+                    $(".modal-body").html("<a href='/gallery/picture?id=" + response.value.item + "'> Click to see upload </a>");
                     $("#modal").addClass("active");
                 },
                 error: function (jqXHR) {
-                    //alert(jQuery.parseJSON(jqXHR.responseText).value.item);
-                    $(".modal-body").append(jQuery.parseJSON(jqXHR.responseText).value.item);
+                    if (jqXHR.status == "401"){
+                        $(".modal-body").html("unauthorized");
+                        $("#modal").addClass("active");
+                    };
+                    $(".modal-body").html(jQuery.parseJSON(jqXHR.responseText).value.item);
                     $("#modal").addClass("active");
                 }
             });

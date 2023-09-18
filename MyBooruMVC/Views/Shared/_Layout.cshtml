@@ -7,7 +7,8 @@
     <meta name="viewport" content="width=device-width" />
     <title>@ViewBag.Title</title>
     @*<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>*@
-    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <script type="text/javascript" src="~/jquery-3.6.0.js"></script>
+    @*<script src="https://code.jquery.com/jquery-3.6.0.js"></script>*@
     <base href="/" />
     <!--so ajax requests get the right path-->
 
@@ -167,6 +168,49 @@
                 text-align: left;
             }
         }
+
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            transition: 200ms ease-in-out;
+            border: 1px solid white;
+            z-index: 10;
+            background-color: #414141;
+            width: 500px;
+            max-width: 80%;
+        }
+
+            .modal.active {
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+        .modal-header {
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid white;
+        }
+
+            .modal-header .title {
+                font-size: 1.25rem;
+                font-weight: bold;
+            }
+
+            .modal-header .close-button {
+                cursor: pointer;
+                border: none;
+                outline: none;
+                background: none;
+                font-size: 1.25rem;
+                font-weight: bold;
+            }
+
+        .modal-body {
+            padding: 10px 15px;
+        }
     </style>
 </head>
 <body>
@@ -186,6 +230,15 @@
 
     <div>
         @RenderBody()
+    </div>
+
+    <div class="modal" id="modal">
+        <div class="modal-header">
+            <div class="title">Info: </div>
+            <button data-close-button class="close-button">&times;</button>
+        </div>
+        <div class="modal-body">
+        </div>
     </div>
 
     <script>
@@ -280,6 +333,10 @@
                 }
             }
         }
+
+        $(".close-button").on("click", function () {
+            $("#modal").removeClass("active");
+        });
     </script>
 </body>
 </html>
