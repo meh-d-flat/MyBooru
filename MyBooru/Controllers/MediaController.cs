@@ -131,7 +131,7 @@ namespace MyBooru.Controllers
         public async Task<IActionResult> UploadFrom([FromServices] UploadService uploader, string source)
         {
             if (!Uri.TryCreate(source, UriKind.Absolute, out var givenURI) && !(givenURI?.Scheme == Uri.UriSchemeHttp || givenURI?.Scheme == Uri.UriSchemeHttps))
-                return StatusCode(400, "bad url!");
+                return StatusCode(400, new JsonResult(new { item = "bad url!" }));
 
             byte[] data;
             HeaderDictionary headers = new HeaderDictionary();

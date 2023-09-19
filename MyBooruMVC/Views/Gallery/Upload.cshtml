@@ -98,6 +98,8 @@
                     );
                 },
                 function (jqXHR) {
+
+                    formFrom.reset();
                     if (jqXHR.status == "401") {
                         $(".modal-body").html("unauthorized");
                         $("#modal").addClass("active");

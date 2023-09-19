@@ -80,7 +80,7 @@ namespace MyBooru
 
         public async Task<string> StoreAsync(AuthenticationTicket ticket)
         {
-            string id = Guid.NewGuid().ToString();
+            string id = ticket.Principal.FindFirstValue("uniqueId");
             using var connection = new SQLiteConnection(_config.GetSection("Store:ConnectionString").Value);
             await connection.OpenAsync();
             string addTicketQuery = "INSERT INTO Tickets ('ID', 'Username', 'Value', 'LastActivity', 'UserAgent', 'IP') VALUES (@a, @b, @c, @d, @e, @f)";

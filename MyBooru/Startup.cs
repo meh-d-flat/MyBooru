@@ -59,7 +59,7 @@ namespace MyBooru
                 });
 
 
-            services.AddOptions<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme)
+            services.AddOptions<CookieAuthenticationOptions>("bla.bla")
                 .Configure<ITicketStore>((options, store) => options.SessionStore = store);
 
             services.AddAuthorization();

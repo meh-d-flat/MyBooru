@@ -124,7 +124,7 @@ namespace MyBooru.Controllers
         [Authorize(Roles = "User"), Route("getSessions")]
         public async Task<IActionResult> GetSessions([FromServices] UserService userService)
         {
-            var all = await userService.GetUserSessionsAsync(HttpContext.User.Identity.Name);
+            var all = await userService.GetUserSessionsAsync(HttpContext.User.FindFirstValue("uniqueId"));
 
             var formatted = all.Select(x => new
             {
@@ -142,10 +142,10 @@ namespace MyBooru.Controllers
         [Authorize(Roles = "User"), Route("closeSession")]
         public async Task<IActionResult> CloseSession([FromServices] UserService userService, string sessionId)
         {
-            if (sessionId == HttpContext.User.Claims.FirstOrDefault(x => x.Type == "uniqueId").Value)
+            if (sessionId == HttpContext.User.FindFirstValue("uniqueId"))
                 return BadRequest();
 
-            var closed = await userService.CloseUserSessionAsync(sessionId);
+            var closed = await userService.CloseUserSessionAsync(sessionId, HttpContext.User.FindFirstValue(ClaimTypes.Email));
             return closed ? Ok() : BadRequest();
         }
     }

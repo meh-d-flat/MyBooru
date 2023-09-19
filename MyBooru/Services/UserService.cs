@@ -139,41 +139,41 @@ namespace MyBooru.Services
             return await GetUserAsync(username);
         }
 
-        public async Task<List<Ticket>> GetUserSessionsAsync(string username)
+        public async Task<List<Ticket>> GetUserSessionsAsync(string uniqueId)
         {
             var tickets = new List<Ticket>();
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             await connection.OpenAsync();
-            string getTicketQuery = "SELECT * FROM Tickets WHERE Username = @a";
+
+            string getTicketQuery = @"SELECT * FROM Tickets WHERE Username = (SELECT Username FROM Tickets WHERE ID = @a);";
 
             using (SQLiteCommand getTicket = new SQLiteCommand(getTicketQuery, connection))
             {
-                getTicket.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = username, DbType = System.Data.DbType.String });
+                getTicket.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = uniqueId, DbType = System.Data.DbType.String });
+               
                 var result = await getTicket.ExecuteReaderAsync();
 
                 if (result.HasRows)
-                {
-                    while (await result.ReadAsync())
-                        tickets = TableCell.MakeEntities<Ticket>(TableCell.GetRows(result));
-                }
+                    tickets = TableCell.MakeEntities<Ticket>(TableCell.GetRows(result));
+
                 await result.DisposeAsync();
             }
-
             await connection.CloseAsync();
 
             return tickets;
         }
 
-        public async Task<bool> CloseUserSessionAsync(string sessionId)
+        public async Task<bool> CloseUserSessionAsync(string sessionId, string email)
         {
             bool closed = false;
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             await connection.OpenAsync();
-            string getTicketQuery = "DELETE FROM Tickets WHERE ID = @a";
+            string removeTicketQuery = @"DELETE FROM Tickets WHERE ID = @a AND Username = (SELECT Username From Users WHERE Email = @b)";
 
-            using (SQLiteCommand getTicket = new SQLiteCommand(getTicketQuery, connection))
+            using (SQLiteCommand getTicket = new SQLiteCommand(removeTicketQuery, connection))
             {
                 getTicket.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = sessionId, DbType = System.Data.DbType.String });
+                getTicket.Parameters.Add(new SQLiteParameter() { ParameterName = "@b", Value = email, DbType = System.Data.DbType.String });
                 var result = await getTicket.ExecuteNonQueryAsync();
                 closed = Convert.ToBoolean(result);
             }

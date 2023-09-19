@@ -50,7 +50,7 @@ namespace MyBooru.Services
             Task<bool> CheckUsernameAsync(string username);
             Task<bool> CheckPasswordAsync(string username, string password);
             Task<List<Ticket>> GetUserSessionsAsync(string username);
-            Task<bool> CloseUserSessionAsync(string sessionId);
+            Task<bool> CloseUserSessionAsync(string sessionId, string email);
         }
     }
 }
