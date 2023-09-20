@@ -25,7 +25,7 @@ namespace MyBooru
             for (int i = 0; i < cells.Length; i++)
             {
                 cells[i] = new TableCell()
-                { 
+                {
                     ColumnName = sqlReader.GetName(i),
                     ColumnNumber = sqlReader.GetOrdinal(sqlReader.GetName(i)),
                     Type = sqlReader.GetFieldType(i),
@@ -99,6 +99,14 @@ namespace MyBooru
         public override string ToString()
         {
             return String.Format("{0} {1} {2} {3}", ColumnName, ColumnNumber, Type, Value);
+        }
+    }
+
+    public static class Ext
+    {
+        public static int AddNew(this SQLiteParameterCollection collection, string parameter, object val, System.Data.DbType type)
+        {
+            return collection.Add(new SQLiteParameter() { ParameterName = parameter, Value = val, DbType = type });
         }
     }
 }

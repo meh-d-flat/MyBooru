@@ -24,36 +24,20 @@ namespace MyBooru.Services
 
         public async Task<bool> CheckEmailAsync(string email)
         {
-            bool exists = false;
-            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-            await connection.OpenAsync();
-            string checkEmailExistsQuery = "SELECT COUNT(*) FROM Users WHERE Email = @p";
-
-            using (SQLiteCommand checEmailkExists = new SQLiteCommand(checkEmailExistsQuery, connection))
+            return await QueryTheDb<bool>(new Func<SQLiteCommand, Task<bool>>(async x =>
             {
-                checEmailkExists.Parameters.Add(new SQLiteParameter() { ParameterName = "@p", Value = email, DbType = System.Data.DbType.String });
-                exists = Convert.ToBoolean(await checEmailkExists.ExecuteScalarAsync());
-            }
-
-            await connection.CloseAsync();
-            return exists;
+                x.Parameters.AddNew("@p", email, System.Data.DbType.String);
+                return Convert.ToBoolean(await x.ExecuteScalarAsync());
+            }), "SELECT COUNT(*) FROM Users WHERE Email = @p");
         }
 
         public async Task<bool> CheckUsernameAsync(string username)
         {
-            bool exists = false;
-            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-            await connection.OpenAsync();
-            string checkUsernameExistsQuery = "SELECT COUNT(*) FROM Users WHERE Username = @p";
-
-            using (SQLiteCommand checkUsernameExists = new SQLiteCommand(checkUsernameExistsQuery, connection))
+            return await QueryTheDb<bool>(new Func<SQLiteCommand, Task<bool>>(async x => 
             {
-                checkUsernameExists.Parameters.Add(new SQLiteParameter() { ParameterName = "@p", Value = username, DbType = System.Data.DbType.String });
-                exists = Convert.ToBoolean(await checkUsernameExists.ExecuteScalarAsync());
-            }
-
-            await connection.CloseAsync();
-            return exists;
+                x.Parameters.AddNew("@p", username, System.Data.DbType.String);
+                return Convert.ToBoolean(await x.ExecuteScalarAsync());
+            }), "SELECT COUNT(*) FROM Users WHERE Username = @p");
         }
 
         public async Task<bool> CheckPasswordAsync(string username, string password)
@@ -72,27 +56,20 @@ namespace MyBooru.Services
 
         public async Task<User> GetUserAsync(string username)
         {
-            var user = new User();
-            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-            await connection.OpenAsync();
-            string getUserQuery = "SELECT * FROM Users WHERE Username = @a";
-
-            using (SQLiteCommand getUser = new SQLiteCommand(getUserQuery, connection))
+            return await QueryTheDb<User>(new Func<SQLiteCommand, Task<User>>(async x =>
             {
-                getUser.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = username, DbType = System.Data.DbType.String });
-                var result = await getUser.ExecuteReaderAsync();
-
+                var user = new User();
+                x.Parameters.AddNew("@a", username, System.Data.DbType.String);
+                using var result = await x.ExecuteReaderAsync();
                 if (result.HasRows)
                 {
                     while (await result.ReadAsync())
                         user = TableCell.MakeEntity<User>(TableCell.GetRow(result));
+                    return user;
                 }
-                await result.DisposeAsync();
-            }
-
-            await connection.CloseAsync();
-
-            return user;
+                else
+                    return null;
+            }), "SELECT * FROM Users WHERE Username = @a");
         }
 
         public async Task<User> PersistUserAsync(string username, string password, string email)
@@ -107,80 +84,48 @@ namespace MyBooru.Services
                 passwordHash = await hmac.ComputeHashAsync(new MemoryStream(Encoding.UTF8.GetBytes(password)));
             }
 
-            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-            await connection.OpenAsync();
-            string addUserQuery = "INSERT INTO Users ('Username', 'Email', 'PasswordHash', 'PasswordSalt', 'Role', 'RegisterDateTime') VALUES (@a, @b, @c, @d, @e, @f)";
-
-            using (SQLiteCommand addUser = new SQLiteCommand(addUserQuery, connection))
+            return await QueryTheDb<User>(new Func<SQLiteCommand, Task<User>>(async x =>
             {
-                addUser.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = username, DbType = System.Data.DbType.String });
-                addUser.Parameters.Add(new SQLiteParameter() { ParameterName = "@b", Value = email, DbType = System.Data.DbType.String });
-                addUser.Parameters.Add(new SQLiteParameter() { ParameterName = "@c", Value = passwordHash, DbType = System.Data.DbType.Binary });
-                addUser.Parameters.Add(new SQLiteParameter() { ParameterName = "@d", Value = passwordSalt, DbType = System.Data.DbType.Binary });
-                addUser.Parameters.Add(new SQLiteParameter() { ParameterName = "@e", Value = "User", DbType = System.Data.DbType.String });
-                addUser.Parameters.Add(new SQLiteParameter() { ParameterName = "@f", Value = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds, DbType = System.Data.DbType.Int32 });
-
-                try
-                {
-                    await addUser.ExecuteNonQueryAsync();
-                }
-                catch (SQLiteException ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"user creation error: {ex}");
-                }
-                finally
-                {
-                    await addUser.DisposeAsync();
-                }
-            }
-
-            await connection.CloseAsync();
-
-            return await GetUserAsync(username);
+                x.Parameters.AddNew("@a",username, System.Data.DbType.String);
+                x.Parameters.AddNew("@b",email, System.Data.DbType.String);
+                x.Parameters.AddNew("@c",passwordHash, System.Data.DbType.Binary);
+                x.Parameters.AddNew("@d",passwordSalt, System.Data.DbType.Binary);
+                x.Parameters.AddNew("@e","User", System.Data.DbType.String);
+                x.Parameters.AddNew("@f",(int)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds, System.Data.DbType.Int32);
+                await x.ExecuteNonQueryAsync();
+                return await GetUserAsync(username);
+            }), "INSERT INTO Users ('Username', 'Email', 'PasswordHash', 'PasswordSalt', 'Role', 'RegisterDateTime') VALUES (@a, @b, @c, @d, @e, @f)");
         }
 
-        public async Task<List<Ticket>> GetUserSessionsAsync(string uniqueId)
+        public async Task<T> QueryTheDb<T>(Func<SQLiteCommand, Task<T>> f, string query)
         {
-            var tickets = new List<Ticket>();
+            T output = default(T);
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             await connection.OpenAsync();
-
-            string getTicketQuery = @"SELECT * FROM Tickets WHERE Username = (SELECT Username FROM Tickets WHERE ID = @a);";
-
-            using (SQLiteCommand getTicket = new SQLiteCommand(getTicketQuery, connection))
-            {
-                getTicket.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = uniqueId, DbType = System.Data.DbType.String });
-               
-                var result = await getTicket.ExecuteReaderAsync();
-
-                if (result.HasRows)
-                    tickets = TableCell.MakeEntities<Ticket>(TableCell.GetRows(result));
-
-                await result.DisposeAsync();
-            }
+            using var command = new SQLiteCommand(query, connection);
+            output = await f(command);
             await connection.CloseAsync();
+            return output;
+        }
 
-            return tickets;
+        public async Task<List<Ticket>> GetUserSessionsAsync(string sessionId)
+        {
+            return await QueryTheDb<List<Ticket>>(new Func<SQLiteCommand, Task<List<Ticket>>>(async x =>
+                {
+                    x.Parameters.AddNew("@a", sessionId, System.Data.DbType.String);
+                    using var result = await x.ExecuteReaderAsync();
+                    return result.HasRows ? TableCell.MakeEntities<Ticket>(TableCell.GetRows(result)) : null;
+                }), @"SELECT * FROM Tickets WHERE Username = (SELECT Username FROM Tickets WHERE ID = @a)");
         }
 
         public async Task<bool> CloseUserSessionAsync(string sessionId, string email)
         {
-            bool closed = false;
-            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-            await connection.OpenAsync();
-            string removeTicketQuery = @"DELETE FROM Tickets WHERE ID = @a AND Username = (SELECT Username From Users WHERE Email = @b)";
-
-            using (SQLiteCommand getTicket = new SQLiteCommand(removeTicketQuery, connection))
+            return await QueryTheDb<bool>(new Func<SQLiteCommand, Task<bool>>(async x =>
             {
-                getTicket.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = sessionId, DbType = System.Data.DbType.String });
-                getTicket.Parameters.Add(new SQLiteParameter() { ParameterName = "@b", Value = email, DbType = System.Data.DbType.String });
-                var result = await getTicket.ExecuteNonQueryAsync();
-                closed = Convert.ToBoolean(result);
-            }
-
-            await connection.CloseAsync();
-
-            return closed;
+                x.Parameters.AddNew("@a", sessionId, System.Data.DbType.String);
+                x.Parameters.AddNew("@b", email, System.Data.DbType.String);
+                return Convert.ToBoolean(await x.ExecuteNonQueryAsync());
+            }), @"DELETE FROM Tickets WHERE ID = @a AND Username = (SELECT Username From Users WHERE Email = @b)");
         }
     }
 }
