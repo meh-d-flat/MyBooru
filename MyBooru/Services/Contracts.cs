@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using MyBooru.Models;
 using System;
 using System.Collections.Generic;
+using System.Data.SQLite;
 using System.Threading.Tasks;
 
 namespace MyBooru.Services
@@ -51,6 +53,11 @@ namespace MyBooru.Services
             Task<bool> CheckPasswordAsync(string username, string password);
             Task<List<Ticket>> GetUserSessionsAsync(string username);
             Task<bool> CloseUserSessionAsync(string sessionId, string email);
+        }
+
+        public interface IQueryService
+        {
+            Task<T> QueryTheDb<T>(Func<SQLiteCommand, Task<T>> f, string query);
         }
     }
 }

@@ -28,7 +28,7 @@ namespace MyBooru.Controllers
                 return StatusCode(400, "Bad tag");
 
             var resultCollection = await tagger.SearchTagAsync(tagName);
-            var result = resultCollection.Select(x => x.Name);
+            var result = resultCollection?.Select(x => x.Name);
             return new JsonResult(result);
         }
 

@@ -2,41 +2,37 @@
 using MyBooru.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SQLite;
 using System.Linq;
 using System.Threading.Tasks;
+using static MyBooru.Services.Contracts;
 
 namespace MyBooru.Services
 {
     public class TagsService : Contracts.ITagsService
     {
         readonly IConfiguration config;
+        private readonly IQueryService queryService;
 
-        public TagsService(IConfiguration configuration)
+        public TagsService(IConfiguration configuration, IQueryService queryService)
         {
             config = configuration;
+            this.queryService = queryService;
         }
 
         public async Task<Tag> AddTagAsync(string name)
         {
             Tag tag = null;
             bool rowsChanged = false;
+
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             await connection.OpenAsync();
             string addTagQuery = "INSERT OR IGNORE INTO Tags ('Name') VALUES (@a)";
-            SQLiteCommand addTag = new SQLiteCommand(addTagQuery, connection);
-            addTag.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = name, DbType = System.Data.DbType.String });
-            try
+            using (SQLiteCommand addTag = new SQLiteCommand(addTagQuery, connection))
             {
+                addTag.Parameters.AddNew("@a", name, System.Data.DbType.String);
                 rowsChanged = await addTag.ExecuteNonQueryAsync() > 0;
-            }
-            catch (SQLiteException ex)
-            {
-                System.Diagnostics.Debug.WriteLine(ex);
-            }
-            finally
-            {
-                await addTag .DisposeAsync();
             }
 
             if (rowsChanged)
@@ -48,21 +44,16 @@ namespace MyBooru.Services
         public async Task<List<Tag>> SearchTagAsync(string name)
         {
             List<Tag> tags = null;
-            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-            await connection.OpenAsync();
-            string getTagQuery = "SELECT * FROM Tags WHERE Name LIKE @a";
-
-            using (SQLiteCommand getTag = new SQLiteCommand(getTagQuery, connection))
+            await queryService.QueryTheDb<List<Tag>>(async x => 
             {
-                getTag.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = $"{name}%", DbType = System.Data.DbType.String });
-                var result = await getTag.ExecuteReaderAsync();
+                x.Parameters.AddNew("@a", $"%{name}%", System.Data.DbType.String);
+                var result = await x.ExecuteReaderAsync();
 
                 if (result.HasRows)
                     tags = TableCell.MakeEntities<Tag>(TableCell.GetRows(result));
 
-                await result.DisposeAsync();
-            }
-            await connection.CloseAsync();
+                return tags;
+            }, "SELECT * FROM Tags WHERE Name LIKE @a");
             return tags;
         }
 
@@ -81,17 +72,12 @@ namespace MyBooru.Services
                 GROUP BY m.id
                 HAVING COUNT(m.id) = @a";
 
-            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-
-            using (SQLiteCommand byTag = new SQLiteCommand(byTagsQuery, connection))
+            count = await queryService.QueryTheDb<int>(async x => 
             {
-                byTag.Parameters.Add(new SQLiteParameter { ParameterName = "@a", Value = parameters.Count, DbType = System.Data.DbType.Int32 });
-                byTag.Parameters.AddRange(parameters.ToArray());
-                await connection.OpenAsync();
-                count = Convert.ToInt32(await byTag.ExecuteScalarAsync());
-
-                await connection.CloseAsync();
-            }
+                x.Parameters.AddNew("@a", parameters.Count, System.Data.DbType.Int32);
+                x.Parameters.AddRange(parameters.ToArray());
+                return Convert.ToInt32(await x.ExecuteScalarAsync());
+            }, byTagsQuery);
             return count;
         }
 
@@ -101,12 +87,10 @@ namespace MyBooru.Services
             var parameters = MakeParamsList(tags);
             string tagQuery = MakeParamsString(parameters, true);
 
-            string tempTableQuery =
-                $@"CREATE TEMP TABLE Search(tag);
-                INSERT INTO Search VALUES {tagQuery};";
-
             string byTagsQuery =
-                $@"SELECT *
+                $@"CREATE TEMP TABLE Search(tag);
+                INSERT INTO Search VALUES {tagQuery};
+                SELECT *
                 FROM Medias
                 JOIN MediasTags on Medias.ID = MediasTags.MediaID
                 JOIN Tags on Tags.ID = MediasTags.TagID
@@ -114,28 +98,17 @@ namespace MyBooru.Services
                 GROUP BY Medias.ID
                 HAVING COUNT(Medias.id) = @a
                 {(reverse == 1 ? "ORDER BY Medias.Id DESC" : "")}
-                LIMIT 20 OFFSET { 20 * (page - 1) };";
+                LIMIT 20 OFFSET {20 * (page - 1)};";
 
-            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-
-            using (SQLiteCommand tempTable = new SQLiteCommand(tempTableQuery, connection))
+            await queryService.QueryTheDb<List<Media>>(async x => 
             {
-                tempTable.Parameters.AddRange(parameters.ToArray());//
-                await connection.OpenAsync();//temp table is wiped upon closing connection
-                await tempTable.ExecuteNonQueryAsync();
-            }
-
-            using (SQLiteCommand byTag = new SQLiteCommand(byTagsQuery, connection))
-            {
-                byTag.Parameters.Add(new SQLiteParameter { ParameterName = "@a", Value = parameters.Count, DbType = System.Data.DbType.Int32 });
-                byTag.Parameters.AddRange(parameters.ToArray());
-                var result = await byTag.ExecuteReaderAsync();
-
+                x.Parameters.Add(new SQLiteParameter { ParameterName = "@a", Value = parameters.Count, DbType = System.Data.DbType.Int32 });
+                x.Parameters.AddRange(parameters.ToArray());
+                var result = await x.ExecuteReaderAsync();
                 if (result.HasRows)
                     medias = TableCell.MakeEntities<Media>(TableCell.GetRows(result));
-
-                await connection.CloseAsync();
-            }
+                return null;
+            }, byTagsQuery);
             return medias;
         }
 
@@ -152,7 +125,7 @@ namespace MyBooru.Services
                 {
                     ParameterName = $"@p{i}",
                     DbType = System.Data.DbType.String,
-                    Value = delimited[i]
+                    Value = delimited[i].Trim()
                 });
             }
             return parameters;
@@ -164,13 +137,8 @@ namespace MyBooru.Services
 
             for (int i = 0; i < parameters.Count; i++)
             {
-                if (!parenthesis)
-                    paramsForQuery += $"{parameters[i].ParameterName}";
-                else
-                    paramsForQuery += $"({parameters[i].ParameterName})";
-
-                if (i < parameters.Count - 1)
-                    paramsForQuery += ",";
+                paramsForQuery += parenthesis ? $"({parameters[i].ParameterName})" : parameters[i].ParameterName;
+                paramsForQuery += (i < parameters.Count - 1) ? "," : string.Empty;
             }
 
             return paramsForQuery;
@@ -189,21 +157,13 @@ namespace MyBooru.Services
             List<Tag> tagList = new List<Tag>();
             var parameters = MakeParamsList(tags);
             string paramsForQuery = MakeParamsString(parameters, false);
-            var checkTagsQuery = $"SELECT * FROM Tags WHERE Name IN ({paramsForQuery})";
 
-            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-
-            using (SQLiteCommand checkTags = new SQLiteCommand(checkTagsQuery, connection))
+            tagList = await queryService.QueryTheDb<List<Tag>>(async x => 
             {
-                checkTags.Parameters.AddRange(parameters.ToArray());
-                await connection.OpenAsync();
-                var result = await checkTags.ExecuteReaderAsync();
-
-                if (result.HasRows)
-                    tagList = TableCell.MakeEntities<Tag>(TableCell.GetRows(result));
-
-                await connection.CloseAsync();
-            }
+                x.Parameters.AddRange(parameters.ToArray());
+                var result = await x.ExecuteReaderAsync();
+                return result.HasRows ? TableCell.MakeEntities<Tag>(TableCell.GetRows(result)) : null;
+            }, $"SELECT * FROM Tags WHERE Name IN ({paramsForQuery})");
 
             if (delimited.Count > tagList.Count)
             {
@@ -223,19 +183,20 @@ namespace MyBooru.Services
         public async Task AddToMediaAsync(string id, List<Tag> tags)
         {
             int mediaId = -1;
-            string fetchIdQuery = $"SELECT Id FROM Medias WHERE Hash = @a";
-            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
 
-            using (var fetchId = new SQLiteCommand(fetchIdQuery, connection))
+            mediaId = await queryService.QueryTheDb<int>(async x => 
             {
-                fetchId.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = id, DbType = System.Data.DbType.String });
-                await connection.OpenAsync();
-                var result = await fetchId.ExecuteReaderAsync();
+                x.Parameters.AddNew("@a", id, System.Data.DbType.String);
+                var result = await x.ExecuteReaderAsync();
                 if (result.HasRows)
-                    while(await result.ReadAsync())
+                {
+                    while (await result.ReadAsync())
                         mediaId = result.GetInt32(0);
-                await connection.CloseAsync();
-            }
+                    return mediaId;
+                }
+                else
+                    return -1;
+            }, "SELECT Id FROM Medias WHERE Hash = @a");
 
             string values = "";
             for (int i = 0; i < tags.Count; i++)
@@ -244,15 +205,12 @@ namespace MyBooru.Services
                 if (i < tags.Count - 1)
                     values += ",";
             }
-            string addTagsQuery = $"INSERT OR IGNORE INTO MediasTags VALUES {values}";
 
-            using (var addTags = new SQLiteCommand(addTagsQuery, connection))
+            await queryService.QueryTheDb<Task>(async x => 
             {
-                await connection.OpenAsync();
-                await addTags.ExecuteNonQueryAsync();
-                await connection.CloseAsync();
-            }
-
+                await x.ExecuteNonQueryAsync();
+                return Task.CompletedTask;
+            }, $"INSERT OR IGNORE INTO MediasTags VALUES {values}");
         }
     }
 }

@@ -40,20 +40,16 @@ namespace MyBooru.Services
             string addFileQuery = "INSERT INTO Medias ('Name', 'Hash', 'Type', 'Path', 'Thumb') VALUES (@a, @b, @c, @d, @e)";//('Name', 'Hash', 'Size', 'Type', 'Binary', 'Path') VALUES (@a, @b, @c, @d, @e, @f)
 
             SQLiteCommand addFile = new SQLiteCommand(addFileQuery, connection);
-            addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = file.FileName, DbType = System.Data.DbType.String });
-            addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@c", Value = file.ContentType, DbType = System.Data.DbType.String });
+            addFile.Parameters.AddNew("@a", file.FileName, System.Data.DbType.String);
+            addFile.Parameters.AddNew("@c", file.ContentType, System.Data.DbType.String);
 
             using (var stream = file.OpenReadStream())
             {
-                //int size = (int)file.Length;
-                //byte[] bytes = new byte[size];
-                //await stream.ReadAsync(bytes, 0, (int)file.Length);
-
                 using (SHA256 SHA256 = SHA256Managed.Create())
                 {
                     string hash = BitConverter.ToString(await SHA256.ComputeHashAsync(stream));
                     hash = hash.Replace("-", "");
-                    addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@b", Value = hash, DbType = System.Data.DbType.String });
+                    addFile.Parameters.AddNew("@b", hash, System.Data.DbType.String);
                     fileHash = hash;
                 }
 
@@ -62,7 +58,7 @@ namespace MyBooru.Services
                 await Task.Run(() => Directory.CreateDirectory(directoryPath));
                 var path = Path.Combine(directoryPath, file.FileName);
                 webPath = path.Replace(@"\", "/");
-                addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@d", Value = webPath, DbType = System.Data.DbType.String });
+                addFile.Parameters.AddNew("@d", webPath, System.Data.DbType.String);
 
                 using (var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write))
                 {
@@ -84,13 +80,14 @@ namespace MyBooru.Services
                         ffmpeg.Close();
                         await Task.Run(() => Directory.Delete(Path.GetDirectoryName(webPath), true));
                     }
+                    ffmpeg.WaitForExit();
                 }
                 catch
                 {
                     fileHash = "error: failed to create thumbnail";
                 }
 
-                addFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@e", Value = webThumbPath, DbType = System.Data.DbType.String });
+                addFile.Parameters.AddNew("@e", webThumbPath, System.Data.DbType.String);
             }
 
             try

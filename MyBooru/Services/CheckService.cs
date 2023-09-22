@@ -5,49 +5,36 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.IO;
 using System.Data.SQLite;
+using static MyBooru.Services.Contracts;
 
 namespace MyBooru.Services
 {
     public class CheckService : Contracts.ICheckService
     {
         readonly IConfiguration config;
+        private readonly IQueryService queryService;
 
-        public CheckService(IConfiguration configuration)
+        public CheckService(IConfiguration configuration, IQueryService queryService)
         {
             config = configuration;
+            this.queryService = queryService;
         }
 
         public async Task<int> MediasCountAsync()
         {
-            int count = 0;
-            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-            await connection.OpenAsync();
-            string mediasNumberQuery = "SELECT COUNT(*) FROM Medias";
-
-            using (SQLiteCommand mediasNumber = new SQLiteCommand(mediasNumberQuery, connection))
-            {
-                count = Convert.ToInt32(await mediasNumber.ExecuteScalarAsync());
-            }
-
-            await connection.CloseAsync();
-            return count;
+            return await queryService.QueryTheDb<int>(async x =>
+             {
+                 return Convert.ToInt32(await x.ExecuteScalarAsync());
+             }, "SELECT COUNT(*) FROM Medias");
         }
 
         public async Task<bool> CheckMediaExistsAsync(string id)
         {
-            bool exists = false;
-            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-            await connection.OpenAsync();
-            string checkExistsQuery = "SELECT COUNT(*) FROM Medias WHERE Hash = @p";
-
-            using (SQLiteCommand checkExists = new SQLiteCommand(checkExistsQuery, connection))
+            return await queryService.QueryTheDb<bool>(async x => 
             {
-                checkExists.Parameters.Add(new SQLiteParameter() { ParameterName = "@p", Value = id, DbType = System.Data.DbType.String });
-                exists = Convert.ToBoolean(await checkExists.ExecuteScalarAsync());
-            }
-
-            await connection.CloseAsync();
-            return exists;
+                x.Parameters.AddNew("@p", id, System.Data.DbType.String);
+                return Convert.ToBoolean(await x.ExecuteScalarAsync());
+            }, "SELECT COUNT(*) FROM Medias WHERE Hash = @p");
         }
 
         public async Task<bool> DBSetupAsync()

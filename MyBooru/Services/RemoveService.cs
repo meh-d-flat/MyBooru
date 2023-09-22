@@ -6,39 +6,39 @@ using System.Data.SQLite;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using static MyBooru.Services.Contracts;
 
 namespace MyBooru.Services
 {
     public class RemoveService : Contracts.IRemoveService
     {
         readonly IConfiguration config;
+        private readonly IQueryService queryService;
 
-        public RemoveService(IConfiguration configuration)
+        public RemoveService(IConfiguration configuration, IQueryService queryService)
         {
             config = configuration;
+            this.queryService = queryService;
         }
 
         public async Task<string> RemoveAsync(string id)
         {
             string removed = "deleted";
             Media file = null;
-            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-            await connection.OpenAsync();
 
-            string removeFileQuery = "SELECT * FROM Medias WHERE Hash = @a";
-
-            using (SQLiteCommand removeFile = new SQLiteCommand(removeFileQuery, connection))
+            await queryService.QueryTheDb<Media>(async x => 
             {
-                removeFile.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = id, DbType = System.Data.DbType.String });
-                var result = await removeFile.ExecuteReaderAsync();
+                x.Parameters.AddNew("@a", id, System.Data.DbType.String);
+                var result = await x.ExecuteReaderAsync();
 
                 if (result.HasRows)
                 {
                     while (await result.ReadAsync())
                         file = TableCell.MakeEntity<Media>(TableCell.GetRow(result));
                 }
-                await result.DisposeAsync();
-            }
+
+                return null;
+            }, "SELECT * FROM Medias WHERE Hash = @a");
 
             try
             {
@@ -49,26 +49,14 @@ namespace MyBooru.Services
                 removed = $"error: {ex.GetType()} {ex.Message}";
             }
 
-            string removeEntryQuery = "DELETE FROM MediasTags WHERE MediaID = (SELECT ID FROM Medias WHERE Hash = @a);DELETE FROM Medias WHERE Hash = @a;";
-            using (SQLiteCommand removeEntry = new SQLiteCommand(removeEntryQuery, connection))
+            removed = await queryService.QueryTheDb<string>(async x => 
             {
-                removeEntry.Parameters.Add(new SQLiteParameter() { ParameterName = "@a", Value = id, DbType = System.Data.DbType.String });
-                try
-                {
-                    await removeEntry.ExecuteNonQueryAsync();
-                }
-                catch (SQLiteException ex)
-                {
-                    removed = $"error: {ex.GetType()} {ex.Message}";
-                }
-                finally
-                {
-                    await removeEntry.DisposeAsync();
-                }
-                await connection.CloseAsync();
-            }
-
+                x.Parameters.AddNew("@a", id, System.Data.DbType.String);
+                await x.ExecuteNonQueryAsync();
                 return removed;
+            }, "DELETE FROM MediasTags WHERE MediaID = (SELECT ID FROM Medias WHERE Hash = @a);DELETE FROM Medias WHERE Hash = @a;");
+
+            return removed;
         }
     }
 }
