@@ -92,8 +92,8 @@ namespace MyBooru
         public static List<T> MakeEntities<T>(List<TableCell[]> rows) where T : class
         {
             var entities = new List<T>();
-            foreach (var row in rows)
-                entities.Add(MakeEntity<T>(row));
+            for (int i = 0; i < rows.Count; i++)
+                entities.Add(MakeEntity<T>(rows[i]));
 
             return entities;
         }
@@ -103,7 +103,6 @@ namespace MyBooru
             var list = new List<TableCell>();
             var text = string.Empty;
             var parms = string.Empty;
-            //var tableName = $"{src.GetType().Name}s";
             src.GetType().GetProperties().ToList().ForEach(x =>
             {
                 if (!x.PropertyType.IsGenericType && x.Name.ToLower() != "id") // || !x.PropertyType.FullName.Contains('`') - yeah lol

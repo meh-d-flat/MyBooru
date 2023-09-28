@@ -58,7 +58,6 @@ namespace MyBooru.Services
                 await Task.Run(() => Directory.CreateDirectory(directoryPath));
                 var path = Path.Combine(directoryPath, file.FileName);
                 webPath = path.Replace(@"\", "/");
-                //addFile.Parameters.AddNew("@d", webPath, System.Data.DbType.String);
                 up.Path = webPath;
 
                 using (var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write))
@@ -112,12 +111,12 @@ namespace MyBooru.Services
             return fileHash;
         }
 
-        public async Task<List<string>> UploadManyAsync(ICollection<IFormFile> files, string username)
+        public async Task<List<string>> UploadManyAsync(List<IFormFile> files, string username)
         {
             var hashes = new List<string>();
-            foreach (var media in files)
+            for (int i = 0; i < files.Count; i++)
             {
-                var hash = await UploadOneAsync(media, username);
+                var hash = await UploadOneAsync(files[i], username);
                 hashes.Add(hash);
             }
             return hashes;

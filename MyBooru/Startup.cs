@@ -69,7 +69,7 @@ namespace MyBooru
                 options.AddDefaultPolicy(
                     policy =>
                     {
-                        policy.WithOrigins(Configuration["ApiConsumerAddressPort"])
+                        policy.WithOrigins(Configuration.GetSection("ApiConsumerAddressPort").Get<string[]>())
                             .AllowAnyHeader()
                             .AllowAnyMethod()
                             .AllowCredentials();
@@ -77,7 +77,7 @@ namespace MyBooru
             });
             services.AddControllers();
             services.AddSingleton<ITicketStore, SessionTicketStore>();
-            //services.AddSingleton<LimitService>();
+            services.AddSingleton<LimitService>();
             services.AddTransient<Contracts.ICheckService, CheckService>();
             services.AddTransient<UploadService>();
             services.AddTransient<DownloadService>();
@@ -111,11 +111,12 @@ namespace MyBooru
             app.UseRouting();
 
             app.UseCors();
+            
+            app.UseMiddleware<RequestLimitMiddleware>();
 
             app.UseAuthentication();
             app.UseAuthorization();
             
-            //app.UseMiddleware<RequestLimitMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {

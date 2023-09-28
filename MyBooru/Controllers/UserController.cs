@@ -13,6 +13,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MyBooru.Controllers
@@ -22,9 +23,9 @@ namespace MyBooru.Controllers
     public class UserController : ControllerBase
     {
         [Authorize(Roles = "User"), Route("getInfo")]
-        public async Task<IActionResult> GetInfo([FromServices] UserService userService)
+        public async Task<IActionResult> GetInfo([FromServices] UserService userService, CancellationToken ct)
         {
-            var user = await userService.GetUserAsync(HttpContext.User.Identity.Name);
+            var user = await userService.GetUserAsync(HttpContext.User.Identity.Name, ct);
             return new JsonResult(new {
                 username = user.Username,
                 dateRegistered = user.RegisterDateTime,
@@ -57,7 +58,7 @@ namespace MyBooru.Controllers
         }
 
         [HttpPost, Route("signup")]
-        async public Task<IActionResult> SignUp([FromServices] UserService userService, [FromForm] string username, [FromForm] string email, [FromForm] string password, [FromForm] string passwordRepeat)
+        async public Task<IActionResult> SignUp([FromServices] UserService userService, [FromForm] string username, [FromForm] string email, [FromForm] string password, [FromForm] string passwordRepeat, CancellationToken ct)
         {
             if (HttpContext.User.Identity.IsAuthenticated)
                 return RedirectToAction("Details");
@@ -71,13 +72,13 @@ namespace MyBooru.Controllers
             if (await userService.CheckEmailAsync(email))
                 return BadRequest("Username/Email already registered!");
 
-            var user = await userService.PersistUserAsync(username, password, email);
+            var user = await userService.PersistUserAsync(username, password, email, ct);
 
-            return await this.SignIn(userService, username, password);
+            return await this.SignIn(userService, username, password, ct);
         }
 
         [HttpPost, Route("signin")]
-        async public Task<IActionResult> SignIn([FromServices] UserService userService, [FromForm] string username, [FromForm] string password)
+        async public Task<IActionResult> SignIn([FromServices] UserService userService, [FromForm] string username, [FromForm] string password, CancellationToken ct)
         {
             if (HttpContext.User.Identity.IsAuthenticated)
                 return RedirectToAction("Details");
@@ -85,10 +86,10 @@ namespace MyBooru.Controllers
             if (!await userService.CheckUsernameAsync(username))
                 return BadRequest("Wrong Username/Password combination");
 
-            if (!await userService.CheckPasswordAsync(username, password))
+            if (!await userService.CheckPasswordAsync(username, password, ct))
                 return BadRequest("Wrong Username/Password combination");
 
-            var user = await userService.GetUserAsync(username);
+            var user = await userService.GetUserAsync(username, ct);
 
             var claims = new List<Claim>
                 {
@@ -122,9 +123,9 @@ namespace MyBooru.Controllers
         }
 
         [Authorize(Roles = "User"), Route("getSessions")]
-        public async Task<IActionResult> GetSessions([FromServices] UserService userService)
+        public async Task<IActionResult> GetSessions([FromServices] UserService userService, CancellationToken ct)
         {
-            var all = await userService.GetUserSessionsAsync(HttpContext.User.FindFirstValue("uniqueId"));
+            var all = await userService.GetUserSessionsAsync(HttpContext.User.FindFirstValue("uniqueId"), ct);
 
             var formatted = all.Select(x => new
             {
@@ -132,8 +133,7 @@ namespace MyBooru.Controllers
                 UserAgent = x.UserAgent,
                 LastActivity = x.LastActivity,
                 IP = x.IP,
-                id = x.ID//,
-                //UniqueId = TicketSerializer.Default.Deserialize(x.Value).Principal.Claims.FirstOrDefault(x => x.Type == "uniqueId").Value
+                id = x.ID
             });
 
             return new JsonResult(new { allSessions = formatted });

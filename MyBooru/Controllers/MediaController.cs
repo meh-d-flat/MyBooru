@@ -11,6 +11,7 @@ using System.IO;
 using static MyBooru.Services.Contracts;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
+using System.Threading;
 
 namespace MyBooru.Controllers
 {
@@ -26,10 +27,10 @@ namespace MyBooru.Controllers
             checker.DBSetupAsync();
         }
 
-        public async Task<IActionResult> Get([FromServices] DownloadService downloader, int page = 1, int reverse = 1)
+        public async Task<IActionResult> Get([FromServices] DownloadService downloader, CancellationToken ct, int page = 1, int reverse = 1)
         {
-            var mediasCount = await checker.MediasCountAsync();
-            var result = await downloader.DownloadAsync(page, reverse);
+            var mediasCount = await checker.MediasCountAsync(ct);
+            var result = await downloader.DownloadAsync(page, reverse, ct);
 
             return new JsonResult(new
             {
@@ -45,28 +46,28 @@ namespace MyBooru.Controllers
 
         [HttpGet]
         [Route("details")]
-        public async Task<IActionResult> Details([FromServices] DownloadService downloader, [FromQuery] string id)
+        public async Task<IActionResult> Details([FromServices] DownloadService downloader, [FromQuery] string id, CancellationToken ct)
         {
-            if (!await checker.CheckMediaExistsAsync(id))
+            if (!await checker.CheckMediaExistsAsync(id, ct))
                 return BadRequest();
 
-            var result = await downloader.DownloadAsync(id);
+            var result = await downloader.DownloadAsync(id, ct);
             return new JsonResult(result);
         }
 
         [HttpGet]
         [Route("addTags")]
         [Authorize(Roles = "User")]
-        public async Task<IActionResult> AddTags([FromServices] TagsService tagger, string id, string tags)
+        public async Task<IActionResult> AddTags([FromServices] TagsService tagger, string id, string tags, CancellationToken ct)
         {
-            if (!await checker.CheckMediaExistsAsync(id))
+            if (!await checker.CheckMediaExistsAsync(id, ct))
                 return StatusCode(400);
 
-            //validate the tags
-            foreach (var item in tags.Split(","))
+            var delimited = tags.Split(",");
+            for (int i = 0; i < delimited.Length; i++)
             {
-                if (!Regex.Match(item, @"[ a-zA-Z0-9]{2,32}$").Success)
-                    return BadRequest(new JsonResult(new { bad_tag = item }));
+                if (!Regex.Match(delimited[i], @"[ a-zA-Z0-9]{2,32}$").Success)
+                    return BadRequest(new JsonResult(new { bad_tag = delimited[i] }));
             }
 
             var newTags = await tagger.AddTagsToMediaAsync(id, tags.ToLower());
@@ -76,11 +77,11 @@ namespace MyBooru.Controllers
 
         [HttpGet]
         [Route("byTag")]
-        public async Task<IActionResult> GetByTags([FromServices] TagsService tagger, string tags, int page = 1, int reverse = 1)
+        public async Task<IActionResult> GetByTags([FromServices] TagsService tagger, string tags, CancellationToken ct, int page = 1, int reverse = 1)
         {
             //validate the tags
-            var mediasCount = await tagger.MediasCountAsync(tags);
-            var result = await tagger.GetMediasByTagsAsync(tags, page, reverse);//rewrite to get only ids by tag then go through download
+            var mediasCount = await tagger.MediasCountAsync(tags, ct);
+            var result = await tagger.GetMediasByTagsAsync(tags, page, reverse, ct);//rewrite to get only ids by tag then go through download
 
             return new JsonResult(new
             {
@@ -96,12 +97,12 @@ namespace MyBooru.Controllers
 
         [HttpGet]
         [Route("download")]
-        public async Task<IActionResult> Download([FromServices] DownloadService downloader, string id, bool dl = false)
+        public async Task<IActionResult> Download([FromServices] DownloadService downloader, string id, CancellationToken ct, bool dl = false)
         {
-            if (!await checker.CheckMediaExistsAsync(id))
+            if (!await checker.CheckMediaExistsAsync(id, ct))
                 return StatusCode(400);
 
-            var result = await downloader.DownloadAsync(id);
+            var result = await downloader.DownloadAsync(id, ct);
             if (result != null)
             {
                 //var file = new FileContentResult((result.Binary, result.Type);
@@ -156,9 +157,9 @@ namespace MyBooru.Controllers
 
         [Route("remove")]
         [Authorize(Roles = "User")]
-        public async Task<IActionResult> Remove([FromServices] RemoveService remover, string id)
+        public async Task<IActionResult> Remove([FromServices] RemoveService remover, string id, CancellationToken ct)
         {
-            bool exist = await checker.CheckMediaExistsAsync(id);
+            bool exist = await checker.CheckMediaExistsAsync(id, ct);
             if (!exist)
                 return StatusCode(400);
 

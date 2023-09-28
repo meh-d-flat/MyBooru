@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Drawing.Imaging;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using static MyBooru.Services.Contracts;
 
@@ -22,13 +23,13 @@ namespace MyBooru.Services
             this.queryService = queryService;
         }
 
-        public async Task<Media> DownloadAsync(string id)
+        public async Task<Media> DownloadAsync(string id, CancellationToken ct)
         {
             Media file = null;
-            file = await queryService.QueryTheDb<Media>(async x => 
+            file = await queryService.QueryTheDbAsync<Media>(async x => 
             {
                 x.Parameters.AddNew("@a", id, System.Data.DbType.String);
-                var result = await x.ExecuteReaderAsync();
+                var result = await x.ExecuteReaderAsync(ct);
                 if (result.HasRows)
                 {
                     while (await result.ReadAsync())
@@ -40,10 +41,10 @@ namespace MyBooru.Services
                     return null;
             }, "SELECT * FROM Medias WHERE Hash = @a");
 
-            var _ = await queryService.QueryTheDb<List<Tag>>(async x => 
+            var _ = await queryService.QueryTheDbAsync<List<Tag>>(async x => 
             {
                 x.Parameters.AddNew("@a", id, System.Data.DbType.String);
-                var result = await x.ExecuteReaderAsync();
+                var result = await x.ExecuteReaderAsync(ct);
 
                 if (result.HasRows)
                     file.Tags = TableCell.MakeEntities<Tag>(await TableCell.GetRowsAsync(result));
@@ -57,12 +58,12 @@ namespace MyBooru.Services
             return file;
         }
 
-        public async Task<List<Media>> DownloadAsync(int page, int reverse)
+        public async Task<List<Media>> DownloadAsync(int page, int reverse, CancellationToken ct)
         {
-            return await queryService.QueryTheDb<List<Media>>(async x => 
+            return await queryService.QueryTheDbAsync<List<Media>>(async x => 
             {
                 x.Parameters.AddNew("@a", page, System.Data.DbType.Int32);
-                var result = await x.ExecuteReaderAsync();
+                var result = await x.ExecuteReaderAsync(ct);
                 return result.HasRows ? TableCell.MakeEntities<Media>(await TableCell.GetRowsAsync(result)) : new List<Media>();
             }, "SELECT * FROM Medias" + (reverse == 1 ? " ORDER BY Id DESC " : " ") + $"LIMIT 20 OFFSET {20 * (page - 1)}");
         }

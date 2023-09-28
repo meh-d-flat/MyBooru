@@ -15,7 +15,7 @@ namespace MyBooru.Services
             this.config = config;
         }
 
-        public async Task<T> QueryTheDb<T>(Func<SQLiteCommand, Task<T>> f, string query)
+        public async Task<T> QueryTheDbAsync<T>(Func<SQLiteCommand, Task<T>> f, string query)
         {
             T output = default(T);
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);

@@ -29,7 +29,7 @@ namespace MyBooru
 
         public async Task RemoveAsync(string key)
         {
-            await _queryService.QueryTheDb<Task>(async x => 
+            await _queryService.QueryTheDbAsync<Task>(async x => 
             {
                 x.Parameters.AddNew("@a", key, System.Data.DbType.String);
                 await x.ExecuteNonQueryAsync();
@@ -40,7 +40,7 @@ namespace MyBooru
         public async Task RenewAsync(string key, AuthenticationTicket ticket)
         {
             string removeTicketQuery = "UPADTE Tickets SET Value = @a WHERE ID = @b; UPDATE Tickets SET LastActivity = @c WHERE ID = @b;";
-            await _queryService.QueryTheDb<Task>(async x =>
+            await _queryService.QueryTheDbAsync<Task>(async x =>
             {
                 x.Parameters.AddNew("@a", Serialize(ticket), System.Data.DbType.Binary);
                 x.Parameters.AddNew("@b", key, System.Data.DbType.String);
@@ -53,7 +53,7 @@ namespace MyBooru
         public async Task<AuthenticationTicket> RetrieveAsync(string key)
         {
             var ticket = new Ticket();
-            await _queryService.QueryTheDb<Ticket>(async x =>
+            await _queryService.QueryTheDbAsync<Ticket>(async x =>
             {
                 x.Parameters.AddNew("@a", key, System.Data.DbType.String);
                 var result = await x.ExecuteReaderAsync();
@@ -76,7 +76,7 @@ namespace MyBooru
             string id = ticket.Principal.FindFirstValue("uniqueId");
             string addTicketQuery = "INSERT INTO Tickets ('ID', 'Username', 'Value', 'LastActivity', 'UserAgent', 'IP') VALUES (@a, @b, @c, @d, @e, @f)";
 
-            await _queryService.QueryTheDb<Task>(async x =>
+            await _queryService.QueryTheDbAsync<Task>(async x =>
             {
                 x.Parameters.AddNew("@a", id, System.Data.DbType.String);
                 x.Parameters.AddNew("@b", ticket.Principal.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name).Value, System.Data.DbType.String);

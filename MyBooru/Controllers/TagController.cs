@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MyBooru.Controllers
@@ -22,12 +23,12 @@ namespace MyBooru.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Get(string tagName)
+        public async Task<IActionResult> Get(string tagName, CancellationToken ct)
         {
             if (!InputCheck(tagName))
                 return StatusCode(400, "Bad tag");
 
-            var resultCollection = await tagger.SearchTagAsync(tagName);
+            var resultCollection = await tagger.SearchTagAsync(tagName, ct);
             var result = resultCollection?.Select(x => x.Name);
             return new JsonResult(result);
         }

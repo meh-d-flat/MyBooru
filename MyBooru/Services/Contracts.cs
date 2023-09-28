@@ -5,6 +5,7 @@ using MyBooru.Models;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MyBooru.Services
@@ -13,21 +14,21 @@ namespace MyBooru.Services
     {
         public interface ICheckService
         {
-            Task<int> MediasCountAsync();
+            Task<int> MediasCountAsync(CancellationToken ct);
             Task<bool> DBSetupAsync();
-            Task<bool> CheckMediaExistsAsync(string id);
+            Task<bool> CheckMediaExistsAsync(string id, CancellationToken ct);
         }
 
         public interface IUploadService
         {
             Task<string> UploadOneAsync(IFormFile file, string username);
-            Task<List<string>> UploadManyAsync(ICollection<IFormFile> files, string username);
+            Task<List<string>> UploadManyAsync(List<IFormFile> files, string username);
         }
 
         public interface IDownloadService
         {
-            Task<Media> DownloadAsync(string id);
-            Task<List<Media>> DownloadAsync(int page, int reverse);
+            Task<Media> DownloadAsync(string id, CancellationToken ct);
+            Task<List<Media>> DownloadAsync(int page, int reverse, CancellationToken ct);
         }
 
         public interface IRemoveService
@@ -38,26 +39,26 @@ namespace MyBooru.Services
         public interface ITagsService
         {
             Task <Tag> AddTagAsync(string name);
-            Task<List<Tag>> SearchTagAsync(string name);
-            Task<int> MediasCountAsync(string tags);
-            Task<List<Media>> GetMediasByTagsAsync(string tags, int page, int reverse);
+            Task<List<Tag>> SearchTagAsync(string name, CancellationToken ct);
+            Task<int> MediasCountAsync(string tags, CancellationToken ct);
+            Task<List<Media>> GetMediasByTagsAsync(string tags, int page, int reverse, CancellationToken ct);
             Task<List<Tag>> AddTagsToMediaAsync(string id, string tags);
         }
 
         public interface IUserService
         {
-            Task<User> PersistUserAsync(string username, string password, string email);
-            Task<User> GetUserAsync(string username);
+            Task<User> PersistUserAsync(string username, string password, string email, CancellationToken ct);
+            Task<User> GetUserAsync(string username, CancellationToken ct);
             Task<bool> CheckEmailAsync(string email);
             Task<bool> CheckUsernameAsync(string username);
-            Task<bool> CheckPasswordAsync(string username, string password);
-            Task<List<Ticket>> GetUserSessionsAsync(string username);
+            Task<bool> CheckPasswordAsync(string username, string password, CancellationToken ct);
+            Task<List<Ticket>> GetUserSessionsAsync(string username, CancellationToken ct);
             Task<bool> CloseUserSessionAsync(string sessionId, string email);
         }
 
         public interface IQueryService
         {
-            Task<T> QueryTheDb<T>(Func<SQLiteCommand, Task<T>> f, string query);
+            Task<T> QueryTheDbAsync<T>(Func<SQLiteCommand, Task<T>> f, string query);
         }
     }
 }

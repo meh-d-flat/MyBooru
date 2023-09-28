@@ -10,9 +10,7 @@ namespace MyBooru.Models
         public int Id { get; set; }
         public string Name { get; set; }
         public string Hash { get; set; }
-        //public int Size { get; set; }
         public string Type { get; set; }
-        //public byte[] Binary { get; set; }
         public string Path { get; set; }
         public string Thumb { get; set; }
         public string Uploader { get; set; }

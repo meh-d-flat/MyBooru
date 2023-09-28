@@ -16,41 +16,28 @@ namespace MyBooru.Middleware
     {
         private readonly RequestDelegate _next;
         private readonly int numOfRequests;
-        private readonly int requestsIntevalMs;
 
 
         public RequestLimitMiddleware(RequestDelegate next, IConfiguration config)
         {
             _next = next;
-            requestsIntevalMs = config.GetValue<int>("Limiter:RequestsIntevalMs");
             numOfRequests = config.GetValue<int>("Limiter:RequestsNumber");
         }
 
         public async Task Invoke(HttpContext context, LimitService limiter)
         {
-            var ipString = context.Connection.LocalIpAddress.ToString();
-            var recordExists = limiter.AllRecords.Any(x => x.LocalIP.ToString() == ipString);
-
-            var record = recordExists
-                ? limiter.AllRecords.Find(x => x.LocalIP.ToString() == ipString)
+            var isNew = IPAddressRecord.AllIPRecords.Any(x => x.RemoteIP.Equals(context.Connection.RemoteIpAddress));
+            var ipRecord = isNew
+                ? IPAddressRecord.AllIPRecords.Find(x => x.RemoteIP.Equals(context.Connection.RemoteIpAddress))
                 : new IPAddressRecord(context);
-
-            if (!recordExists)
-                limiter.AllRecords.Add(record);
             
-            if (record.NumberOfRequests > numOfRequests)
-                await TooManyRequestsResponse(context);
+            ipRecord.LastRequestTime = DateTime.UtcNow;
+            ipRecord.NumberOfRequests++;
 
-            if ((DateTime.Now - record.LastRequestTime).Milliseconds < requestsIntevalMs)
+            if (ipRecord.NumberOfRequests > numOfRequests)
                 await TooManyRequestsResponse(context);
-            
-            record.NumberOfRequests++;
-            record.LastRequestTime = DateTime.Now;
-
-            //inverse this
-            if (record.NumberOfRequests <= 25)
+            else
                 await _next(context);
-
         }
 
         async Task TooManyRequestsResponse(HttpContext context)

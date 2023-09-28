@@ -26,7 +26,7 @@ namespace MyBooru.Services
             string removed = "deleted";
             Media file = null;
 
-            await queryService.QueryTheDb<Media>(async x => 
+            await queryService.QueryTheDbAsync<Media>(async x => 
             {
                 x.Parameters.AddNew("@a", id, System.Data.DbType.String);
                 var result = await x.ExecuteReaderAsync();
@@ -49,7 +49,7 @@ namespace MyBooru.Services
                 removed = $"error: {ex.GetType()} {ex.Message}";
             }
 
-            removed = await queryService.QueryTheDb<string>(async x => 
+            removed = await queryService.QueryTheDbAsync<string>(async x => 
             {
                 x.Parameters.AddNew("@a", id, System.Data.DbType.String);
                 await x.ExecuteNonQueryAsync();

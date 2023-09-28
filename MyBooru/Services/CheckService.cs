@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Data.SQLite;
 using static MyBooru.Services.Contracts;
+using System.Threading;
 
 namespace MyBooru.Services
 {
@@ -20,20 +21,20 @@ namespace MyBooru.Services
             this.queryService = queryService;
         }
 
-        public async Task<int> MediasCountAsync()
+        public async Task<int> MediasCountAsync(CancellationToken ct)
         {
-            return await queryService.QueryTheDb<int>(async x =>
+            return await queryService.QueryTheDbAsync<int>(async x =>
              {
-                 return Convert.ToInt32(await x.ExecuteScalarAsync());
+                 return Convert.ToInt32(await x.ExecuteScalarAsync(ct));
              }, "SELECT COUNT(*) FROM Medias");
         }
 
-        public async Task<bool> CheckMediaExistsAsync(string id)
+        public async Task<bool> CheckMediaExistsAsync(string id, CancellationToken ct)
         {
-            return await queryService.QueryTheDb<bool>(async x => 
+            return await queryService.QueryTheDbAsync<bool>(async x => 
             {
                 x.Parameters.AddNew("@p", id, System.Data.DbType.String);
-                return Convert.ToBoolean(await x.ExecuteScalarAsync());
+                return Convert.ToBoolean(await x.ExecuteScalarAsync(ct));
             }, "SELECT COUNT(*) FROM Medias WHERE Hash = @p");
         }
 
