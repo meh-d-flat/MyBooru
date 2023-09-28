@@ -46,7 +46,7 @@ namespace MyBooru.Services
                 var result = await x.ExecuteReaderAsync();
 
                 if (result.HasRows)
-                    file.Tags = TableCell.MakeEntities<Tag>(TableCell.GetRows(result));
+                    file.Tags = TableCell.MakeEntities<Tag>(await TableCell.GetRowsAsync(result));
 
                 return null;
             }, @"SELECT Tags.ID, Tags.Name FROM Medias 
@@ -63,7 +63,7 @@ namespace MyBooru.Services
             {
                 x.Parameters.AddNew("@a", page, System.Data.DbType.Int32);
                 var result = await x.ExecuteReaderAsync();
-                return result.HasRows ? TableCell.MakeEntities<Media>(TableCell.GetRows(result)) : new List<Media>();
+                return result.HasRows ? TableCell.MakeEntities<Media>(await TableCell.GetRowsAsync(result)) : new List<Media>();
             }, "SELECT * FROM Medias" + (reverse == 1 ? " ORDER BY Id DESC " : " ") + $"LIMIT 20 OFFSET {20 * (page - 1)}");
         }
     }

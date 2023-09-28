@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MyBooru.Models;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Linq;
@@ -51,19 +53,19 @@ namespace MyBooru
             return cells;
         }
 
-        public static List<TableCell[]> GetRows(SQLiteDataReader sqlReader)
+        public async static Task<List<TableCell[]>> GetRowsAsync(SQLiteDataReader sqlReader)
         {
             var rows = new List<TableCell[]>();
-            while (sqlReader.Read())
+            while (await sqlReader.ReadAsync())
                 rows.Add(GetRow(sqlReader));
 
             return rows;
         }
 
-        public static List<TableCell[]> GetRows(System.Data.Common.DbDataReader sqlReader)
+        public async static Task<List<TableCell[]>> GetRowsAsync(System.Data.Common.DbDataReader sqlReader)
         {
             var rows = new List<TableCell[]>();
-            while (sqlReader.Read())
+            while (await sqlReader.ReadAsync())
                 rows.Add(GetRow(sqlReader));
 
             return rows;
@@ -95,6 +97,30 @@ namespace MyBooru
 
             return entities;
         }
+
+        public static SQLiteCommand MakeAddCommand<T>(object src, SQLiteConnection conn)
+        {
+            var list = new List<TableCell>();
+            var text = string.Empty;
+            var parms = string.Empty;
+            //var tableName = $"{src.GetType().Name}s";
+            src.GetType().GetProperties().ToList().ForEach(x =>
+            {
+                if (!x.PropertyType.IsGenericType && x.Name.ToLower() != "id") // || !x.PropertyType.FullName.Contains('`') - yeah lol
+                    list.Add(new TableCell { Value = x.GetValue(src), ColumnName = x.Name });
+            });
+            var comm = new SQLiteCommand(conn);
+            for (int i = 0; i < list.Count; i++)
+            {
+                comm.Parameters.Add(new SQLiteParameter() { ParameterName = $"@p{i}", Value = list[i].Value });
+                text += (i < list.Count - 1) ? $"'{list[i].ColumnName}', " : $"'{list[i].ColumnName}'";
+                parms += (i < list.Count - 1) ? $"@p{i}, " : $"@p{i}";
+            }
+            comm.CommandText = $"INSERT INTO {typeof(T).Name}s ({text}) VALUES ({parms})";
+
+            return comm;
+        }
+
 
         public override string ToString()
         {

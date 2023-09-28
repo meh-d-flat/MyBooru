@@ -20,8 +20,8 @@ namespace MyBooru.Services
 
         public interface IUploadService
         {
-            Task<string> UploadOneAsync(IFormFile file);
-            Task<List<string>> UploadManyAsync(ICollection<IFormFile> files);
+            Task<string> UploadOneAsync(IFormFile file, string username);
+            Task<List<string>> UploadManyAsync(ICollection<IFormFile> files, string username);
         }
 
         public interface IDownloadService

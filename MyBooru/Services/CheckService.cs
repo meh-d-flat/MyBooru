@@ -66,6 +66,9 @@ namespace MyBooru.Services
             	    Type VARCHAR(255) NOT NULL,
                     Path VARCHAR(255),
                     Thumb VARCHAR(255),
+                    Uploader VARCHAR(255),
+                    Timestamp INTEGER NOT NULL,
+                    FOREIGN KEY(Uploader) REFERENCES Users(Username) ON DELETE CASCADE,
                     CONSTRAINT HashAlreadyExists UNIQUE(Hash)
                 );
                 CREATE TABLE IF NOT EXISTS Tags (
@@ -75,8 +78,8 @@ namespace MyBooru.Services
                 CREATE TABLE IF NOT EXISTS MediasTags (
                     MediaID INTEGER,
                     TagID INTEGER,
-                    FOREIGN KEY(MediaID) REFERENCES Medias(ID),
-                    FOREIGN KEY(TagID) REFERENCES Tags(ID),
+                    FOREIGN KEY(MediaID) REFERENCES Medias(ID) ON DELETE CASCADE,
+                    FOREIGN KEY(TagID) REFERENCES Tags(ID) ON DELETE CASCADE,
                     CONSTRAINT OnlyOneOccurenceOfTagOnFile UNIQUE(MediaID, TagID)
                 );
                 CREATE TABLE IF NOT EXISTS Users(
@@ -87,6 +90,15 @@ namespace MyBooru.Services
                     PasswordSalt BLOB NOT NULL,                  
                     Role VARCHAR(255) NOT NULL,
                     RegisterDateTime INTEGER NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS Comments(
+                    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Text VARCHAR(255) NOT NULL,
+                    User VARCHAR(255),
+                    MediaID VARCHAR(255) NOT NULL,
+                    Timestamp INTEGER NOT NULL,
+                    FOREIGN KEY(User) REFERENCES Users(Username) ON DELETE CASCADE,
+                    FOREIGN KEY(MediaID) REFERENCES Medias(Hash) ON DELETE CASCADE
                 );
                 CREATE TABLE IF NOT EXISTS Tickets(
                     ID VARCHAR(255) PRIMARY KEY,

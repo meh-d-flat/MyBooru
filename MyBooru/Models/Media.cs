@@ -15,6 +15,8 @@ namespace MyBooru.Models
         //public byte[] Binary { get; set; }
         public string Path { get; set; }
         public string Thumb { get; set; }
+        public string Uploader { get; set; }
+        public int Timestamp { get; set; }
 
         public List<Tag> Tags { get; set; }
     }

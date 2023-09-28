@@ -50,7 +50,7 @@ namespace MyBooru.Services
                 var result = await x.ExecuteReaderAsync();
 
                 if (result.HasRows)
-                    tags = TableCell.MakeEntities<Tag>(TableCell.GetRows(result));
+                    tags = TableCell.MakeEntities<Tag>(await TableCell.GetRowsAsync(result));
 
                 return tags;
             }, "SELECT * FROM Tags WHERE Name LIKE @a");
@@ -106,7 +106,7 @@ namespace MyBooru.Services
                 x.Parameters.AddRange(parameters.ToArray());
                 var result = await x.ExecuteReaderAsync();
                 if (result.HasRows)
-                    medias = TableCell.MakeEntities<Media>(TableCell.GetRows(result));
+                    medias = TableCell.MakeEntities<Media>(await TableCell.GetRowsAsync(result));
                 return null;
             }, byTagsQuery);
             return medias;
@@ -162,7 +162,7 @@ namespace MyBooru.Services
             {
                 x.Parameters.AddRange(parameters.ToArray());
                 var result = await x.ExecuteReaderAsync();
-                return result.HasRows ? TableCell.MakeEntities<Tag>(TableCell.GetRows(result)) : null;
+                return result.HasRows ? TableCell.MakeEntities<Tag>(await TableCell.GetRowsAsync(result)) : tagList;
             }, $"SELECT * FROM Tags WHERE Name IN ({paramsForQuery})");
 
             if (delimited.Count > tagList.Count)

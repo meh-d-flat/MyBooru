@@ -9,6 +9,7 @@ using System.Security.Cryptography;
 using System.Threading.Tasks;
 using System.Drawing;
 using System.Net.Mime;
+using MyBooru.Models;
 
 namespace MyBooru.Services
 {
@@ -21,10 +22,11 @@ namespace MyBooru.Services
             config = configuration;
         }
 
-        public async Task<string> UploadOneAsync(IFormFile file)
+        public async Task<string> UploadOneAsync(IFormFile file, string username)
         {
             string fileHash = "empty";
             string webPath, webThumbPath;
+            var up = new Media();
 
             if (file == null)
                 return fileHash;
@@ -37,11 +39,9 @@ namespace MyBooru.Services
 
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             await connection.OpenAsync();
-            string addFileQuery = "INSERT INTO Medias ('Name', 'Hash', 'Type', 'Path', 'Thumb') VALUES (@a, @b, @c, @d, @e)";//('Name', 'Hash', 'Size', 'Type', 'Binary', 'Path') VALUES (@a, @b, @c, @d, @e, @f)
-
-            SQLiteCommand addFile = new SQLiteCommand(addFileQuery, connection);
-            addFile.Parameters.AddNew("@a", file.FileName, System.Data.DbType.String);
-            addFile.Parameters.AddNew("@c", file.ContentType, System.Data.DbType.String);
+            up.Name = file.FileName;
+            up.Type = file.ContentType;
+            up.Uploader = username;
 
             using (var stream = file.OpenReadStream())
             {
@@ -49,7 +49,7 @@ namespace MyBooru.Services
                 {
                     string hash = BitConverter.ToString(await SHA256.ComputeHashAsync(stream));
                     hash = hash.Replace("-", "");
-                    addFile.Parameters.AddNew("@b", hash, System.Data.DbType.String);
+                    up.Hash = hash;
                     fileHash = hash;
                 }
 
@@ -58,19 +58,22 @@ namespace MyBooru.Services
                 await Task.Run(() => Directory.CreateDirectory(directoryPath));
                 var path = Path.Combine(directoryPath, file.FileName);
                 webPath = path.Replace(@"\", "/");
-                addFile.Parameters.AddNew("@d", webPath, System.Data.DbType.String);
+                //addFile.Parameters.AddNew("@d", webPath, System.Data.DbType.String);
+                up.Path = webPath;
 
                 using (var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write))
                 {
                     await file.CopyToAsync(fileStream);
                 }
 
+                up.Timestamp = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+
                 var fullPath = Path.GetFullPath(path);
                 var thumbPath = Path.GetFullPath(path).Replace(Path.GetFileName(path), "thumbnail.jpeg");
                 webThumbPath = path.Replace(Path.GetFileName(path), "thumbnail.jpeg").Replace(@"\", "/");
                 var ffmpeg = new System.Diagnostics.Process();
                 ffmpeg.StartInfo.FileName = config["FFMpegExecPath"];
-                ffmpeg.StartInfo.Arguments = file.ContentType.Contains("video") ? $"-i \"{fullPath}\" -ss 00:00:00.001 -vframes 1 -vf scale=300:-1 \"{thumbPath}\"" : $"-i \"{fullPath}\" -vf scale=300:-1 \"{thumbPath}\"";
+                ffmpeg.StartInfo.Arguments = file.ContentType.Contains("video") ? $"-i \"{fullPath}\" -ss 00:00:00.000 -vframes 1 -vf scale=300:-1 \"{thumbPath}\"" : $"-i \"{fullPath}\" -vf scale=300:-1 \"{thumbPath}\"";
 
                 try
                 {
@@ -87,8 +90,9 @@ namespace MyBooru.Services
                     fileHash = "error: failed to create thumbnail";
                 }
 
-                addFile.Parameters.AddNew("@e", webThumbPath, System.Data.DbType.String);
+                up.Thumb = webThumbPath;
             }
+            var addFile = TableCell.MakeAddCommand<Media>(up,connection);
 
             try
             {
@@ -108,12 +112,12 @@ namespace MyBooru.Services
             return fileHash;
         }
 
-        public async Task<List<string>> UploadManyAsync(ICollection<IFormFile> files)
+        public async Task<List<string>> UploadManyAsync(ICollection<IFormFile> files, string username)
         {
             var hashes = new List<string>();
             foreach (var media in files)
             {
-                var hash = await UploadOneAsync(media);
+                var hash = await UploadOneAsync(media, username);
                 hashes.Add(hash);
             }
             return hashes;

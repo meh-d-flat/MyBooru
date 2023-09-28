@@ -104,7 +104,7 @@ namespace MyBooru.Services
             {
                 x.Parameters.AddNew("@a", sessionId, System.Data.DbType.String);
                 using var result = await x.ExecuteReaderAsync();
-                return result.HasRows ? TableCell.MakeEntities<Ticket>(TableCell.GetRows(result)) : null;
+                return result.HasRows ? TableCell.MakeEntities<Ticket>(await TableCell.GetRowsAsync(result)) : null;
             }, @"SELECT * FROM Tickets WHERE Username = (SELECT Username FROM Tickets WHERE ID = @a)");
         }
 
