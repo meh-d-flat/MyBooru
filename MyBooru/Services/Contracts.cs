@@ -60,5 +60,14 @@ namespace MyBooru.Services
         {
             Task<T> QueryTheDbAsync<T>(Func<SQLiteCommand, Task<T>> f, string query);
         }
+
+        public interface ICommentService
+        {
+            Task<int> PostCommentAsync(string username, string commentText, string pictureHash);
+            Task<Comment> GetCommentAsync(int id, CancellationToken ct);
+            Task<List<Comment>> GetCommentsOnMediaAsync(string pistureHash, CancellationToken ct);
+            Task<List<Comment>> GetMyCommentsAsync(string sessionId, string email, CancellationToken ct);
+            Task<int> RemoveCommentAsync(int id, string sessionId, string email);
+        }
     }
 }

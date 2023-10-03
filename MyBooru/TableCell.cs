@@ -133,5 +133,10 @@ namespace MyBooru
         {
             return collection.Add(new SQLiteParameter() { ParameterName = parameter, Value = val, DbType = type });
         }
+
+        public static int GetUnixTime(this DateTime dt)
+        {
+            return (int)(dt - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+        }
     }
 }

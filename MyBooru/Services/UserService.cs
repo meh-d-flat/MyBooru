@@ -93,7 +93,7 @@ namespace MyBooru.Services
                 x.Parameters.AddNew("@c",passwordHash, System.Data.DbType.Binary);
                 x.Parameters.AddNew("@d",passwordSalt, System.Data.DbType.Binary);
                 x.Parameters.AddNew("@e","User", System.Data.DbType.String);
-                x.Parameters.AddNew("@f",(int)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds, System.Data.DbType.Int32);
+                x.Parameters.AddNew("@f",DateTime.UtcNow.GetUnixTime(), System.Data.DbType.Int32);
                 await x.ExecuteNonQueryAsync();
                 return await GetUserAsync(username, ct);
             }, "INSERT INTO Users ('Username', 'Email', 'PasswordHash', 'PasswordSalt', 'Role', 'RegisterDateTime') VALUES (@a, @b, @c, @d, @e, @f)");

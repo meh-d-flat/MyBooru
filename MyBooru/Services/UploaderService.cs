@@ -65,7 +65,7 @@ namespace MyBooru.Services
                     await file.CopyToAsync(fileStream);
                 }
 
-                up.Timestamp = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+                up.Timestamp = DateTime.UtcNow.GetUnixTime();
 
                 var fullPath = Path.GetFullPath(path);
                 var thumbPath = Path.GetFullPath(path).Replace(Path.GetFileName(path), "thumbnail.jpeg");

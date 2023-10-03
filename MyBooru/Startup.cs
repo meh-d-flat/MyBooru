@@ -86,6 +86,7 @@ namespace MyBooru
             services.AddTransient<TagsService>();
             services.AddTransient<UserService>();
             services.AddTransient<Contracts.IQueryService, QueryService>();
+            services.AddTransient<CommentService>();
             services.AddMvc();
         }
 

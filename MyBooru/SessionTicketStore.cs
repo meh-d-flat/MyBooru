@@ -81,7 +81,7 @@ namespace MyBooru
                 x.Parameters.AddNew("@a", id, System.Data.DbType.String);
                 x.Parameters.AddNew("@b", ticket.Principal.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name).Value, System.Data.DbType.String);
                 x.Parameters.AddNew("@c", Serialize(ticket), System.Data.DbType.Binary);
-                x.Parameters.AddNew("@d", (int)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds, System.Data.DbType.Int32);
+                x.Parameters.AddNew("@d", DateTime.UtcNow.GetUnixTime(), System.Data.DbType.Int32);
                 x.Parameters.AddNew("@e", _contextAccessor.HttpContext.Request.Headers.FirstOrDefault(x => x.Key == "User-Agent").Value, System.Data.DbType.String);
                 x.Parameters.AddNew("@f", _contextAccessor.HttpContext.Connection.RemoteIpAddress, System.Data.DbType.String);
                 await x.ExecuteNonQueryAsync();

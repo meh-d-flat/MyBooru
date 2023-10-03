@@ -48,14 +48,12 @@ namespace MyBooru.Services
             {
                 removed = $"error: {ex.GetType()} {ex.Message}";
             }
-
-            removed = await queryService.QueryTheDbAsync<string>(async x => 
-            {
-                x.Parameters.AddNew("@a", id, System.Data.DbType.String);
-                await x.ExecuteNonQueryAsync();
-                return removed;
-            }, "DELETE FROM MediasTags WHERE MediaID = (SELECT ID FROM Medias WHERE Hash = @a);DELETE FROM Medias WHERE Hash = @a;");
-
+            //removed = await queryService.QueryTheDbAsync<string>(async x => 
+            //{
+            //    x.Parameters.AddNew("@a", id, System.Data.DbType.String);
+            //    await x.ExecuteNonQueryAsync();
+            //    return removed;
+            //}, "DELETE FROM MediasTags WHERE MediaID = (SELECT ID FROM Medias WHERE Hash = @a);DELETE FROM Medias WHERE Hash = @a;");
             return removed;
         }
     }
