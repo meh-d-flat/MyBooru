@@ -16,6 +16,7 @@ Grab the latest ffmpeg executables:
 
 -**Windows**:
 [From here](https://ffmpeg.org/download.html#build-windows)
+
 -**Linux**:
 [From here](https://johnvansickle.com/ffmpeg/)
 
@@ -25,7 +26,7 @@ Place them according to the graph below:
 MyBooru
 	└── ffmpeg
 	       └── bin
-			    ├── ffmpeg*
+                    ├── ffmpeg*
 	            └── ffprobe*
 ```
 
