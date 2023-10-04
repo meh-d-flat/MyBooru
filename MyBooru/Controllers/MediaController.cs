@@ -24,7 +24,7 @@ namespace MyBooru.Controllers
         public MediaController(Contracts.ICheckService checkService)
         {
             checker = checkService;
-            checker.DBSetupAsync();
+            //checker.DBSetupAsync();
         }
 
         public async Task<IActionResult> Get([FromServices] DownloadService downloader, CancellationToken ct, int page = 1, int reverse = 1)

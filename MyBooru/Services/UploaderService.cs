@@ -70,8 +70,9 @@ namespace MyBooru.Services
                 var fullPath = Path.GetFullPath(path);
                 var thumbPath = Path.GetFullPath(path).Replace(Path.GetFileName(path), "thumbnail.jpeg");
                 webThumbPath = path.Replace(Path.GetFileName(path), "thumbnail.jpeg").Replace(@"\", "/");
+                var ffmpegPaths = config.GetSection("FFMpegExecPath").Get<string[]>();
                 var ffmpeg = new System.Diagnostics.Process();
-                ffmpeg.StartInfo.FileName = config["FFMpegExecPath"];
+                ffmpeg.StartInfo.FileName = Ext.IsWindows() ? ffmpegPaths[0] : Ext.IsLinux() ? ffmpegPaths[1] : throw new Exception("No thumb creation support on macs yet"); 
                 ffmpeg.StartInfo.Arguments = file.ContentType.Contains("video") ? $"-i \"{fullPath}\" -ss 00:00:00.000 -vframes 1 -vf scale=300:-1 \"{thumbPath}\"" : $"-i \"{fullPath}\" -vf scale=300:-1 \"{thumbPath}\"";
 
                 try

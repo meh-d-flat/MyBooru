@@ -1,3 +1,6 @@
+#  FOR USE WITH LINUX CONTAINERS!
+#  OTHERWISE PLATFORM HELL'S GUARANTEED!
+
 #-------COMPILE--------
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /source

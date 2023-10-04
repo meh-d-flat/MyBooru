@@ -58,9 +58,7 @@ namespace MyBooru.Services
             bool created = false;
             using (SQLiteConnection connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value))
             {
-                //CONSTRAINTS NOT SUPPORTED THROUGH ALTER
-
-                await connection.OpenAsync();//Size INTEGER NOT NULL, Binary BLOB,
+                await connection.OpenAsync();
                 string createTableQuery =
                 @"PRAGMA foreign_keys=off;
                  BEGIN TRANSACTION;

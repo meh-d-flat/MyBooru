@@ -98,6 +98,8 @@ namespace MyBooru
                 app.UseDeveloperExceptionPage();
             }
 
+            app.ApplicationServices.GetRequiredService<Contracts.ICheckService>().DBSetupAsync();
+
             app.UseHttpsRedirection();
 
             if (!System.IO.Directory.Exists("Files"))
