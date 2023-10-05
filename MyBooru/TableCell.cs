@@ -7,6 +7,8 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
+using System.Collections;
 
 namespace MyBooru
 {
@@ -99,28 +101,52 @@ namespace MyBooru
             return entities;
         }
 
+        static bool IsNavigationProperty(PropertyInfo prop)
+        {
+            var pt = prop.PropertyType;
+            bool definedInThisDll = Type.GetType(pt.Name) != null & pt.IsClass & !pt.IsArray;
+            if (definedInThisDll)
+                return true;
+
+            bool genWithOneArg = pt.IsGenericType & pt.GetGenericArguments().Length == 1;
+            bool isGenCollection = genWithOneArg ? pt.GetInterfaces().Any(x => x != typeof(String) & (x == typeof(ICollection) | x == typeof(IEnumerable) | x == typeof(IList))) : false;
+            bool navCollection = isGenCollection ? Type.GetType(pt.GetGenericArguments()[0].Name) != null : false;
+            return navCollection;
+        }
+
         public static SQLiteCommand MakeAddCommand<T>(object src, SQLiteConnection conn)
         {
-            var list = new List<TableCell>();
+            if (src == null)
+                throw new ArgumentNullException("Source object parameter cannot be null");
+            
+            var srcType = src.GetType();
+            var srcProps = srcType.GetProperties();
+
+            if (srcType.GetCustomAttribute<CompilerGeneratedAttribute>() != null)
+            {
+                srcProps = srcProps.Intersect(typeof(T).GetProperties(), new PropInfoComparer()).ToArray();
+                if (srcProps.Length > 0)
+                    return null;
+            }
+
+            var comm = new SQLiteCommand(conn);
             var text = string.Empty;
             var parms = string.Empty;
-            src.GetType().GetProperties().ToList().ForEach(x =>
+
+            for (int i = 0; i < srcProps.Length; i++)
             {
-                if (!x.PropertyType.IsGenericType && x.Name.ToLower() != "id") // || !x.PropertyType.FullName.Contains('`') - yeah lol
-                    list.Add(new TableCell { Value = x.GetValue(src), ColumnName = x.Name });
-            });
-            var comm = new SQLiteCommand(conn);
-            for (int i = 0; i < list.Count; i++)
-            {
-                comm.Parameters.Add(new SQLiteParameter() { ParameterName = $"@p{i}", Value = list[i].Value });
-                text += (i < list.Count - 1) ? $"'{list[i].ColumnName}', " : $"'{list[i].ColumnName}'";
-                parms += (i < list.Count - 1) ? $"@p{i}, " : $"@p{i}";
+                if (!IsNavigationProperty(srcProps[i]) && srcProps[i].Name.ToLower() != "id" && Type.GetType(srcProps[i].Name) == null)
+                {
+                    comm.Parameters.Add(new SQLiteParameter() { ParameterName = $"@p{i}", Value = srcProps[i].GetValue(src) });
+                    text += (i < srcProps.Length - 1) ? $"'{srcProps[i].Name}', " : $"'{srcProps[i].Name}'";
+                    parms += (i < srcProps.Length - 1) ? $"@p{i}, " : $"@p{i}";
+
+                }
             }
             comm.CommandText = $"INSERT INTO {typeof(T).Name}s ({text}) VALUES ({parms})";
 
             return comm;
         }
-
 
         public override string ToString()
         {
@@ -148,5 +174,27 @@ namespace MyBooru
 
         public static bool IsLinux() =>
             RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
-}
+    }
+
+    public class PropInfoComparer : IEqualityComparer<PropertyInfo>
+    {
+        public bool Equals(PropertyInfo left, PropertyInfo right)
+        {
+            bool xNull = left == null;
+            bool yNull = right == null;
+            if (xNull | yNull)
+                throw new ArgumentNullException("Left, right or both parameters were null during PropertyInfo comparison");
+            return left.PropertyType == right.PropertyType && left.Name == right.Name;
+        }
+
+        public int GetHashCode(PropertyInfo prop)
+        {
+            if (prop == null)
+                return 0;
+
+            int hashPropName = prop.Name == null ? 0 : prop.Name.GetHashCode();
+            int hashPropType = prop.GetType().GetHashCode();
+            return hashPropName ^ hashPropType;
+        }
+    }
 }

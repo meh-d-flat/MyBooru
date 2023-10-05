@@ -21,7 +21,14 @@ namespace MyBooru.Services
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             await connection.OpenAsync();
             using var command = new SQLiteCommand(query, connection);
-            output = await f(command);
+            try
+            {
+                output = await f(command);
+            }
+            catch (SQLiteException ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
             await connection.CloseAsync();
             return output;
         }

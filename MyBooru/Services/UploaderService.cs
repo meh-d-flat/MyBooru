@@ -27,6 +27,8 @@ namespace MyBooru.Services
             string fileHash = "empty";
             string webPath, webThumbPath;
             var up = new Media();
+            var ffmpegPaths = config.GetSection("FFMpegExecPath").Get<List<string>>();
+            var ffmpegPath = Ext.IsWindows() ? ffmpegPaths[0] : ffmpegPaths[1];
 
             if (file == null)
                 return fileHash;
@@ -34,7 +36,7 @@ namespace MyBooru.Services
             if (!(file.ContentType.Contains("image") | file.ContentType.Contains("video")))
                 return fileHash;
 
-            if (!File.Exists(config["FFMpegExecPath"]))
+            if (!File.Exists(ffmpegPath))
                 return "error: ffmpeg not found";
 
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
@@ -70,9 +72,8 @@ namespace MyBooru.Services
                 var fullPath = Path.GetFullPath(path);
                 var thumbPath = Path.GetFullPath(path).Replace(Path.GetFileName(path), "thumbnail.jpeg");
                 webThumbPath = path.Replace(Path.GetFileName(path), "thumbnail.jpeg").Replace(@"\", "/");
-                var ffmpegPaths = config.GetSection("FFMpegExecPath").Get<string[]>();
                 var ffmpeg = new System.Diagnostics.Process();
-                ffmpeg.StartInfo.FileName = Ext.IsWindows() ? ffmpegPaths[0] : Ext.IsLinux() ? ffmpegPaths[1] : throw new Exception("No thumb creation support on macs yet"); 
+                ffmpeg.StartInfo.FileName = ffmpegPath;
                 ffmpeg.StartInfo.Arguments = file.ContentType.Contains("video") ? $"-i \"{fullPath}\" -ss 00:00:00.000 -vframes 1 -vf scale=300:-1 \"{thumbPath}\"" : $"-i \"{fullPath}\" -vf scale=300:-1 \"{thumbPath}\"";
 
                 try
@@ -100,6 +101,7 @@ namespace MyBooru.Services
             }
             catch (SQLiteException ex)
             {
+                Console.WriteLine(ex.Message);
                 await Task.Run(() => Directory.Delete(Path.GetDirectoryName(webPath), true));
                 fileHash = "error: failed to upload";
             }
