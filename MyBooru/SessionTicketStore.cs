@@ -44,7 +44,7 @@ namespace MyBooru
             {
                 x.Parameters.AddNew("@a", Serialize(ticket), System.Data.DbType.Binary);
                 x.Parameters.AddNew("@b", key, System.Data.DbType.String);
-                x.Parameters.AddNew("@c", (int)(DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds, System.Data.DbType.Int32);
+                x.Parameters.AddNew("@c", DateTime.UtcNow.GetUnixTime(), System.Data.DbType.Int32);
                 await x.ExecuteNonQueryAsync();
                 return Task.CompletedTask;
             }, removeTicketQuery);

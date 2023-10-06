@@ -26,7 +26,7 @@ namespace MyBooru.Services
             string removed = "deleted";
             Media file = null;
 
-            await queryService.QueryTheDbAsync<Media>(async x => 
+            await queryService.QueryTheDbAsync<string>(async x => 
             {
                 x.Parameters.AddNew("@a", id, System.Data.DbType.String);
                 var result = await x.ExecuteReaderAsync();
@@ -38,7 +38,7 @@ namespace MyBooru.Services
                 }
 
                 return null;
-            }, "SELECT * FROM Medias WHERE Hash = @a");
+            }, "SELECT Path FROM Medias WHERE Hash = @a");
 
             try
             {
@@ -48,12 +48,12 @@ namespace MyBooru.Services
             {
                 removed = $"error: {ex.GetType()} {ex.Message}";
             }
-            //removed = await queryService.QueryTheDbAsync<string>(async x => 
-            //{
-            //    x.Parameters.AddNew("@a", id, System.Data.DbType.String);
-            //    await x.ExecuteNonQueryAsync();
-            //    return removed;
-            //}, "DELETE FROM MediasTags WHERE MediaID = (SELECT ID FROM Medias WHERE Hash = @a);DELETE FROM Medias WHERE Hash = @a;");
+            removed = await queryService.QueryTheDbAsync<string>(async x =>
+            {
+                x.Parameters.AddNew("@a", id, System.Data.DbType.String);
+                await x.ExecuteNonQueryAsync();
+                return removed;
+            }, "DELETE FROM MediasTags WHERE MediaID = (SELECT ID FROM Medias WHERE Hash = @a);DELETE FROM Medias WHERE Hash = @a;");
             return removed;
         }
     }

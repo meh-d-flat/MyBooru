@@ -47,7 +47,7 @@ namespace MyBooru.Services
 
         public interface IUserService
         {
-            Task<User> PersistUserAsync(string username, string password, string email, CancellationToken ct);
+            Task<int> PersistUserAsync(string username, string password, string email, CancellationToken ct);
             Task<User> GetUserAsync(string username, CancellationToken ct);
             Task<bool> CheckEmailAsync(string email);
             Task<bool> CheckUsernameAsync(string username);

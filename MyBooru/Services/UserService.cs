@@ -75,8 +75,9 @@ namespace MyBooru.Services
             }, "SELECT * FROM Users WHERE Username = @a");
         }
 
-        public async Task<User> PersistUserAsync(string username, string password, string email, CancellationToken ct)
+        public async Task<int> PersistUserAsync(string username, string password, string email, CancellationToken ct)
         {
+            int result = -1;
             byte[] passwordHash = new byte[2];
             byte[] passwordSalt = new byte[2];
 
@@ -85,18 +86,22 @@ namespace MyBooru.Services
                 passwordSalt = hmac.Key;
                 passwordHash = await hmac.ComputeHashAsync(new MemoryStream(Encoding.UTF8.GetBytes(password)));
             }
-
-            return await queryService.QueryTheDbAsync<User>(async x =>
+            using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
+            await queryService.QueryTheDbAsync<Task>(async x => 
             {
-                x.Parameters.AddNew("@a",username, System.Data.DbType.String);
-                x.Parameters.AddNew("@b",email, System.Data.DbType.String);
-                x.Parameters.AddNew("@c",passwordHash, System.Data.DbType.Binary);
-                x.Parameters.AddNew("@d",passwordSalt, System.Data.DbType.Binary);
-                x.Parameters.AddNew("@e","User", System.Data.DbType.String);
-                x.Parameters.AddNew("@f",DateTime.UtcNow.GetUnixTime(), System.Data.DbType.Int32);
-                await x.ExecuteNonQueryAsync();
-                return await GetUserAsync(username, ct);
-            }, "INSERT INTO Users ('Username', 'Email', 'PasswordHash', 'PasswordSalt', 'Role', 'RegisterDateTime') VALUES (@a, @b, @c, @d, @e, @f)");
+                x = TableCell.MakeAddCommand<User>(new User()
+                {
+                    Username = username,
+                    Email = email,
+                    PasswordHash = passwordHash,
+                    PasswordSalt = passwordSalt,
+                    Role = "User",
+                    RegisterDateTime = DateTime.UtcNow.GetUnixTime()
+                }, connection);
+
+                return Task.CompletedTask;
+            }, "");
+            return 1;
         }
 
         public async Task<List<Ticket>> GetUserSessionsAsync(string sessionId, CancellationToken ct)

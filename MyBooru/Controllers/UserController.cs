@@ -72,7 +72,7 @@ namespace MyBooru.Controllers
             if (await userService.CheckEmailAsync(email))
                 return BadRequest("Username/Email already registered!");
 
-            var user = await userService.PersistUserAsync(username, password, email, ct);
+            await userService.PersistUserAsync(username, password, email, ct);
 
             return await this.SignIn(userService, username, password, ct);
         }
