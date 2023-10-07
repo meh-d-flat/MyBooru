@@ -24,25 +24,17 @@ namespace MyBooru.Services
         public async Task<string> RemoveAsync(string id)
         {
             string removed = "deleted";
-            Media file = null;
+            string path = "\"/";
 
-            await queryService.QueryTheDbAsync<string>(async x => 
+            path = await queryService.QueryTheDbAsync<string>(async x => 
             {
                 x.Parameters.AddNew("@a", id, System.Data.DbType.String);
-                var result = await x.ExecuteReaderAsync();
-
-                if (result.HasRows)
-                {
-                    while (await result.ReadAsync())
-                        file = TableCell.MakeEntity<Media>(TableCell.GetRow(result));
-                }
-
-                return null;
+                return Convert.ToString(await x.ExecuteScalarAsync());
             }, "SELECT Path FROM Medias WHERE Hash = @a");
 
             try
             {
-                await Task.Run(() => Directory.Delete(Path.GetFullPath(file.Path).Replace(Path.GetFileName(file.Path), ""), true));
+                await Task.Run(() => Directory.Delete(Path.GetFullPath(path).Replace(Path.GetFileName(path), string.Empty), true));
             }
             catch (Exception ex)
             {
@@ -53,7 +45,7 @@ namespace MyBooru.Services
                 x.Parameters.AddNew("@a", id, System.Data.DbType.String);
                 await x.ExecuteNonQueryAsync();
                 return removed;
-            }, "DELETE FROM MediasTags WHERE MediaID = (SELECT ID FROM Medias WHERE Hash = @a);DELETE FROM Medias WHERE Hash = @a;");
+            }, "DELETE FROM Medias WHERE Hash = @a;");
             return removed;
         }
     }

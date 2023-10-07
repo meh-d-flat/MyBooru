@@ -44,18 +44,12 @@ namespace MyBooru.Services
 
         public async Task<List<Tag>> SearchTagAsync(string name, CancellationToken ct)
         {
-            List<Tag> tags = null;
-            await queryService.QueryTheDbAsync<List<Tag>>(async x => 
+            return await queryService.QueryTheDbAsync<List<Tag>>(async x => 
             {
                 x.Parameters.AddNew("@a", $"%{name}%", System.Data.DbType.String);
                 var result = await x.ExecuteReaderAsync(ct);
-
-                if (result.HasRows)
-                    tags = TableCell.MakeEntities<Tag>(await TableCell.GetRowsAsync(result));
-
-                return tags;
+                return TableCell.MakeEntities<Tag>(await TableCell.GetRowsAsync(result));
             }, "SELECT * FROM Tags WHERE Name LIKE @a");
-            return tags;
         }
 
         public async Task<int> MediasCountAsync(string tags, CancellationToken ct)
@@ -91,7 +85,7 @@ namespace MyBooru.Services
             string byTagsQuery =
                 $@"CREATE TEMP TABLE Search(tag);
                 INSERT INTO Search VALUES {tagQuery};
-                SELECT *
+                SELECT Thumb, Hash
                 FROM Medias
                 JOIN MediasTags on Medias.ID = MediasTags.MediaID
                 JOIN Tags on Tags.ID = MediasTags.TagID
@@ -101,16 +95,13 @@ namespace MyBooru.Services
                 {(reverse == 1 ? "ORDER BY Medias.Id DESC" : "")}
                 LIMIT 20 OFFSET {20 * (page - 1)};";
 
-            await queryService.QueryTheDbAsync<List<Media>>(async x => 
+            return await queryService.QueryTheDbAsync<List<Media>>(async x => 
             {
                 x.Parameters.Add(new SQLiteParameter { ParameterName = "@a", Value = parameters.Count, DbType = System.Data.DbType.Int32 });
                 x.Parameters.AddRange(parameters.ToArray());
                 var result = await x.ExecuteReaderAsync(ct);
-                if (result.HasRows)
-                    medias = TableCell.MakeEntities<Media>(await TableCell.GetRowsAsync(result));
-                return null;
+                return TableCell.MakeEntities<Media>(await TableCell.GetRowsAsync(result));
             }, byTagsQuery);
-            return medias;
         }
 
         public List<SQLiteParameter> MakeParamsList(string tags)
@@ -188,15 +179,7 @@ namespace MyBooru.Services
             mediaId = await queryService.QueryTheDbAsync<int>(async x => 
             {
                 x.Parameters.AddNew("@a", id, System.Data.DbType.String);
-                var result = await x.ExecuteReaderAsync();
-                if (result.HasRows)
-                {
-                    while (await result.ReadAsync())
-                        mediaId = result.GetInt32(0);
-                    return mediaId;
-                }
-                else
-                    return -1;
+                return Convert.ToInt32(await x.ExecuteScalarAsync());
             }, "SELECT Id FROM Medias WHERE Hash = @a");
 
             string values = "";

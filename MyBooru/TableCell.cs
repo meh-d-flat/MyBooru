@@ -26,89 +26,121 @@ namespace MyBooru
 
         TableCell() { }
 
-        static Dictionary<Type, Func<SQLiteDataReader, int, object>> acts
-            = new Dictionary<Type, Func<SQLiteDataReader, int, object>>()
+        static Dictionary<Type, Func<SQLiteDataReader, int, object>> acts = new()
         {
             { typeof(Int32), (x,y) => x.GetInt32(y) },
             { typeof(String), (x,y) => x.GetString(y) }
         };
 
 
-        public static TableCell[] GetRow(SQLiteDataReader sqlReader)
+        public static async Task<TableCell[]> GetRowAsync(SQLiteDataReader sqlReader)
         {
-            var cells = new TableCell[sqlReader.FieldCount];
-            if (cells.Length == 1)
-            {
-                cells[0] = new TableCell()
-                {
-                    ColumnName = sqlReader.GetName(0),
-                    Type = sqlReader.GetFieldType(0),
-                    Value = sqlReader[0]
-                };
-                return cells;
-            }
+            if (!sqlReader.HasRows)
+                return null;
 
-            for (int i = 0; i < cells.Length; i++)
+            var cells = new TableCell[sqlReader.FieldCount];
+            if (await sqlReader.ReadAsync())
             {
-                cells[i] = new TableCell()
+                for (int i = 0; i < cells.Length; i++)
                 {
-                    ColumnName = sqlReader.GetName(i),
-                    Type = sqlReader.GetFieldType(i),
-                    Value = sqlReader[i]
-                };
+                    cells[i] = new TableCell()
+                    {
+                        ColumnName = sqlReader.GetName(i),
+                        Type = sqlReader.GetFieldType(i),
+                        Value = sqlReader[i]
+                    };
+                }
             }
+            await sqlReader.CloseAsync();
+            await sqlReader.DisposeAsync();
             return cells;
         }
 
-        public static TableCell[] GetRow(System.Data.Common.DbDataReader sqlReader)
+        public static async Task<TableCell[]> GetRowAsync(System.Data.Common.DbDataReader sqlReader)
         {
-            var cells = new TableCell[sqlReader.FieldCount];
-            if(cells.Length == 1)
-            {
-                cells[0] = new TableCell()
-                {
-                    ColumnName = sqlReader.GetName(0),
-                    Type = sqlReader.GetFieldType(0),
-                    Value = sqlReader[0]
-                };
-                return cells;
-            }
+            if (!sqlReader.HasRows)
+                return null;
 
-            for (int i = 0; i < cells.Length; i++)
+            var cells = new TableCell[sqlReader.FieldCount];
+            if (await sqlReader.ReadAsync())
             {
-                cells[i] = new TableCell()
+                for (int i = 0; i < cells.Length; i++)
                 {
-                    ColumnName = sqlReader.GetName(i),
-                    Type = sqlReader.GetFieldType(i),
-                    Value = sqlReader[i]
-                };
+                    cells[i] = new TableCell()
+                    {
+                        ColumnName = sqlReader.GetName(i),
+                        Type = sqlReader.GetFieldType(i),
+                        Value = sqlReader[i]
+                    };
+                }
             }
+            await sqlReader.CloseAsync();
+            await sqlReader.DisposeAsync();
             return cells;
         }
 
         public async static Task<List<TableCell[]>> GetRowsAsync(SQLiteDataReader sqlReader)
         {
+            if (!sqlReader.HasRows)
+                return null;
+
             var rows = new List<TableCell[]>();
             while (await sqlReader.ReadAsync())
-                rows.Add(GetRow(sqlReader));
-
+            {
+                var cells = new TableCell[sqlReader.FieldCount];
+                for (int i = 0; i < cells.Length; i++)
+                {
+                    cells[i] = new TableCell()
+                    {
+                        ColumnName = sqlReader.GetName(i),
+                        Type = sqlReader.GetFieldType(i),
+                        Value = sqlReader[i]
+                    };
+                }
+                rows.Add(cells);
+            }
+            await sqlReader.CloseAsync();
+            await sqlReader.DisposeAsync();
             return rows;
         }
 
         public async static Task<List<TableCell[]>> GetRowsAsync(System.Data.Common.DbDataReader sqlReader)
         {
+            if (!sqlReader.HasRows)
+                return null;
+
             var rows = new List<TableCell[]>();
             while (await sqlReader.ReadAsync())
-                rows.Add(GetRow(sqlReader));
+            {
+                var cells = new TableCell[sqlReader.FieldCount];
+                for (int i = 0; i < cells.Length; i++)
+                {
+                    cells[i] = new TableCell()
+                    {
+                        ColumnName = sqlReader.GetName(i),
+                        Type = sqlReader.GetFieldType(i),
+                        Value = sqlReader[i]
+                    };
+                }
+                rows.Add(cells);
+            }
 
+            await sqlReader.CloseAsync();
+            await sqlReader.DisposeAsync();
             return rows;
         }
 
         public static T MakeEntity<T>(TableCell[] cells) where T : class
         {
+            if (cells == null)
+                throw new ArgumentNullException("'TableCell[] cells' parameter was null");
+
+            if (cells.Length == 0)
+                throw new InvalidOperationException("Sequence contains no elements: passed TableCell[] was empty");
+
             object instance;
             //TODO: optimise for primitives
-            if (!TableCell.IsUserDefined<T>())
+            if (!TableCell.IsUserDefined<T>() & cells.Length == 1)
             {
                 instance = typeof(T) == typeof(String) ? string.Empty : default(T);
                 instance = Convert.ChangeType(cells[0].Value, cells[0].Type);
@@ -139,6 +171,9 @@ namespace MyBooru
 
         public static List<T> MakeEntities<T>(List<TableCell[]> rows) where T : class
         {
+            if(rows == null)
+                return null;
+
             var entities = new List<T>();
             for (int i = 0; i < rows.Count; i++)
                 entities.Add(MakeEntity<T>(rows[i]));
@@ -167,16 +202,16 @@ namespace MyBooru
             return navCollection;
         }
 
-        public static SQLiteCommand MakeAddCommand<T>(object src, SQLiteConnection conn)
+        public static SQLiteCommand MakeAddCommand<T>(object source, SQLiteConnection conn)
         {
-            if (src == null)
+            if (source == null)
                 throw new ArgumentNullException("Source object parameter cannot be null");
 
             //TODO: handle collections and arrays of model types (heh)
             if (!TableCell.IsUserDefined<T>())
                 return null;
-            
-            var srcType = src.GetType();
+
+            var srcType = source.GetType();
             var srcProps = srcType.GetProperties();
 
             if (srcType.GetCustomAttribute<CompilerGeneratedAttribute>() != null)
@@ -198,7 +233,7 @@ namespace MyBooru
 
                 if (!IsNavigationProperty(srcProps[i]) && srcProps[i].Name.ToLower() != "id" && Type.GetType(srcProps[i].Name) == null)
                 {
-                    comm.Parameters.Add(new SQLiteParameter() { ParameterName = $"@p{i}", Value = srcProps[i].GetValue(src) });
+                    comm.Parameters.Add(new SQLiteParameter() { ParameterName = $"@p{i}", Value = srcProps[i].GetValue(source) });
                     text += $"'{srcProps[i].Name}', ";
                     parms += $"@p{i}, ";
 
@@ -229,6 +264,11 @@ namespace MyBooru
         public static int GetUnixTime(this DateTime dt)
         {
             return (int)(dt - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+        }
+
+        public static bool IsSQLReaderBusy(this SQLiteCommand c)
+        {
+            return c.GetType().GetField("_activeReader", BindingFlags.Instance) != null;
         }
 
         public static bool IsWindows() =>

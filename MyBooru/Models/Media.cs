@@ -17,5 +17,6 @@ namespace MyBooru.Models
         public int Timestamp { get; set; }
 
         public List<Tag> Tags { get; set; }
+        public List<Comment> Comments { get; set; }
     }
 }

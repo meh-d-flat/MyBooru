@@ -49,7 +49,7 @@ namespace MyBooru.Controllers
         public async Task<IActionResult> Details([FromServices] DownloadService downloader, [FromQuery] string id, CancellationToken ct)
         {
             if (!await checker.CheckMediaExistsAsync(id, ct))
-                return BadRequest();
+                return NotFound();
 
             var result = await downloader.DownloadAsync(id, ct);
             return new JsonResult(result);
@@ -100,7 +100,7 @@ namespace MyBooru.Controllers
         public async Task<IActionResult> Download([FromServices] DownloadService downloader, string id, CancellationToken ct, bool dl = false)
         {
             if (!await checker.CheckMediaExistsAsync(id, ct))
-                return StatusCode(400);
+                return NotFound();
 
             var result = await downloader.DownloadAsync(id, ct);
             if (result != null)

@@ -9,5 +9,7 @@ namespace MyBooru.Models
         public string User { get; set; }
         public int Timestamp { get; set; }
         public string MediaID { get; set; }
+
+        public Media Media { get; set; }
     }
 }

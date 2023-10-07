@@ -28,6 +28,8 @@ namespace MyBooru.Services
             catch (SQLiteException ex)
             {
                 Console.WriteLine(ex.Message);
+                await command.DisposeAsync();
+                await connection.CloseAsync();
             }
             await connection.CloseAsync();
             return output;

@@ -30,30 +30,25 @@ namespace MyBooru.Services
             {
                 x.Parameters.AddNew("@a", id, System.Data.DbType.String);
                 var result = await x.ExecuteReaderAsync(ct);
-                if (result.HasRows)
-                {
-                    while (await result.ReadAsync())
-                        file = TableCell.MakeEntity<Media>(TableCell.GetRow(result));
-
-                    return file;
-                }
-                else
-                    return null;
+                return TableCell.MakeEntity<Media>(await TableCell.GetRowAsync(result));
             }, "SELECT * FROM Medias WHERE Hash = @a");
 
-            var _ = await queryService.QueryTheDbAsync<List<Tag>>(async x => 
+            file.Tags = await queryService.QueryTheDbAsync<List<Tag>>(async x => 
             {
                 x.Parameters.AddNew("@a", id, System.Data.DbType.String);
                 var result = await x.ExecuteReaderAsync(ct);
-
-                if (result.HasRows)
-                    file.Tags = TableCell.MakeEntities<Tag>(await TableCell.GetRowsAsync(result));
-
-                return null;
-            }, @"SELECT Tags.ID, Tags.Name FROM Medias 
+                return TableCell.MakeEntities<Tag>(await TableCell.GetRowsAsync(result));
+            }, @"SELECT Tags.Name FROM Medias 
                 JOIN MediasTags ON Medias.id = MediasTags.MediaID
                 JOIN Tags ON Tags.ID = MediasTags.TagID
                 Where Hash = @a;");
+
+            file.Comments = await queryService.QueryTheDbAsync<List<Comment>>(async x =>
+            {
+                x.Parameters.AddNew("@a", id, System.Data.DbType.String);
+                var result = await x.ExecuteReaderAsync(ct);
+                return TableCell.MakeEntities<Comment>(await TableCell.GetRowsAsync(result));
+            },"SELECT Text, User, Timestamp FROM Comments WHERE MediaID = @a");
 
             return file;
         }
@@ -65,7 +60,7 @@ namespace MyBooru.Services
                 x.Parameters.AddNew("@a", page, System.Data.DbType.Int32);
                 var result = await x.ExecuteReaderAsync(ct);
                 return result.HasRows ? TableCell.MakeEntities<Media>(await TableCell.GetRowsAsync(result)) : new List<Media>();
-            }, "SELECT * FROM Medias" + (reverse == 1 ? " ORDER BY Id DESC " : " ") + $"LIMIT 20 OFFSET {20 * (page - 1)}");
+            }, "SELECT Thumb, Hash FROM Medias" + (reverse == 1 ? " ORDER BY Id DESC " : " ") + $"LIMIT 20 OFFSET {20 * (page - 1)}");
         }
     }
 }

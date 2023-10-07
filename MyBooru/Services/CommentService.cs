@@ -29,7 +29,7 @@ namespace MyBooru.Services
             {
                 x.Parameters.AddNew("@p", pistureHash, System.Data.DbType.String);
                 var result = await x.ExecuteReaderAsync(ct);
-                return result.HasRows ? TableCell.MakeEntities<Comment>(await TableCell.GetRowsAsync(result)) : comments;
+                return TableCell.MakeEntities<Comment>(await TableCell.GetRowsAsync(result));
             }, "SELECT * FROM Comments WHERE MediaID = @p");
         }
 
@@ -42,8 +42,8 @@ namespace MyBooru.Services
                 x.Parameters.AddNew("@a", sessionId, System.Data.DbType.String);
                 x.Parameters.AddNew("@b", email, System.Data.DbType.String);
                 var result = await x.ExecuteReaderAsync();
-                return result.HasRows ? TableCell.MakeEntities<Comment>(await TableCell.GetRowsAsync(result)) : comments;
-            }, @"SELECT * FROM Comments WHERE User = (SELECT Username From Tickets WHERE ID = @a) AND (SELECT Username From Users WHERE Email = @b)");
+                return TableCell.MakeEntities<Comment>(await TableCell.GetRowsAsync(result));
+            }, "SELECT * FROM Comments WHERE User = (SELECT Username From Tickets WHERE ID = @a) AND (SELECT Username From Users WHERE Email = @b)");
         }
 
         public async Task<Comment> GetCommentAsync(int id, CancellationToken ct)
@@ -52,15 +52,7 @@ namespace MyBooru.Services
             return await queryService.QueryTheDbAsync<Comment>(async x => {
                 x.Parameters.AddNew("@p", id, System.Data.DbType.Int32);
                 var result = await x.ExecuteReaderAsync(ct);
-                if (result.HasRows)
-                {
-                    while (await result.ReadAsync())
-                        comment = TableCell.MakeEntity<Comment>(TableCell.GetRow(result));
-
-                    return comment;
-                }
-                else
-                    return null;
+                return TableCell.MakeEntity<Comment>(await TableCell.GetRowAsync(result));
             }, "SELECT * FROM Comments WHERE ID = @p");
         }
 

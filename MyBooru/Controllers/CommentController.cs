@@ -60,7 +60,7 @@ namespace MyBooru.Controllers
                 id,
                 HttpContext.User.FindFirstValue("uniqueId"),
                 HttpContext.User.FindFirstValue(ClaimTypes.Email));
-            return result > 0 ? Ok(result) : BadRequest();
+            return result > 0 ? Ok(result) : StatusCode(500);
         }
     }
 }

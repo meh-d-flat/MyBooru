@@ -1,6 +1,6 @@
 ﻿@using Microsoft.Extensions.Configuration;
 @inject IConfiguration config
-@model System.Int32
+@model (int page, int reverse)
 
 @{
     ViewBag.Title = "Index";
@@ -17,7 +17,8 @@
             $.ajax({
                 url: "@config["ApiHost"]/api/media",
                 data: {
-                    page: @Model
+                    page: @Model.page,
+                    reverse: @Model.reverse
                 },
                 success: function (response) {
                     for (var i = 0; i < response.items.length; i++) {
@@ -25,15 +26,15 @@
                     }
 
                     if (response.prevPage) {
-                        var currentPage = @Model;
-                        var prevPage = @Model - 1;
-                        $("#pages").append("<a href='/gallery?page=" + prevPage + "'>Previous</a>")
+                        var currentPage = @Model.page;
+                        var prevPage = @Model.page - 1;
+                        $("#pages").append("<a href='/gallery?page=" + prevPage + "&reverse=" + @Model.reverse + "'>Next</a>");
                     }
 
                     if (response.nextPage) {
-                        var currentPage = @Model;
-                        var nextPage = @Model + 1;
-                        $("#pages").append("<a href='/gallery?page=" + nextPage + "'>Next</a>")
+                        var currentPage = @Model.page;
+                        var nextPage = @Model.page + 1;
+                        $("#pages").append("<a href='/gallery?page=" + nextPage + "&reverse=" + @Model.reverse + "'>Next</a>");
                     }
                 }
             });

@@ -60,8 +60,8 @@ namespace MyBooru
 
                 if (result.HasRows)
                 {
-                    while (await result.ReadAsync())
-                        ticket = TableCell.MakeEntity<Ticket>(TableCell.GetRow(result));
+                    //while (await result.ReadAsync())
+                        ticket = TableCell.MakeEntity<Ticket>(await TableCell.GetRowAsync(result));
                     return ticket;
                 }
                 else 

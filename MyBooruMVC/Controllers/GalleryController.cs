@@ -13,9 +13,9 @@ namespace MyBooruMVC.Controllers
     public class GalleryController : Controller
     {
         [Route("")]
-        public ActionResult Index(int page = 1)
+        public ActionResult Index(int page = 1, int reverse = 1)
         {
-            return View(model: page);
+            return View(model: (page, reverse));
         }
 
         [Route("picture")]
@@ -31,12 +31,12 @@ namespace MyBooruMVC.Controllers
         }
 
         [Route("search")]
-        public ActionResult Search(string tags, int page = 1)
+        public ActionResult Search(string tags, int page = 1, int reverse = 1)
         {
             if (tags.EndsWith(","))
                 tags = tags.Remove(tags.Length - 1, 1);
 
-            return View(model: (tags, page));
+            return View(model: (tags, page, reverse));
         }
     }
 }

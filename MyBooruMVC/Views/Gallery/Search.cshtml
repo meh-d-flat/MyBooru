@@ -1,6 +1,6 @@
 ﻿@using Microsoft.Extensions.Configuration;
 @inject IConfiguration config
-@model (string id, int page)
+@model (string tags, int page, int reverse)
 @{
     ViewBag.Title = "Search";
     Layout = "_Layout";
@@ -25,8 +25,9 @@
                 url: "@config["ApiHost"]/api/media/byTag",
                 method: "GET",
                 data: {
-                    tags: '@Model.id',
-                    page: @Model.page
+                    tags: '@Model.tags',
+                    page: @Model.page,
+                    reverse: @Model.reverse
                 },
                 success: function (response) {
                     if (response.items.length == 0) {
@@ -43,13 +44,13 @@
                     if (response.prevPage) {
                         var currentPage = @Model.page;
                         var prevPage = @Model.page - 1;
-                        $("#pages").append("<a href='/gallery?page=" + prevPage + "'>Previous</a>")
+                        $("#pages").append("<a href='/gallery/search?tags=" + @Model.tags + "&page=" + prevPage + "&reverse=" + @Model.reverse + "'>Previous</a>")
                     }
 
                     if (response.nextPage) {
                         var currentPage = @Model.page;
                         var nextPage = @Model.page + 1;
-                        $("#pages").append("<a href='/gallery?page=" + nextPage + "'>Next</a>")
+                        $("#pages").append("<a href='/gallery/search?tags=" + @Model.tags + "&page=" + prevPage + "&reverse=" + @Model.reverse + "'>Next</a>")
                     }
                 }
             })

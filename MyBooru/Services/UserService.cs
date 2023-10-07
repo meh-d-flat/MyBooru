@@ -64,14 +64,7 @@ namespace MyBooru.Services
                 var user = new User();
                 x.Parameters.AddNew("@a", username, System.Data.DbType.String);
                 using var result = await x.ExecuteReaderAsync(ct);
-                if (result.HasRows)
-                {
-                    while (await result.ReadAsync(ct))
-                        user = TableCell.MakeEntity<User>(TableCell.GetRow(result));
-                    return user;
-                }
-                else
-                    return null;
+                return TableCell.MakeEntity<User>(await TableCell.GetRowAsync(result));
             }, "SELECT * FROM Users WHERE Username = @a");
         }
 
@@ -110,7 +103,7 @@ namespace MyBooru.Services
             {
                 x.Parameters.AddNew("@a", sessionId, System.Data.DbType.String);
                 using var result = await x.ExecuteReaderAsync(ct);
-                return result.HasRows ? TableCell.MakeEntities<Ticket>(await TableCell.GetRowsAsync(result)) : null;
+                return TableCell.MakeEntities<Ticket>(await TableCell.GetRowsAsync(result));
             }, @"SELECT * FROM Tickets WHERE Username = (SELECT Username FROM Tickets WHERE ID = @a)");
         }
 
