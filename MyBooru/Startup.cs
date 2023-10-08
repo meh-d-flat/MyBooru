@@ -79,14 +79,13 @@ namespace MyBooru
             services.AddSingleton<ITicketStore, SessionTicketStore>();
             services.AddSingleton<LimitService>();
             services.AddTransient<Contracts.ICheckService, CheckService>();
-            services.AddTransient<UploadService>();
-            services.AddTransient<DownloadService>();
-            services.AddTransient<RemoveService>();
+            services.AddTransient<Contracts.IUploadService, UploadService>();
+            services.AddTransient<Contracts.IDownloadService, DownloadService>();
+            services.AddTransient<Contracts.IRemoveService, RemoveService>();
             services.AddTransient<Contracts.ITagsService, TagsService>();
-            services.AddTransient<TagsService>();
-            services.AddTransient<UserService>();
+            services.AddTransient<Contracts.IUserService, UserService>();
             services.AddTransient<Contracts.IQueryService, QueryService>();
-            services.AddTransient<CommentService>();
+            services.AddTransient<Contracts.ICommentService, CommentService>();
             services.AddMvc();
         }
 

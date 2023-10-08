@@ -21,16 +21,22 @@ namespace MyBooru.Services
             this.queryService = queryService;
         }
 
-        public async Task<string> RemoveAsync(string id)
+        public async Task<string> RemoveAsync(string id, string sessionId, string email)
         {
             string removed = "deleted";
-            string path = "\"/";
+            string path = "none";
 
             path = await queryService.QueryTheDbAsync<string>(async x => 
             {
                 x.Parameters.AddNew("@a", id, System.Data.DbType.String);
+                x.Parameters.AddNew("@b", sessionId, System.Data.DbType.String);
+                x.Parameters.AddNew("@c", email, System.Data.DbType.String);
                 return Convert.ToString(await x.ExecuteScalarAsync());
-            }, "SELECT Path FROM Medias WHERE Hash = @a");
+            }, @"SELECT Path FROM Medias WHERE Hash = @a
+                AND Medias.Uploader = (SELECT Username FROM Tickets WHERE ID = @b AND Username = (SELECT Username From Users WHERE Email = @c))");
+
+            if (path == string.Empty | path == "none")
+                return "error: unauthorized to delete";
 
             try
             {
@@ -40,13 +46,12 @@ namespace MyBooru.Services
             {
                 removed = $"error: {ex.GetType()} {ex.Message}";
             }
-            removed = await queryService.QueryTheDbAsync<string>(async x =>
+            return await queryService.QueryTheDbAsync<string>(async x =>
             {
                 x.Parameters.AddNew("@a", id, System.Data.DbType.String);
                 await x.ExecuteNonQueryAsync();
                 return removed;
             }, "DELETE FROM Medias WHERE Hash = @a;");
-            return removed;
         }
     }
 }

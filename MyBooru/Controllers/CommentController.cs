@@ -12,10 +12,17 @@ namespace MyBooru.Controllers
     [ApiController]
     public class CommentController : ControllerBase
     {
-        [HttpGet, Route("byMedia")]
-        public async Task<IActionResult> Get([FromServices] CommentService commService, string id, CancellationToken ct)
+        readonly Contracts.ICommentService _commService;
+
+        public CommentController(Contracts.ICommentService commService)
         {
-            var result = await commService.GetCommentsOnMediaAsync(id, ct);
+            _commService = commService;
+        }
+
+        [HttpGet, Route("byMedia")]
+        public async Task<IActionResult> Get(string id, CancellationToken ct)
+        {
+            var result = await _commService.GetCommentsOnMediaAsync(id, ct);
             return result == null
                 ? NotFound()
                 : Ok(new JsonResult(new
@@ -25,9 +32,9 @@ namespace MyBooru.Controllers
         }
 
         [HttpGet, Route("mine"), Authorize(Roles = "User")]
-        public async Task<IActionResult> Get([FromServices] CommentService commService, CancellationToken ct)
+        public async Task<IActionResult> Get(CancellationToken ct)
         {
-            var result = await commService.GetMyCommentsAsync(
+            var result = await _commService.GetMyCommentsAsync(
                 HttpContext.User.FindFirstValue("uniqueId"),
                 HttpContext.User.FindFirstValue(ClaimTypes.Email),
                 ct);
@@ -40,25 +47,25 @@ namespace MyBooru.Controllers
         }
 
         [HttpGet, Route("byId")]
-        public async Task<IActionResult> GetById([FromServices] CommentService commService, int id, CancellationToken ct)
+        public async Task<IActionResult> GetById(int id, CancellationToken ct)
         {
-            var result = await commService.GetCommentAsync(id, ct);
+            var result = await _commService.GetCommentAsync(id, ct);
             return result != null
                 ? Ok(result)
                 : NotFound() ;
         }
 
         [HttpPost, Authorize(Roles = "User"), Route("post")]
-        public async Task<IActionResult> Post([FromServices] CommentService commService, [FromForm] string commentText, [FromForm] string hash)
+        public async Task<IActionResult> Post([FromForm] string commentText, [FromForm] string hash)
         {
-            var result = await commService.PostCommentAsync(HttpContext.User.Identity.Name, commentText, hash);
+            var result = await _commService.PostCommentAsync(HttpContext.User.Identity.Name, commentText, hash);
             return result > 0 ? Ok(result) : StatusCode(500);
         }
 
         [HttpDelete, Route("remove"), Authorize(Roles = "User")]
-        public async Task<IActionResult> Delete([FromServices] CommentService commService, int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var result = await commService.RemoveCommentAsync(
+            var result = await _commService.RemoveCommentAsync(
                 id,
                 HttpContext.User.FindFirstValue("uniqueId"),
                 HttpContext.User.FindFirstValue(ClaimTypes.Email));

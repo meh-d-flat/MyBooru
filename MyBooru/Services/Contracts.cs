@@ -33,7 +33,7 @@ namespace MyBooru.Services
 
         public interface IRemoveService
         {
-            Task<string> RemoveAsync(string id);
+            Task<string> RemoveAsync(string id, string sessionId, string email);
         }
 
         public interface ITagsService

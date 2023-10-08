@@ -15,11 +15,11 @@ namespace MyBooru.Controllers
     [ApiController]
     public class TagController : ControllerBase
     {
-        readonly Contracts.ITagsService tagger;
+        readonly Contracts.ITagsService _tagger;
 
-        public TagController(Contracts.ITagsService tagsService)
+        public TagController(Contracts.ITagsService tagger)
         {
-            tagger = tagsService;
+            _tagger = tagger;
         }
 
         [HttpGet]
@@ -28,7 +28,7 @@ namespace MyBooru.Controllers
             if (!InputCheck(tagName))
                 return StatusCode(400, "Bad tag");
 
-            var resultCollection = await tagger.SearchTagAsync(tagName, ct);
+            var resultCollection = await _tagger.SearchTagAsync(tagName, ct);
             var result = resultCollection?.Select(x => x.Name);
             return new JsonResult(result);
         }
@@ -39,7 +39,7 @@ namespace MyBooru.Controllers
             if (!InputCheck(newTag))
                 return StatusCode(400, "Bad tag");
 
-            var added = await tagger.AddTagAsync(newTag);
+            var added = await _tagger.AddTagAsync(newTag);
             if (added == null)
                 return StatusCode(501, "Something went wrong");
 

@@ -76,6 +76,15 @@
             background: #333;
             color: cornsilk;
         }
+
+        #new-comment {
+            border: none;
+        }
+
+        .close {
+            float: right;
+            cursor: pointer;
+        }
     </style>
 
     <div class="sidenav">
@@ -207,10 +216,8 @@
 
         function remove() {
             $.ajax({
-                url: "@config["ApiHost"]/api/media/remove",
-                data: {
-                    id: '@Model'
-                },
+                url: "@config["ApiHost"]/api/media/remove?id=" + "@Model",
+                method: "DELETE",
                 xhrFields: {
                     withCredentials: true
                 },
@@ -244,10 +251,29 @@
 
         function makeComment(item) {
             let date = new Date(item.timestamp * 1000).toLocaleString(navigator.language, { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });;
-            let a = $("<a></a>").text(item.user).attr("href", window.location.origin + "/gallery/user/details?username=" + item.user).attr("id", "username");
+            let a = $("<a></a>").text(item.user).attr("href", window.location.origin + "/user/details?username=" + item.user).attr("id", "username");
             let p = $("<p></p>").text(item.text);
-            let p2 = $("<p></p>").text(" said at: " + date).attr("class", "comm").append("<br>");
-            $("#comms").append(p2.prepend(a).append(p));
+            let p2 = $("<p></p>").text(" said at: " + date).attr("class", "comm").attr("key", item.id).append("<br>");
+            $("#comms").append(p2.prepend(a).prepend("<p class='close' title='Delete' onclick=deleteComment(this)>&times;</p>").append(p));
+        }
+
+        function deleteComment(elem) {
+            var commId = elem.parentElement.attributes['key'].value;
+            $.ajax({
+                url: "@config["ApiHost"]/api/comment/remove?id=" + commId,
+                method: "DELETE",
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function () {
+                    elem.parentElement.remove();
+                },
+                error: function (jqXHR) {
+                    checkAuth(jqXHR);
+                    alert(jQuery.parseJSON(jqXHR.responseText).result);
+                }
+
+            });
         }
 
         function minmax() {

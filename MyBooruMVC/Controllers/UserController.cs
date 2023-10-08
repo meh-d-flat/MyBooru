@@ -12,7 +12,7 @@ namespace MyBooruMVC.Controllers
         public IActionResult Index() => View();
 
         [Route("details")]
-        public IActionResult Details(string username) => View(username);
+        public IActionResult Details(string username) => View(model: username);
 
         [Route("login")]
         public IActionResult Login() => View();

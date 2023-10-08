@@ -22,10 +22,17 @@ namespace MyBooru.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        [Authorize(Roles = "User"), Route("getInfo")]
-        public async Task<IActionResult> GetInfo([FromServices] UserService userService, CancellationToken ct)
+        private readonly Contracts.IUserService _userService;
+
+        public UserController(Contracts.IUserService userService)
         {
-            var user = await userService.GetUserAsync(HttpContext.User.Identity.Name, ct);
+            _userService = userService;
+        }
+
+        [Authorize(Roles = "User"), Route("getInfo")]
+        public async Task<IActionResult> GetInfo(CancellationToken ct)
+        {
+            var user = await _userService.GetUserAsync(HttpContext.User.Identity.Name, ct);
             return new JsonResult(new {
                 username = user.Username,
                 dateRegistered = user.RegisterDateTime,
@@ -52,9 +59,9 @@ namespace MyBooru.Controllers
         }
 
         [HttpGet, Route("details"), Authorize]
-        public async Task<IActionResult> Details([FromServices] UserService userService, string username, CancellationToken ct)
+        public async Task<IActionResult> Details(string username, CancellationToken ct)
         {
-            var user = await userService.GetUserAsync(username, ct);
+            var user = await _userService.GetUserAsync(username, ct);
             return user == null 
                 ? NotFound()
                 : Ok(new JsonResult(new 
@@ -66,7 +73,7 @@ namespace MyBooru.Controllers
         }
 
         [HttpPost, Route("signup")]
-        async public Task<IActionResult> SignUp([FromServices] UserService userService, [FromForm] string username, [FromForm] string email, [FromForm] string password, [FromForm] string passwordRepeat, CancellationToken ct)
+        async public Task<IActionResult> SignUp([FromForm] string username, [FromForm] string email, [FromForm] string password, [FromForm] string passwordRepeat, CancellationToken ct)
         {
             if (HttpContext.User.Identity.IsAuthenticated)
                 return RedirectToAction("Details");
@@ -74,30 +81,30 @@ namespace MyBooru.Controllers
             if (password != passwordRepeat)
                 return BadRequest("Password mismatch!");
 
-            if (await userService.CheckUsernameAsync(username))
+            if (await _userService.CheckUsernameAsync(username))
                 return BadRequest("Username/Email already registered!");
 
-            if (await userService.CheckEmailAsync(email))
+            if (await _userService.CheckEmailAsync(email))
                 return BadRequest("Username/Email already registered!");
 
-            await userService.PersistUserAsync(username, password, email, ct);
+            await _userService.PersistUserAsync(username, password, email, ct);
 
-            return await this.SignIn(userService, username, password, ct);
+            return await this.SignIn(username, password, ct);
         }
 
         [HttpPost, Route("signin")]
-        async public Task<IActionResult> SignIn([FromServices] UserService userService, [FromForm] string username, [FromForm] string password, CancellationToken ct)
+        async public Task<IActionResult> SignIn([FromForm] string username, [FromForm] string password, CancellationToken ct)
         {
             if (HttpContext.User.Identity.IsAuthenticated)
                 return RedirectToAction("Details");
 
-            if (!await userService.CheckUsernameAsync(username))
+            if (!await _userService.CheckUsernameAsync(username))
                 return BadRequest("Wrong Username/Password combination");
 
-            if (!await userService.CheckPasswordAsync(username, password, ct))
+            if (!await _userService.CheckPasswordAsync(username, password, ct))
                 return BadRequest("Wrong Username/Password combination");
 
-            var user = await userService.GetUserAsync(username, ct);
+            var user = await _userService.GetUserAsync(username, ct);
 
             var claims = new List<Claim>
                 {
@@ -131,9 +138,9 @@ namespace MyBooru.Controllers
         }
 
         [Authorize(Roles = "User"), Route("getSessions")]
-        public async Task<IActionResult> GetSessions([FromServices] UserService userService, CancellationToken ct)
+        public async Task<IActionResult> GetSessions(CancellationToken ct)
         {
-            var all = await userService.GetUserSessionsAsync(HttpContext.User.FindFirstValue("uniqueId"), ct);
+            var all = await _userService.GetUserSessionsAsync(HttpContext.User.FindFirstValue("uniqueId"), ct);
 
             var formatted = all.Select(x => new
             {
@@ -148,12 +155,12 @@ namespace MyBooru.Controllers
         }
 
         [Authorize(Roles = "User"), Route("closeSession")]
-        public async Task<IActionResult> CloseSession([FromServices] UserService userService, string sessionId)
+        public async Task<IActionResult> CloseSession(string sessionId)
         {
             if (sessionId == HttpContext.User.FindFirstValue("uniqueId"))
                 return BadRequest();
 
-            var closed = await userService.CloseUserSessionAsync(sessionId, HttpContext.User.FindFirstValue(ClaimTypes.Email));
+            var closed = await _userService.CloseUserSessionAsync(sessionId, HttpContext.User.FindFirstValue(ClaimTypes.Email));
             return closed ? Ok() : BadRequest();
         }
     }
