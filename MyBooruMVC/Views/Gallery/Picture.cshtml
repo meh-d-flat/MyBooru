@@ -68,24 +68,40 @@
                 margin-top: 280px;
             }
         }
+
+        .comm {
+            padding: 15px;
+            display: block;
+            margin-right: 210px;
+            background: #333;
+            color: cornsilk;
+        }
     </style>
 
     <div class="sidenav">
         <form onsubmit="addTag(); return false;" method="get" id="tag-form" autocomplete="off">
             <div style="margin-top: 10px">
-                <input name="tags" id="tags-to-add" type="text" />
+                <input name="tags" id="tags-to-add" type="text" placeholder="Add a tag..."/>
             </div>
         </form>
         <ul id="tag-results"></ul>
         <div id="tags"></div>
         <form onsubmit="return false;" method="get">
-            <button type="submit" class="btn btn-primary" onclick="remove()">Delete</button>
+            <button type="submit" onclick="remove()">Delete</button>
         </form>
     </div>
 
     <div class="main">
         <div id="base">
         </div>
+
+        <form id="comment-form">
+            <textarea id="new-comment" rows="2" cols="50" name="new-comment" placeholder="Your comment..."></textarea>
+            <br>
+            <input type="button" onclick="addComment()" value="Submit">
+        </form>
+
+        <div id="comms"></div>
     </div>
 
     <script>
@@ -106,9 +122,6 @@
                 data: {
                     tagName: str
                 },
-                xhrFields: {
-                    withCredentials: true
-                },
                 success: function (response) {
                     tagThing.data = response;
                 }
@@ -126,7 +139,6 @@
                     id: '@Model'
                 },
                 success: function (response) {
-                    //$("#base").append("<img id='picture' src='@config["ApiHost"]/" + response.path + "' width=33% onclick='minmax()'>");
                     let tags = "";
                     if (response.tags != null)
                         response.tags.forEach(x => tags += x.name + " ");
@@ -136,9 +148,39 @@
                         $("#base").append("<video preload='metadata' loop controls autoplay muted src='@config["ApiHost"]/" + response.path + "'>");
 
                     makeList(response.tags);
+                    makeComments(response.comments);
                 }
             });
         });
+
+        function addComment() {
+            let commText = $("#new-comment").val();
+
+            if(commText == null | commText === ""){
+                $(".modal-body").html("comment cannot be empty");
+                $("#modal").addClass("active");
+                return;
+            }
+
+            $.ajax({
+                url: "@config["ApiHost"]/api/comment/post",
+                method: "POST",
+                data: {
+                    hash: "@Model",
+                    commentText: commText
+                },
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function (response) {
+                    $("#new-comment").val("");
+                    ajaxGet("@config["ApiHost"]/api/comment/byId", x => makeComment(x), null, false, { id: response });
+                },
+                error: function (jqXHR) {
+                    checkAuth(jqXHR);
+                }
+            });
+        }
 
 
         function addTag() {
@@ -157,6 +199,7 @@
                     withCredentials: true
                 },
                 error: function (jqXHR) {
+                    checkAuth(jqXHR);
                     alert("Can't add tag: " + jQuery.parseJSON(jqXHR.responseText).value.bad_tag + "\nTags should only contain letters and numbers\nAnd be 3 to 32 characters long");
                 }
             });
@@ -175,6 +218,7 @@
                     location.replace("gallery");
                 },
                 error: function (jqXHR) {
+                    checkAuth(jqXHR);
                     alert(jQuery.parseJSON(jqXHR.responseText).result);
                 }
             })
@@ -187,6 +231,23 @@
             for (var i = 0; i < responseItems.length; i++) {
                 $("#tags").append("<a href='/gallery/search?tags=" + responseItems[i].name + "'>" + responseItems[i].name + "</a>");
             }
+        }
+
+        function makeComments(responseItems){
+            if (responseItems == null)
+                return;
+
+           for (var i = 0; i < responseItems.length; i++){
+                makeComment(responseItems[i]);
+           }
+        }
+
+        function makeComment(item) {
+            let date = new Date(item.timestamp * 1000).toLocaleString(navigator.language, { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });;
+            let a = $("<a></a>").text(item.user).attr("href", window.location.origin + "/gallery/user/details?username=" + item.user).attr("id", "username");
+            let p = $("<p></p>").text(item.text);
+            let p2 = $("<p></p>").text(" said at: " + date).attr("class", "comm").append("<br>");
+            $("#comms").append(p2.prepend(a).append(p));
         }
 
         function minmax() {

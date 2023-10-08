@@ -44,8 +44,7 @@ namespace MyBooru.Controllers
             });
         }
 
-        [HttpGet]
-        [Route("details")]
+        [HttpGet, Route("details")]
         public async Task<IActionResult> Details([FromServices] DownloadService downloader, [FromQuery] string id, CancellationToken ct)
         {
             if (!await checker.CheckMediaExistsAsync(id, ct))
@@ -55,9 +54,7 @@ namespace MyBooru.Controllers
             return new JsonResult(result);
         }
 
-        [HttpGet]
-        [Route("addTags")]
-        [Authorize(Roles = "User")]
+        [HttpGet, Route("addTags"), Authorize(Roles = "User")]
         public async Task<IActionResult> AddTags([FromServices] TagsService tagger, string id, string tags, CancellationToken ct)
         {
             if (!await checker.CheckMediaExistsAsync(id, ct))
@@ -75,8 +72,7 @@ namespace MyBooru.Controllers
             return new JsonResult(new { items = newTags });
         }
 
-        [HttpGet]
-        [Route("byTag")]
+        [HttpGet, Route("byTag")]
         public async Task<IActionResult> GetByTags([FromServices] TagsService tagger, string tags, CancellationToken ct, int page = 1, int reverse = 1)
         {
             //validate the tags
@@ -95,8 +91,7 @@ namespace MyBooru.Controllers
             });
         }
 
-        [HttpGet]
-        [Route("download")]
+        [HttpGet, Route("download")]
         public async Task<IActionResult> Download([FromServices] DownloadService downloader, string id, CancellationToken ct, bool dl = false)
         {
             if (!await checker.CheckMediaExistsAsync(id, ct))
@@ -115,9 +110,7 @@ namespace MyBooru.Controllers
                 return StatusCode(400);
         }
 
-        [HttpPost]
-        [Route("upload")]
-        [Authorize(Roles = "User")]
+        [HttpPost, Route("upload"), Authorize(Roles = "User")]
         public async Task<IActionResult> Upload([FromServices] UploadService uploader, IFormFile file)
         {
             var result = await uploader.UploadOneAsync(file, HttpContext.User.Identity.Name);
@@ -126,9 +119,7 @@ namespace MyBooru.Controllers
               ? StatusCode(400, response) : (IActionResult)Ok(response);
         }
 
-        [HttpGet]
-        [Route("uploadfrom")]
-        [Authorize(Roles = "User")]
+        [HttpGet, Route("uploadfrom"), Authorize(Roles = "User")]
         public async Task<IActionResult> UploadFrom([FromServices] UploadService uploader, string source)
         {
             if (!Uri.TryCreate(source, UriKind.Absolute, out var givenURI) && !(givenURI?.Scheme == Uri.UriSchemeHttp || givenURI?.Scheme == Uri.UriSchemeHttps))
@@ -155,8 +146,7 @@ namespace MyBooru.Controllers
             }
         }
 
-        [Route("remove")]
-        [Authorize(Roles = "User")]
+        [Route("remove"), Authorize(Roles = "User")]
         public async Task<IActionResult> Remove([FromServices] RemoveService remover, string id, CancellationToken ct)
         {
             bool exist = await checker.CheckMediaExistsAsync(id, ct);

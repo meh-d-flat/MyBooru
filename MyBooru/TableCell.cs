@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 using System.Collections;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace MyBooru
 {
@@ -189,11 +190,18 @@ namespace MyBooru
             return one & (two | three);
         }
 
+        static bool IsUserDefined(Type t)
+        {
+            bool one = !t.Namespace.StartsWith(TableCell.Sys);
+            bool two = !t.IsPrimitive;
+            bool three = t != typeof(String);
+            return one & (two | three);
+        }
+
         static bool IsNavigationProperty(PropertyInfo prop)
         {
             var pt = prop.PropertyType;
-            bool definedInThisDll = Type.GetType(pt.Name) != null & pt.IsClass & !pt.IsArray;
-            if (definedInThisDll)
+            if (IsUserDefined(pt))
                 return true;
 
             bool genWithOneArg = pt.IsGenericType & pt.GetGenericArguments().Length == 1;
@@ -231,7 +239,7 @@ namespace MyBooru
                 if (IsNavigationProperty(srcProps[i]))
                     continue;
 
-                if (!IsNavigationProperty(srcProps[i]) && srcProps[i].Name.ToLower() != "id" && Type.GetType(srcProps[i].Name) == null)
+                if (srcProps[i].Name.ToLower() != "id" && Type.GetType(srcProps[i].Name) == null)
                 {
                     comm.Parameters.Add(new SQLiteParameter() { ParameterName = $"@p{i}", Value = srcProps[i].GetValue(source) });
                     text += $"'{srcProps[i].Name}', ";

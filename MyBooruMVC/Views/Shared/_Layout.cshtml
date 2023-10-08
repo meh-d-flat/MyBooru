@@ -29,6 +29,15 @@
             background-color: #444;
         }
 
+        ::placeholder {
+            font-style: italic;
+        }
+
+        a {
+            text-decoration: none;
+            color: #fff;
+        }
+
         .nav {
             display: flex;
             overflow: hidden;
@@ -217,12 +226,9 @@
     @*<div class="nav">*@
     <div class="topnav">
         <a href="/Gallery" id="button-home">Home</a>
-        
-        @*@Html.ActionLink("Home", "Index", "Gallery")
-        @Html.ActionLink("Upload", "Upload", "Gallery")*@
         <div class="search-container">
             <form action="/gallery/search" id="search-form" autocomplete="off">
-                <input name="tags" type="text" id="search" />
+                <input name="tags" type="text" id="search" placeholder="Search by tag..." />
                 <ul id="results"></ul>
             </form>
         </div>
@@ -330,9 +336,26 @@
                 results = getResults(obj.chars, func, obj);
                 suggest.style.display = "block";
                 for (i = 0; i < results.length; i++) {
-                    suggest.innerHTML += "<li style='border-bottom: 1px solid white;'>" + results[i] + "</li>";
+                    suggest.innerHTML += "<li style='border-bottom: 1px solid white;' onclick=pickTag(this)>" + results[i] + "</li>";
                 }
             }
+        }
+
+        function pickTag(liElement) {
+            liElement.parentElement.innerHTML = "";
+        }
+
+        function checkAuth(jqXHR) {
+            if (jqXHR.status == "401") {
+                $(".modal-body").html("unauthorized!");
+                $("#modal").addClass("active");
+                return;
+            };
+            if (jqXHR.status == "403") {
+                $(".modal-body").html("you don't have permissions for that!");
+                $("#modal").addClass("active");
+                return;
+            };
         }
 
         $(".close-button").on("click", function () {

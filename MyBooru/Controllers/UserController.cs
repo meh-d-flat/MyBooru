@@ -52,9 +52,17 @@ namespace MyBooru.Controllers
         }
 
         [HttpGet, Route("details"), Authorize]
-        public IActionResult Details()
+        public async Task<IActionResult> Details([FromServices] UserService userService, string username, CancellationToken ct)
         {
-            return Ok($"Signed in as: {HttpContext.User.Identity.Name}");
+            var user = await userService.GetUserAsync(username, ct);
+            return user == null 
+                ? NotFound()
+                : Ok(new JsonResult(new 
+                {
+                    username = user.Username,
+                    dateRegistered = user.RegisterDateTime,
+                    role = user.Role,
+                }));
         }
 
         [HttpPost, Route("signup")]

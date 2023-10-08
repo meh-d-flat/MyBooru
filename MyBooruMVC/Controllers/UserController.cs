@@ -9,21 +9,15 @@ namespace MyBooruMVC.Controllers
     [Route("User/")]
     public class UserController : Controller
     {
-        public IActionResult Index()
-        {
-            return View();
-        }
+        public IActionResult Index() => View();
+
+        [Route("details")]
+        public IActionResult Details(string username) => View(username);
 
         [Route("login")]
-        public IActionResult Login()
-        {
-            return View();
-        }
+        public IActionResult Login() => View();
 
         [Route("register")]
-        public IActionResult Register()
-        {
-            return View();
-        }
+        public IActionResult Register() => View();
     }
 }

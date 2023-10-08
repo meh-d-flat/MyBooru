@@ -12,8 +12,7 @@ namespace MyBooru.Controllers
     [ApiController]
     public class CommentController : ControllerBase
     {
-        [HttpGet]
-        [Route("byMedia")]
+        [HttpGet, Route("byMedia")]
         public async Task<IActionResult> Get([FromServices] CommentService commService, string id, CancellationToken ct)
         {
             var result = await commService.GetCommentsOnMediaAsync(id, ct);
@@ -25,9 +24,7 @@ namespace MyBooru.Controllers
                 }));
         }
 
-        [HttpGet]
-        [Route("mine")]
-        [Authorize(Roles = "User")]
+        [HttpGet, Route("mine"), Authorize(Roles = "User")]
         public async Task<IActionResult> Get([FromServices] CommentService commService, CancellationToken ct)
         {
             var result = await commService.GetMyCommentsAsync(
@@ -42,18 +39,23 @@ namespace MyBooru.Controllers
                 }));
         }
 
-        [HttpPost]
-        [Authorize(Roles = "User")]
-        [Route("post")]
+        [HttpGet, Route("byId")]
+        public async Task<IActionResult> GetById([FromServices] CommentService commService, int id, CancellationToken ct)
+        {
+            var result = await commService.GetCommentAsync(id, ct);
+            return result != null
+                ? Ok(result)
+                : NotFound() ;
+        }
+
+        [HttpPost, Authorize(Roles = "User"), Route("post")]
         public async Task<IActionResult> Post([FromServices] CommentService commService, [FromForm] string commentText, [FromForm] string hash)
         {
             var result = await commService.PostCommentAsync(HttpContext.User.Identity.Name, commentText, hash);
             return result > 0 ? Ok(result) : StatusCode(500);
         }
 
-        [HttpDelete]
-        [Route("remove")]
-        [Authorize(Roles = "User")]
+        [HttpDelete, Route("remove"), Authorize(Roles = "User")]
         public async Task<IActionResult> Delete([FromServices] CommentService commService, int id)
         {
             var result = await commService.RemoveCommentAsync(

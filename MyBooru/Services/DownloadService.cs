@@ -48,7 +48,7 @@ namespace MyBooru.Services
                 x.Parameters.AddNew("@a", id, System.Data.DbType.String);
                 var result = await x.ExecuteReaderAsync(ct);
                 return TableCell.MakeEntities<Comment>(await TableCell.GetRowsAsync(result));
-            },"SELECT Text, User, Timestamp FROM Comments WHERE MediaID = @a");
+            },"SELECT Id, Text, User, Timestamp FROM Comments WHERE MediaID = @a");
 
             return file;
         }

@@ -12,31 +12,21 @@ namespace MyBooruMVC.Controllers
     [Route("Gallery/")]
     public class GalleryController : Controller
     {
+        static readonly char[] trail = { ',' };
+
         [Route("")]
-        public ActionResult Index(int page = 1, int reverse = 1)
-        {
-            return View(model: (page, reverse));
-        }
+        public ActionResult Index(int page = 1, int reverse = 1) => View(model: (page, reverse));
 
         [Route("picture")]
-        public ActionResult Picture(string id)
-        {
-            return View(model: id);
-        }
+        public ActionResult Picture(string id) => View(model: id);
 
         [Route("upload")]
-        public ActionResult Upload()
-        {
-            return View();
-        }
+        public ActionResult Upload() =>  View();
 
         [Route("search")]
         public ActionResult Search(string tags, int page = 1, int reverse = 1)
         {
-            if (tags.EndsWith(","))
-                tags = tags.Remove(tags.Length - 1, 1);
-
-            return View(model: (tags, page, reverse));
+            return View(model: (tags.TrimEnd(trail), page, reverse));
         }
     }
 }

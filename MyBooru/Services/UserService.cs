@@ -61,7 +61,6 @@ namespace MyBooru.Services
         {
             return await queryService.QueryTheDbAsync<User>(async x =>
             {
-                var user = new User();
                 x.Parameters.AddNew("@a", username, System.Data.DbType.String);
                 using var result = await x.ExecuteReaderAsync(ct);
                 return TableCell.MakeEntity<User>(await TableCell.GetRowAsync(result));

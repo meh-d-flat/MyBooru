@@ -68,10 +68,7 @@
                     );
                 },
                 error: function (jqXHR) {
-                    if (jqXHR.status == "401"){
-                        $(".modal-body").html("unauthorized");
-                        $("#modal").addClass("active");
-                    };
+                    checkAuth(jqXHR);
                     $(".modal-body").html(jQuery.parseJSON(jqXHR.responseText).value.item);
                     $("#modal").addClass("active");
                 }
@@ -98,12 +95,8 @@
                     );
                 },
                 function (jqXHR) {
-
+                    checkAuth(jqXHR);
                     formFrom.reset();
-                    if (jqXHR.status == "401") {
-                        $(".modal-body").html("unauthorized");
-                        $("#modal").addClass("active");
-                    };
                     $(".modal-body").html(jQuery.parseJSON(jqXHR.responseText).value.item);
                     $("#modal").addClass("active");
                 },

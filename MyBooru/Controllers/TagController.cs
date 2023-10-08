@@ -33,8 +33,7 @@ namespace MyBooru.Controllers
             return new JsonResult(result);
         }
 
-        [HttpPost]
-        [Authorize(Roles = "User")]
+        [HttpPost, Authorize(Roles = "User")]
         public async Task<IActionResult> Post(string newTag)
         {
             if (!InputCheck(newTag))
