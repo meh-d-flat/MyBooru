@@ -22,18 +22,28 @@ namespace MyBooru.Services
             this.queryService = queryService;
         }
 
-        public async Task<Tag> AddTagAsync(string name)
+        public async Task<Tag> AddTagAsync(string name, string username)
         {
             Tag tag = null;
             bool rowsChanged = false;
 
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             await connection.OpenAsync();
-            string addTagQuery = "INSERT OR IGNORE INTO Tags ('Name') VALUES (@a)";
-            using (SQLiteCommand addTag = new SQLiteCommand(addTagQuery, connection))
+            var cmd = TableCell.MakeAddCommand<Tag>(new { Name = name, User = username, @DateTime = DateTime.UtcNow.GetUnixTime() }, connection);
+            //string addTagQuery = "INSERT OR IGNORE INTO Tags ('Name') VALUES (@a)";
+            //using (SQLiteCommand addTag = new SQLiteCommand(addTagQuery, connection))
+            //{
+            //    addTag.Parameters.AddNew("@a", name, System.Data.DbType.String);
+            //    rowsChanged = await addTag.ExecuteNonQueryAsync() > 0;
+            //}
+
+            try
             {
-                addTag.Parameters.AddNew("@a", name, System.Data.DbType.String);
-                rowsChanged = await addTag.ExecuteNonQueryAsync() > 0;
+                rowsChanged = await cmd.ExecuteNonQueryAsync() > 0;
+            }
+            catch (SQLiteException ex)
+            {
+                Console.WriteLine(ex);
             }
 
             if (rowsChanged)
@@ -136,14 +146,14 @@ namespace MyBooru.Services
             return paramsForQuery;
         }
 
-        public async Task<List<Tag>> AddTagsToMediaAsync(string id, string tags)
+        public async Task<List<Tag>> AddTagsToMediaAsync(string id, string tags, string username)
         {
-            var tagsList = await AddWithCheckAsync(tags);
-            await AddToMediaAsync(id, tagsList);
+            var tagsList = await AddWithCheckAsync(tags, username);
+            await AddToMediaAsync(id, tagsList, username);
             return tagsList;
         }
 
-        public async Task<List<Tag>> AddWithCheckAsync(string tags)
+        public async Task<List<Tag>> AddWithCheckAsync(string tags, string username)
         {
             var delimited = tags.Split(',').ToList();
             List<Tag> tagList = new List<Tag>();
@@ -164,7 +174,7 @@ namespace MyBooru.Services
 
                 for (int i = 0; i < outliers.Count; i++)
                 {
-                    var newTag = await AddTagAsync(outliers[i]);
+                    var newTag = await AddTagAsync(outliers[i], username);
                     if(newTag != null)
                         tagList.Add(newTag);
                 }
@@ -172,7 +182,7 @@ namespace MyBooru.Services
             return tagList;
         }
 
-        public async Task AddToMediaAsync(string id, List<Tag> tags)
+        public async Task AddToMediaAsync(string id, List<Tag> tags, string username)
         {
             int mediaId = -1;
 
@@ -184,12 +194,9 @@ namespace MyBooru.Services
 
             string values = "";
             for (int i = 0; i < tags.Count; i++)
-            {
-                values += $"({mediaId}, {tags[i].Id})";
-                if (i < tags.Count - 1)
-                    values += ",";
-            }
+                values += $"({mediaId}, {tags[i].Id}, {username}, {DateTime.UtcNow.GetUnixTime()})";
 
+            values = values.TrimEnd(TableCell.toTrim);
             await queryService.QueryTheDbAsync<Task>(async x => 
             {
                 await x.ExecuteNonQueryAsync();

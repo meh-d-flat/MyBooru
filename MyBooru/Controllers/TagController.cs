@@ -39,7 +39,7 @@ namespace MyBooru.Controllers
             if (!InputCheck(newTag))
                 return StatusCode(400, "Bad tag");
 
-            var added = await _tagger.AddTagAsync(newTag);
+            var added = await _tagger.AddTagAsync(newTag, HttpContext.User.Identity.Name);
             if (added == null)
                 return StatusCode(501, "Something went wrong");
 

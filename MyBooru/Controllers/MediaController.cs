@@ -76,7 +76,7 @@ namespace MyBooru.Controllers
                     return BadRequest(new JsonResult(new { bad_tag = delimited[i] }));
             }
 
-            var newTags = await _tagger.AddTagsToMediaAsync(id, tags.ToLower());
+            var newTags = await _tagger.AddTagsToMediaAsync(id, tags.ToLower(), HttpContext.User.Identity.Name);
 
             return new JsonResult(new { items = newTags });
         }

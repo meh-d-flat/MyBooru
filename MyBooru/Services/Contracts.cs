@@ -38,11 +38,11 @@ namespace MyBooru.Services
 
         public interface ITagsService
         {
-            Task <Tag> AddTagAsync(string name);
+            Task <Tag> AddTagAsync(string name, string username);
             Task<List<Tag>> SearchTagAsync(string name, CancellationToken ct);
             Task<int> MediasCountAsync(string tags, CancellationToken ct);
             Task<List<Media>> GetMediasByTagsAsync(string tags, int page, int reverse, CancellationToken ct);
-            Task<List<Tag>> AddTagsToMediaAsync(string id, string tags);
+            Task<List<Tag>> AddTagsToMediaAsync(string id, string tags, string username);
         }
 
         public interface IUserService

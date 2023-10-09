@@ -22,7 +22,7 @@ namespace MyBooru
         public Type Type { get; private set; }
         public object Value { get; private set; }
 
-        static readonly char[] toTrim = { ',', ' ' };
+        public static readonly char[] toTrim = { ',', ' ' };
         static readonly string Sys = "System";
         static readonly Type stringType = typeof(String);
         static readonly Type icollType = typeof(ICollection);
@@ -38,27 +38,26 @@ namespace MyBooru
         };
 
 
+        static TableCell[] ReadOut(System.Data.Common.DbDataReader sqlReader, TableCell[] cells)
+        {
+            for (int i = 0; i < cells.Length; i++)
+            {
+                if (Convert.IsDBNull(sqlReader[i]))
+                    break;
+
+                cells[i] = new TableCell()
+                {
+                    ColumnName = sqlReader.GetName(i),
+                    Type = sqlReader.GetFieldType(i),
+                    Value = sqlReader[i]
+                };
+            }
+            return cells;
+        }
+
         public static async Task<TableCell[]> GetRowAsync(SQLiteDataReader sqlReader)
         {
-            if (!sqlReader.HasRows)
-                return null;
-
-            var cells = new TableCell[sqlReader.FieldCount];
-            if (await sqlReader.ReadAsync())
-            {
-                for (int i = 0; i < cells.Length; i++)
-                {
-                    cells[i] = new TableCell()
-                    {
-                        ColumnName = sqlReader.GetName(i),
-                        Type = sqlReader.GetFieldType(i),
-                        Value = sqlReader[i]
-                    };
-                }
-            }
-            await sqlReader.CloseAsync();
-            await sqlReader.DisposeAsync();
-            return cells;
+            return await GetRowAsync(sqlReader as System.Data.Common.DbDataReader);
         }
 
         public static async Task<TableCell[]> GetRowAsync(System.Data.Common.DbDataReader sqlReader)
@@ -68,17 +67,8 @@ namespace MyBooru
 
             var cells = new TableCell[sqlReader.FieldCount];
             if (await sqlReader.ReadAsync())
-            {
-                for (int i = 0; i < cells.Length; i++)
-                {
-                    cells[i] = new TableCell()
-                    {
-                        ColumnName = sqlReader.GetName(i),
-                        Type = sqlReader.GetFieldType(i),
-                        Value = sqlReader[i]
-                    };
-                }
-            }
+                ReadOut(sqlReader, cells);
+
             await sqlReader.CloseAsync();
             await sqlReader.DisposeAsync();
             return cells;
@@ -86,27 +76,7 @@ namespace MyBooru
 
         public async static Task<List<TableCell[]>> GetRowsAsync(SQLiteDataReader sqlReader)
         {
-            if (!sqlReader.HasRows)
-                return null;
-
-            var rows = new List<TableCell[]>();
-            while (await sqlReader.ReadAsync())
-            {
-                var cells = new TableCell[sqlReader.FieldCount];
-                for (int i = 0; i < cells.Length; i++)
-                {
-                    cells[i] = new TableCell()
-                    {
-                        ColumnName = sqlReader.GetName(i),
-                        Type = sqlReader.GetFieldType(i),
-                        Value = sqlReader[i]
-                    };
-                }
-                rows.Add(cells);
-            }
-            await sqlReader.CloseAsync();
-            await sqlReader.DisposeAsync();
-            return rows;
+            return await GetRowsAsync(sqlReader as System.Data.Common.DbDataReader);
         }
 
         public async static Task<List<TableCell[]>> GetRowsAsync(System.Data.Common.DbDataReader sqlReader)
@@ -118,15 +88,7 @@ namespace MyBooru
             while (await sqlReader.ReadAsync())
             {
                 var cells = new TableCell[sqlReader.FieldCount];
-                for (int i = 0; i < cells.Length; i++)
-                {
-                    cells[i] = new TableCell()
-                    {
-                        ColumnName = sqlReader.GetName(i),
-                        Type = sqlReader.GetFieldType(i),
-                        Value = sqlReader[i]
-                    };
-                }
+                ReadOut(sqlReader, cells);
                 rows.Add(cells);
             }
 
@@ -135,7 +97,7 @@ namespace MyBooru
             return rows;
         }
 
-        public static T MakeEntity<T>(TableCell[] cells) where T : class
+        public static T MakeEntity<T>(TableCell[] cells)
         {
             if (cells == null)
                 throw new ArgumentNullException("'TableCell[] cells' parameter was null");
@@ -157,16 +119,16 @@ namespace MyBooru
 
             if (cells.Length != fields.Length)
             {
-                fields = fields.Where(x => cells.Any(y => y.ColumnName == x.Name)).ToArray();
+                fields = fields.Where(x => cells.Any(y => y?.ColumnName == x.Name)).ToArray();
             }
 
             for (int m = 0; m < cells.Length; m++)
             {
                 for (int n = 0; n < fields.Length; n++)
                 {
-                    if (fields[n].Name.Equals(cells[m].ColumnName, StringComparison.OrdinalIgnoreCase))
+                    if (fields[n].Name.Equals(cells[m]?.ColumnName, StringComparison.OrdinalIgnoreCase))
                     {
-                        fields[n].SetValue(instance, Convert.ChangeType(cells[m].Value, fields[n].PropertyType));
+                        fields[n].SetValue(instance, Convert.ChangeType(cells[m]?.Value, fields[n].PropertyType));
                         break;
                     }
                 }

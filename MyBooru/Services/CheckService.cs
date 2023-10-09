@@ -14,11 +14,13 @@ namespace MyBooru.Services
     {
         readonly IConfiguration config;
         private readonly IQueryService queryService;
+        private readonly string path;
 
         public CheckService(IConfiguration configuration, IQueryService queryService)
         {
             config = configuration;
             this.queryService = queryService;
+            path = config.GetValue<string>("SQLiteDBPath");
         }
 
         public async Task<int> MediasCountAsync(CancellationToken ct)
@@ -31,7 +33,7 @@ namespace MyBooru.Services
 
         public async Task<bool> CheckMediaExistsAsync(string id, CancellationToken ct)
         {
-            return await queryService.QueryTheDbAsync<bool>(async x => 
+            return await queryService.QueryTheDbAsync<bool>(async x =>
             {
                 x.Parameters.AddNew("@p", id, System.Data.DbType.String);
                 return Convert.ToBoolean(await x.ExecuteScalarAsync(ct));
@@ -46,10 +48,13 @@ namespace MyBooru.Services
 
         async Task CheckDbFileExists()
         {
-            if (File.Exists("db.sqlite3"))
+            if (File.Exists(path))
+            {
+                await Task.Run(() => File.Copy(path, DateTime.Now.ToString() + "." + path));
                 return;
+            }
 
-            await Task.Run(() => SQLiteConnection.CreateFile("db.sqlite3"));
+            await Task.Run(() => SQLiteConnection.CreateFile(path));
         }
 
         //SELECT COUNT(name) FROM sqlite_master WHERE type='table' AND name='';
@@ -78,6 +83,18 @@ namespace MyBooru.Services
                     ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 	Name VARCHAR(255) NOT NULL UNIQUE
                 );
+                CREATE TABLE IF NOT EXISTS new_table (
+                    ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                	Name VARCHAR(255) NOT NULL UNIQUE,
+                    User VARCHAR(255),
+                    DateTime INTEGER,
+                    FOREIGN KEY(User) REFERENCES Users(Username) ON DELETE SET NULL
+                );
+                INSERT INTO new_table(ID, Name)
+                SELECT t.ID, t.Name 
+                FROM Tags AS t;
+                DROP TABLE Tags;
+                ALTER TABLE new_table RENAME TO Tags;
                 CREATE TABLE IF NOT EXISTS MediasTags (
                     MediaID INTEGER,
                     TagID INTEGER,
@@ -85,6 +102,21 @@ namespace MyBooru.Services
                     FOREIGN KEY(TagID) REFERENCES Tags(ID) ON DELETE CASCADE,
                     CONSTRAINT OnlyOneOccurenceOfTagOnFile UNIQUE(MediaID, TagID)
                 );
+                CREATE TABLE IF NOT EXISTS new_table (
+                    MediaID INTEGER,
+                    TagID INTEGER,
+                    User VARCHAR(255),
+                    DateTime INTEGER,
+                    FOREIGN KEY(MediaID) REFERENCES Medias(ID) ON DELETE CASCADE,
+                    FOREIGN KEY(TagID) REFERENCES Tags(ID) ON DELETE CASCADE,
+                    FOREIGN KEY(User) REFERENCES Users(Username) ON DELETE SET NULL,
+                    CONSTRAINT OnlyOneOccurenceOfTagOnFile UNIQUE(MediaID, TagID)
+                );
+                INSERT INTO new_table(MediaID, TagID)
+                SELECT m.MediaID, m.TagID 
+                FROM MediasTags AS m;
+                DROP TABLE MediasTags;
+                ALTER TABLE new_table RENAME TO MediasTags;
                 CREATE TABLE IF NOT EXISTS Users(
                     ID INTEGER PRIMARY KEY AUTOINCREMENT,
                     Username VARCHAR(255) NOT NULL UNIQUE,
