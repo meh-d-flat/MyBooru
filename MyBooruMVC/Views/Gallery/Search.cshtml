@@ -44,13 +44,13 @@
                     if (response.prevPage) {
                         var currentPage = @Model.page;
                         var prevPage = @Model.page - 1;
-                        $("#pages").append("<a href='/gallery/search?tags=" + @Model.tags + "&page=" + prevPage + "&reverse=" + @Model.reverse + "'>Previous</a>")
+                        $("#pages").append("<a href='/gallery/search?tags=" + '@Model.tags' + "&page=" + prevPage + "&reverse=" + @Model.reverse + "'>Previous</a>")
                     }
 
                     if (response.nextPage) {
                         var currentPage = @Model.page;
                         var nextPage = @Model.page + 1;
-                        $("#pages").append("<a href='/gallery/search?tags=" + @Model.tags + "&page=" + prevPage + "&reverse=" + @Model.reverse + "'>Next</a>")
+                        $("#pages").append("<a href='/gallery/search?tags=" + '@Model.tags' + "&page=" + prevPage + "&reverse=" + @Model.reverse + "'>Next</a>")
                     }
                 }
             })

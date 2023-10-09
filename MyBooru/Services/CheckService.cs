@@ -81,28 +81,12 @@ namespace MyBooru.Services
                 );
                 CREATE TABLE IF NOT EXISTS Tags (
                     ID INTEGER PRIMARY KEY AUTOINCREMENT,
-                	Name VARCHAR(255) NOT NULL UNIQUE
-                );
-                CREATE TABLE IF NOT EXISTS new_table (
-                    ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 	Name VARCHAR(255) NOT NULL UNIQUE,
                     User VARCHAR(255),
                     DateTime INTEGER,
                     FOREIGN KEY(User) REFERENCES Users(Username) ON DELETE SET NULL
                 );
-                INSERT INTO new_table(ID, Name)
-                SELECT t.ID, t.Name 
-                FROM Tags AS t;
-                DROP TABLE Tags;
-                ALTER TABLE new_table RENAME TO Tags;
                 CREATE TABLE IF NOT EXISTS MediasTags (
-                    MediaID INTEGER,
-                    TagID INTEGER,
-                    FOREIGN KEY(MediaID) REFERENCES Medias(ID) ON DELETE CASCADE,
-                    FOREIGN KEY(TagID) REFERENCES Tags(ID) ON DELETE CASCADE,
-                    CONSTRAINT OnlyOneOccurenceOfTagOnFile UNIQUE(MediaID, TagID)
-                );
-                CREATE TABLE IF NOT EXISTS new_table (
                     MediaID INTEGER,
                     TagID INTEGER,
                     User VARCHAR(255),
@@ -112,11 +96,6 @@ namespace MyBooru.Services
                     FOREIGN KEY(User) REFERENCES Users(Username) ON DELETE SET NULL,
                     CONSTRAINT OnlyOneOccurenceOfTagOnFile UNIQUE(MediaID, TagID)
                 );
-                INSERT INTO new_table(MediaID, TagID)
-                SELECT m.MediaID, m.TagID 
-                FROM MediasTags AS m;
-                DROP TABLE MediasTags;
-                ALTER TABLE new_table RENAME TO MediasTags;
                 CREATE TABLE IF NOT EXISTS Users(
                     ID INTEGER PRIMARY KEY AUTOINCREMENT,
                     Username VARCHAR(255) NOT NULL UNIQUE,
