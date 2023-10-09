@@ -24,6 +24,10 @@ namespace MyBooru
 
         static readonly char[] toTrim = { ',', ' ' };
         static readonly string Sys = "System";
+        static readonly Type stringType = typeof(String);
+        static readonly Type icollType = typeof(ICollection);
+        static readonly Type ienumType = typeof(IEnumerable);
+        static readonly Type ilistType = typeof(IList);
 
         TableCell() { }
 
@@ -143,7 +147,7 @@ namespace MyBooru
             //TODO: optimise for primitives
             if (!TableCell.IsUserDefined<T>() & cells.Length == 1)
             {
-                instance = typeof(T) == typeof(String) ? string.Empty : default(T);
+                instance = typeof(T) == stringType ? string.Empty : default(T);
                 instance = Convert.ChangeType(cells[0].Value, cells[0].Type);
                 return (T)instance;
             }
@@ -172,7 +176,7 @@ namespace MyBooru
 
         public static List<T> MakeEntities<T>(List<TableCell[]> rows) where T : class
         {
-            if(rows == null)
+            if(rows == null || rows.Count == 0)
                 return null;
 
             var entities = new List<T>();
@@ -184,17 +188,14 @@ namespace MyBooru
 
         static bool IsUserDefined<T>()
         {
-            bool one = !typeof(T).Namespace.StartsWith(TableCell.Sys);
-            bool two = !typeof(T).IsPrimitive;
-            bool three = typeof(T) != typeof(String);
-            return one & (two | three);
+            return IsUserDefined(typeof(T));
         }
 
         static bool IsUserDefined(Type t)
         {
             bool one = !t.Namespace.StartsWith(TableCell.Sys);
             bool two = !t.IsPrimitive;
-            bool three = t != typeof(String);
+            bool three = t != stringType;
             return one & (two | three);
         }
 
@@ -205,7 +206,7 @@ namespace MyBooru
                 return true;
 
             bool genWithOneArg = pt.IsGenericType & pt.GetGenericArguments().Length == 1;
-            bool isGenCollection = genWithOneArg ? pt.GetInterfaces().Any(x => x != typeof(String) & (x == typeof(ICollection) | x == typeof(IEnumerable) | x == typeof(IList))) : false;
+            bool isGenCollection = genWithOneArg ? pt.GetInterfaces().Any(x => x != stringType & (x == icollType | x == ienumType | x == ilistType)) : false;
             bool navCollection = isGenCollection ? Type.GetType(pt.GetGenericArguments()[0].Name) == null : false;
             return navCollection;
         }
@@ -239,12 +240,11 @@ namespace MyBooru
                 if (IsNavigationProperty(srcProps[i]))
                     continue;
 
-                if (srcProps[i].Name.ToLower() != "id" && Type.GetType(srcProps[i].Name) == null)
+                if (srcProps[i].Name.ToLower() != "id")
                 {
                     comm.Parameters.Add(new SQLiteParameter() { ParameterName = $"@p{i}", Value = srcProps[i].GetValue(source) });
                     text += $"'{srcProps[i].Name}', ";
                     parms += $"@p{i}, ";
-
                 }
             }
 

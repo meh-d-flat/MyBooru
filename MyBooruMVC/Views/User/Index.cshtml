@@ -9,6 +9,7 @@
         <div id="user-info">
         </div>
         <button onclick="signOff()">Sign off</button>
+        <div id="comms"></div>
         Your sessions:
     </div>
 </body>
@@ -41,11 +42,8 @@
 
         ajaxGet("@config["ApiHost"]/api/comment/mine",
             function (response) {
-                response.value.items.forEach(function (i) {
-                    var p = $("<p></p>").text(i.text + " " + i.user + " " + new Date(i.timestamp * 1000));
-                    var a = $("<a></a>").text("picture").attr("href", window.location.origin + "/gallery/picture?id=" + i.mediaID);
-                    $("#base").append(p.append(a));
-                });
+                if (response.value.items != null)
+                    response.value.items.forEach(i => makeComment(i, true));
             },
             function (jqXHR) {
                 checkAuth(jqXHR);

@@ -220,6 +220,23 @@
         .modal-body {
             padding: 10px 15px;
         }
+
+        .comm {
+            padding: 15px;
+            display: block;
+            margin-right: 210px;
+            background: #333;
+            color: cornsilk;
+        }
+
+        #new-comment {
+            border: none;
+        }
+
+        .close {
+            float: right;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -356,6 +373,35 @@
                 $("#modal").addClass("active");
                 return;
             };
+        }
+
+        function makeComment(item, printMediaID) {
+            let date = new Date(item.timestamp * 1000).toLocaleString(navigator.language, { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });;
+            let a = printMediaID
+                ? $("<a></a>").attr("href", "/gallery/picture?id=" + item.mediaID).attr("id", "username").text("this picture").prepend(document.createTextNode("You said on "))
+                : $("<a></a>").text(item.user).attr("href", window.location.origin + "/user/details?username=" + item.user).attr("id", "username");
+            let p = $("<p></p>").text(item.text);
+            let p2 = $("<p></p>").text(" said at: " + date).attr("class", "comm").attr("key", item.id).append("<br>");
+            $("#comms").append(p2.prepend(a).prepend("<p class='close' title='Delete' role='button' onclick=deleteComment(this)>&times;</p>").append(p));
+        }
+
+        function deleteComment(elem) {
+            var commId = elem.parentElement.attributes['key'].value;
+            $.ajax({
+                url: "@config["ApiHost"]/api/comment/remove?id=" + commId,
+                method: "DELETE",
+                xhrFields: {
+                    withCredentials: true
+                },
+                success: function () {
+                    elem.parentElement.remove();
+                },
+                error: function (jqXHR) {
+                    checkAuth(jqXHR);
+                    alert(jQuery.parseJSON(jqXHR.responseText).result);
+                }
+
+            });
         }
 
         $(".close-button").on("click", function () {

@@ -25,7 +25,6 @@ namespace MyBooru.Services
         public async Task<string> UploadOneAsync(IFormFile file, string username)
         {
             string fileHash = "empty";
-            string webPath, webThumbPath;
             var up = new Media();
             var ffmpegPaths = config.GetSection("FFMpegExecPath").Get<List<string>>();
             var ffmpegPath = Ext.IsWindows() ? ffmpegPaths[0] : ffmpegPaths[1];
@@ -44,6 +43,9 @@ namespace MyBooru.Services
             up.Name = file.FileName;
             up.Type = file.ContentType;
             up.Uploader = username;
+            var guid = Guid.NewGuid().ToString();
+            var directoryPath = Path.Combine(config.GetValue<string>("FilePath"), guid);
+            var path = Path.Combine(directoryPath, file.FileName);
 
             using (var stream = file.OpenReadStream())
             {
@@ -55,12 +57,8 @@ namespace MyBooru.Services
                     fileHash = hash;
                 }
 
-                var guid = Guid.NewGuid().ToString();
-                var directoryPath = Path.Combine(config.GetValue<string>("FilePath"), guid);
                 await Task.Run(() => Directory.CreateDirectory(directoryPath));
-                var path = Path.Combine(directoryPath, file.FileName);
-                webPath = path.Replace(@"\", "/");
-                up.Path = webPath;
+                up.Path = path;
 
                 using (var fileStream = new FileStream(path, FileMode.Create, FileAccess.Write))
                 {
@@ -69,9 +67,10 @@ namespace MyBooru.Services
 
                 up.Timestamp = DateTime.UtcNow.GetUnixTime();
 
+                var thumbName = $"{new Random().Next()}_thumbnail.jpeg";
                 var fullPath = Path.GetFullPath(path);
-                var thumbPath = Path.GetFullPath(path).Replace(Path.GetFileName(path), "thumbnail.jpeg");
-                webThumbPath = path.Replace(Path.GetFileName(path), "thumbnail.jpeg").Replace(@"\", "/");
+                var thumbPath = Path.GetFullPath(path).Replace(Path.GetFileName(path), thumbName);
+                var webThumbPath = path.Replace(Path.GetFileName(path), thumbName);
                 var ffmpeg = new System.Diagnostics.Process();
                 ffmpeg.StartInfo.FileName = ffmpegPath;
                 ffmpeg.StartInfo.Arguments = file.ContentType.Contains("video") ? $"-i \"{fullPath}\" -ss 00:00:00.000 -vframes 1 -vf scale=300:-1 \"{thumbPath}\"" : $"-i \"{fullPath}\" -vf scale=300:-1 \"{thumbPath}\"";
@@ -82,7 +81,7 @@ namespace MyBooru.Services
                     if (!ffmpeg.WaitForExit(2000))
                     {
                         ffmpeg.Close();
-                        await Task.Run(() => Directory.Delete(Path.GetDirectoryName(webPath), true));
+                        await Task.Run(() => Directory.Delete(Path.GetDirectoryName(path), true));
                     }
                     ffmpeg.WaitForExit();
                 }
@@ -102,7 +101,7 @@ namespace MyBooru.Services
             catch (SQLiteException ex)
             {
                 Console.WriteLine(ex.Message);
-                await Task.Run(() => Directory.Delete(Path.GetDirectoryName(webPath), true));
+                await Task.Run(() => Directory.Delete(Path.GetDirectoryName(path), true));
                 fileHash = "error: failed to upload";
             }
             finally

@@ -122,7 +122,7 @@ namespace MyBooru.Controllers
         [HttpPost, Route("upload"), Authorize(Roles = "User")]
         public async Task<IActionResult> Upload(IFormFile file)
         {
-            var result = await _uploader.UploadOneAsync(file, HttpContext.User.FindFirstValue(ClaimTypes.Name));
+            var result = await _uploader.UploadOneAsync(file, HttpContext.User.Identity.Name);
             var response = new JsonResult(new { item = result });
             return result == "empty" || result.StartsWith("error")
               ? StatusCode(400, response) : (IActionResult)Ok(response);

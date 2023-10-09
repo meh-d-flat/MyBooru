@@ -69,25 +69,11 @@ namespace MyBooru.Services
             	    Type VARCHAR(255) NOT NULL,
                     Path VARCHAR(255),
                     Thumb VARCHAR(255),
-                    CONSTRAINT HashAlreadyExists UNIQUE(Hash)
-                );
-                 CREATE TABLE IF NOT EXISTS new_table (
-                    ID INTEGER PRIMARY KEY AUTOINCREMENT,
-            	    Name VARCHAR(255),
-            	    Hash VARCHAR(255) NOT NULL,
-            	    Type VARCHAR(255) NOT NULL,
-                    Path VARCHAR(255),
-                    Thumb VARCHAR(255),
                     Uploader VARCHAR(255),
                     Timestamp INTEGER DEFAULT 1 NOT NULL,
                     FOREIGN KEY(Uploader) REFERENCES Users(Username) ON DELETE CASCADE,
                     CONSTRAINT HashAlreadyExists UNIQUE(Hash)
                 );
-                INSERT INTO new_table(ID, Name, Hash, Type, Path, Thumb)
-                SELECT m.ID, m.Name, m.Hash, m.Type, m.Path, m.Thumb 
-                FROM Medias AS m;
-                DROP TABLE Medias;
-                ALTER TABLE new_table RENAME TO Medias;
                 CREATE TABLE IF NOT EXISTS Tags (
                     ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 	Name VARCHAR(255) NOT NULL UNIQUE
@@ -95,22 +81,10 @@ namespace MyBooru.Services
                 CREATE TABLE IF NOT EXISTS MediasTags (
                     MediaID INTEGER,
                     TagID INTEGER,
-                    FOREIGN KEY(MediaID) REFERENCES Medias(ID),
-                    FOREIGN KEY(TagID) REFERENCES Tags(ID),
-                    CONSTRAINT OnlyOneOccurenceOfTagOnFile UNIQUE(MediaID, TagID)
-                );
-                CREATE TABLE IF NOT EXISTS new_table (
-                    MediaID INTEGER,
-                    TagID INTEGER,
                     FOREIGN KEY(MediaID) REFERENCES Medias(ID) ON DELETE CASCADE,
                     FOREIGN KEY(TagID) REFERENCES Tags(ID) ON DELETE CASCADE,
                     CONSTRAINT OnlyOneOccurenceOfTagOnFile UNIQUE(MediaID, TagID)
                 );
-                INSERT INTO new_table(MediaID, TagID)
-                SELECT m.MediaID, m.TagID 
-                FROM MediasTags AS m;
-                DROP TABLE MediasTags;
-                ALTER TABLE new_table RENAME TO MediasTags;
                 CREATE TABLE IF NOT EXISTS Users(
                     ID INTEGER PRIMARY KEY AUTOINCREMENT,
                     Username VARCHAR(255) NOT NULL UNIQUE,

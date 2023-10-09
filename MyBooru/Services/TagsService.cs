@@ -100,7 +100,7 @@ namespace MyBooru.Services
                 x.Parameters.Add(new SQLiteParameter { ParameterName = "@a", Value = parameters.Count, DbType = System.Data.DbType.Int32 });
                 x.Parameters.AddRange(parameters.ToArray());
                 var result = await x.ExecuteReaderAsync(ct);
-                return TableCell.MakeEntities<Media>(await TableCell.GetRowsAsync(result));
+                return result.HasRows ? TableCell.MakeEntities<Media>(await TableCell.GetRowsAsync(result)) : medias;
             }, byTagsQuery);
         }
 
