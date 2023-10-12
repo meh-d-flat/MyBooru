@@ -72,7 +72,8 @@ namespace MyBooru
                         policy.WithOrigins(Configuration.GetSection("ApiConsumerAddressPort").Get<string[]>())
                             .AllowAnyHeader()
                             .AllowAnyMethod()
-                            .AllowCredentials();
+                            .AllowCredentials()
+                            .SetPreflightMaxAge(TimeSpan.FromMinutes(3));
                     });
             });
             services.AddControllers();
@@ -113,7 +114,11 @@ namespace MyBooru
             app.UseRouting();
 
             app.UseCors();
-            
+
+            if (!env.IsDevelopment())
+            {
+                app.UseMiddleware<OriginRefererCheckMiddleware>();
+            }
             app.UseMiddleware<RequestLimitMiddleware>();
 
             app.UseAuthentication();

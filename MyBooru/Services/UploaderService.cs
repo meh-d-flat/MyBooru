@@ -102,7 +102,7 @@ namespace MyBooru.Services
             {
                 Console.WriteLine(ex.Message);
                 await Task.Run(() => Directory.Delete(Path.GetDirectoryName(path), true));
-                fileHash = "error: failed to upload";
+                fileHash = ex.Message.Contains("UNIQUE") ? "error: such file already exists" : "error: failed to upload";
             }
             finally
             {
