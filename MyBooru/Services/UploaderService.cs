@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using System.Drawing;
 using System.Net.Mime;
 using MyBooru.Models;
+using static System.Net.Mime.MediaTypeNames;
+using System.Text.RegularExpressions;
 
 namespace MyBooru.Services
 {
@@ -38,14 +40,16 @@ namespace MyBooru.Services
             if (!File.Exists(ffmpegPath))
                 return "error: ffmpeg not found";
 
+            bool illegalChar = file.FileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 | file.FileName.Contains("%");
+                up.Name = illegalChar ? new Random().Next().ToString() + Path.GetExtension(file.FileName) : file.FileName;
+
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             await connection.OpenAsync();
-            up.Name = file.FileName;
             up.Type = file.ContentType;
             up.Uploader = username;
             var guid = Guid.NewGuid().ToString();
             var directoryPath = Path.Combine(config.GetValue<string>("FilePath"), guid);
-            var path = Path.Combine(directoryPath, file.FileName);
+            var path = Path.Combine(directoryPath, up.Name);
 
             using (var stream = file.OpenReadStream())
             {
