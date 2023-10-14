@@ -31,6 +31,14 @@ namespace MyBooru
 
         public static bool IsLinux() =>
             RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
+
+        public static T GetRandomMember<T>(this T[] array)
+        {
+            if (array is null)
+                throw new ArgumentNullException("passed array was null");
+
+            return array[new Random().Next(0, array.Length - 1)];
+        }
     }
 
     public class PropInfoComparer : IEqualityComparer<PropertyInfo>

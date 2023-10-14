@@ -98,10 +98,7 @@ namespace MyBooru.Controllers
             if (HttpContext.User.Identity.IsAuthenticated)
                 return RedirectToAction("Details");
 
-            if (!await _userService.CheckUsernameAsync(username))
-                return BadRequest("Wrong Username/Password combination");
-
-            if (!await _userService.CheckPasswordAsync(username, password, ct))
+            if (!await ShuffledCredCheck(_userService, username, password, ct))
                 return BadRequest("Wrong Username/Password combination");
 
             var user = await _userService.GetUserAsync(username, ct);
@@ -162,6 +159,20 @@ namespace MyBooru.Controllers
 
             var closed = await _userService.CloseUserSessionAsync(sessionId, HttpContext.User.FindFirstValue(ClaimTypes.Email));
             return closed ? Ok() : BadRequest();
+        }
+
+        public static async Task<bool> ShuffledCredCheck(Contracts.IUserService us, string username, string password, CancellationToken ct)
+        {
+            Func<Task<bool>> un = async () => await us.CheckUsernameAsync(username);
+            Func<Task<bool>> pw = async () => await us.CheckPasswordAsync(username, password, ct);
+            Func<Task<bool>> rw = async () => { await Task.Delay(new Random().Next(5, 80), ct); return true; };
+            var credCheckers = new[]{ un, pw, rw }.OrderBy(x => new Random().Next()).ToArray();
+            bool checkedOut = true;
+            for (int i = 0; i < 2; i++)
+            {
+                checkedOut = checkedOut & await credCheckers[i].Invoke();
+            }
+            return checkedOut;
         }
     }
 }
