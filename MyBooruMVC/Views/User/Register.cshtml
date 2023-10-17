@@ -24,8 +24,6 @@
             e.preventDefault();
             var formData = new FormData(this);
 
-            //check the form and validate
-
             $.ajax({
                 url: "@config["ApiHost"]/api/user/signup",
                 method: "POST",

@@ -4,12 +4,6 @@
     ViewBag.Title = "Upload";
     Layout = "_Layout";
 }
-<style>
-    *, *::after, *::before {
-        box-sizing: border-box;
-    }
-</style>
-
 <body>
     <form action="@config["ApiHost"]/api/media/upload" method="post" enctype="multipart/form-data" id="file-form">
         <div style="padding-top: 1em">

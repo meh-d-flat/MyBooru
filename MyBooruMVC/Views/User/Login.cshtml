@@ -20,9 +20,6 @@
             e.preventDefault();
             var formData = new FormData(this);
 
-        //check the form and validate
-        console.log(this.email.value);
-
             $.ajax({
                 url: "@config["ApiHost"]/api/user/signin",
                 method: "POST",
