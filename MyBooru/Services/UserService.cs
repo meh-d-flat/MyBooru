@@ -57,6 +57,26 @@ namespace MyBooru.Services
             return passwordChecksOut;
         }
 
+        public async Task<bool> CheckPasswordNewAsync(string username, string password, CancellationToken ct)
+        {
+            bool passwordChecksOut = false;
+
+            User user = await queryService.QueryTheDbAsync<User>(async x =>
+            {
+                x.Parameters.AddNew("@a", username, System.Data.DbType.String);
+                using var result = await x.ExecuteReaderAsync(ct);
+                return TableCell.MakeEntity<User>(await TableCell.GetRowAsync(result));
+            }, "SELECT * FROM Users WHERE Email = @a");
+
+            using (var hmac = new HMACSHA512(user.PasswordSalt))
+            {
+                var passwordBytes = Encoding.UTF8.GetBytes(password);
+                var computedHash = await hmac.ComputeHashAsync(new MemoryStream(passwordBytes));
+                passwordChecksOut = computedHash.SequenceEqual(user.PasswordHash);
+            }
+            return passwordChecksOut;
+        }
+
         public async Task<User> GetUserAsync(string username, CancellationToken ct)
         {
             return await queryService.QueryTheDbAsync<User>(async x =>
@@ -64,7 +84,17 @@ namespace MyBooru.Services
                 x.Parameters.AddNew("@a", username, System.Data.DbType.String);
                 using var result = await x.ExecuteReaderAsync(ct);
                 return TableCell.MakeEntity<User>(await TableCell.GetRowAsync(result));
-            }, "SELECT * FROM Users WHERE Username = @a");
+            }, "SELECT Username, Role, RegisterDateTime FROM Users WHERE Username = @a");
+        }
+
+        public async Task<User> GetUserNewAsync(string email, CancellationToken ct)
+        {
+            return await queryService.QueryTheDbAsync<User>(async x =>
+            {
+                x.Parameters.AddNew("@a", email, System.Data.DbType.String);
+                using var result = await x.ExecuteReaderAsync(ct);
+                return TableCell.MakeEntity<User>(await TableCell.GetRowAsync(result));
+            }, "SELECT * FROM Users WHERE Email = @a");
         }
 
         public async Task<int> PersistUserAsync(string username, string password, string email, CancellationToken ct)

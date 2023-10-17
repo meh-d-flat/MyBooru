@@ -93,15 +93,15 @@ namespace MyBooru.Controllers
         }
 
         [HttpPost, Route("signin")]
-        async public Task<IActionResult> SignIn([FromForm] string username, [FromForm] string password, CancellationToken ct)
+        async public Task<IActionResult> SignIn([FromForm] string email, [FromForm] string password, CancellationToken ct)
         {
             if (HttpContext.User.Identity.IsAuthenticated)
                 return RedirectToAction("Details");
 
-            if (!await ShuffledCredCheck(_userService, username, password, ct))
+            if (!await ShuffledCredCheck(_userService, email, password, ct))
                 return BadRequest("Wrong Username/Password combination");
 
-            var user = await _userService.GetUserAsync(username, ct);
+            var user = await _userService.GetUserNewAsync(email, ct);
 
             var claims = new List<Claim>
                 {
@@ -161,10 +161,10 @@ namespace MyBooru.Controllers
             return closed ? Ok() : BadRequest();
         }
 
-        public static async Task<bool> ShuffledCredCheck(Contracts.IUserService us, string username, string password, CancellationToken ct)
+        public static async Task<bool> ShuffledCredCheck(Contracts.IUserService us, string email, string password, CancellationToken ct)
         {
-            Func<Task<bool>> un = async () => await us.CheckUsernameAsync(username);
-            Func<Task<bool>> pw = async () => await us.CheckPasswordAsync(username, password, ct);
+            Func<Task<bool>> un = async () => await us.CheckEmailAsync(email);
+            Func<Task<bool>> pw = async () => await us.CheckPasswordNewAsync(email, password, ct);
             Func<Task<bool>> rw = async () => { await Task.Delay(new Random().Next(5, 80), ct); return true; };
             var credCheckers = new[]{ un, pw, rw }.OrderBy(x => new Random().Next()).ToArray();
             bool checkedOut = true;

@@ -5,6 +5,7 @@ using MyBooru.Models;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -49,9 +50,11 @@ namespace MyBooru.Services
         {
             Task<int> PersistUserAsync(string username, string password, string email, CancellationToken ct);
             Task<User> GetUserAsync(string username, CancellationToken ct);
+            Task<User> GetUserNewAsync(string email, CancellationToken ct);
             Task<bool> CheckEmailAsync(string email);
             Task<bool> CheckUsernameAsync(string username);
             Task<bool> CheckPasswordAsync(string username, string password, CancellationToken ct);
+            Task<bool> CheckPasswordNewAsync(string email, string password, CancellationToken ct);
             Task<List<Ticket>> GetUserSessionsAsync(string username, CancellationToken ct);
             Task<bool> CloseUserSessionAsync(string sessionId, string email);
         }
