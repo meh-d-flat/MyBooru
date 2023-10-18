@@ -4,59 +4,13 @@
     ViewBag.Title = "Home";
     Layout = "_Layout";
 }
-<body onload="getLoggedUserDetails('@config["ApiHost"]')">
-    <div id="base">
-        <div id="user-info">
-        </div>
-        <button onclick="signOff('@config["ApiHost"]')">Sign off</button>
-        <div id="comms"></div>
-        Your sessions:
+<div id="base">
+    <div id="user-info">
     </div>
-</body>
+    <button onclick="signOff('@config["ApiHost"]')">Sign off</button>
+    <div id="comms"></div>
+    Your sessions:
+</div>
 <script>
-    function getLoggedUserDetails(apihost) {
-        ajaxGet(apihost + "/api/user/getInfo",
-            function (response) {
-                $("#user-info").append("<p>" + response.username + "</p>");
-                $("#user-info").append("<p>Registered: " + new Date(response.dateRegistered * 1000) + "</p>");
-                $("#user-info").append("<p>User group: " + response.role + "</p>");
-            },
-            function (jqXHR) {
-                checkAuth(jqXHR);
-            },
-            true
-        );
-
-        ajaxGet(apihost + "/api/user/getSessions",
-            function (response) {
-                response.allSessions.reverse();
-                response.allSessions.forEach(function (item) {
-                    $("#base").append("<details id='" + item.id + "'><summary>Session " + item.id + "</summary><p>Last Active: " + new Date(item.lastActivity * 1000) + "Ip Address: " + item.ip + "UserAgent: " + item.userAgent + (item.isActiveSession ? "Active" : "<button onclick='closeSession(\"" + apihost + "\",\"" + item.id + "\");'>Close</button>") + "</p></details>");
-                });
-            },
-            function (jqXHR) {
-                checkAuth(jqXHR);
-            },
-            true
-        );
-
-        ajaxGet(apihost + "/api/comment/mine",
-            function (response) {
-                if (response.value.items != null)
-                    response.value.items.forEach(i => makeComment(i, true));
-            },
-            function (jqXHR) {
-                checkAuth(jqXHR);
-            },
-            true
-        );
-    }
-
-    function signOff(apihost) {
-        ajaxGet(apihost + "/api/user/signoff", x => window.location.href = "/user/login", x => alert("Something went wrong, try again"), true, { fromAJAX: true });
-    }
-
-    function closeSession(apihost, session) {
-        ajaxGet(apihost + "/api/user/closeSession", x => $("#" + session + "").remove(), x => alert("Something went wrong!"), true, { sessionId: session });
-    }
+    window.onload += getLoggedUserDetails('@config["ApiHost"]');
 </script>

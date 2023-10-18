@@ -5,7 +5,6 @@
     Layout = "_Layout";
 }
 
-<body onload="bindRegister('@config["ApiHost"]')">
 <h1>Register</h1>
 
 <form action="@config["ApiHost"]/api/user/signup" method="post" id="register-form">
@@ -19,36 +18,8 @@
     <input type="password" id="passwordRepeat" name="passwordRepeat" required><br><br>
     <input type="submit" value="Submit">
 </form>
-</body>
 
 <script>
-    function bindRegister(apihost){
-        document.getElementById("register-form").addEventListener("submit", (e) => processRegister(e, apihost));
-    }
-
-    function processRegister(e, apihost) {
-            e.preventDefault();
-            var formData = new FormData(e.target);
-
-            $.ajax({
-                url: apihost + "/api/user/signup",
-                method: "POST",
-                type: "POST",
-                cache: false,
-                data: formData,
-                processData: false,
-                contentType: false,
-                xhrFields: {
-                    withCredentials: true
-                },
-                success: function (response) {
-                    console.log(response);
-                    window.location = "/gallery";
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    console.log(`$first: ${jqXHR.responseText} second: ${textStatus} third: ${errorThrown}`);
-                }
-            });
-        }
+    window.onload += bindRegister('@config["ApiHost"]');
 </script>
 

@@ -7,36 +7,9 @@
     Layout = "_Layout";
 }
 
-<body onload="populateGallery('@config["ApiHost"]')">
-    <p id="smth"></p>
-    <center id="pages">
-    </center>
-    <script>
-        function populateGallery(apihost) {
-            $.ajax({
-                url: apihost + "/api/media",
-                data: {
-                    page: @Model.page,
-                    reverse: @Model.reverse
-                },
-                success: function (response) {
-                    for (var i = 0; i < response.items.length; i++) {
-                        $("#smth").append("<a href='/gallery/picture?id=" + response.items[i].hash + "'>" + "<img src='@config["ApiHost"]/" + response.items[i].thumb + "'>" + "</a>");
-                    }
-
-                    if (response.prevPage) {
-                        var currentPage = @Model.page;
-                        var prevPage = @Model.page - 1;
-                        $("#pages").append("<a href='/gallery?page=" + prevPage + "&reverse=" + @Model.reverse + "'>Previous</a>");
-                    }
-
-                    if (response.nextPage) {
-                        var currentPage = @Model.page;
-                        var nextPage = @Model.page + 1;
-                        $("#pages").append("<a href='/gallery?page=" + nextPage + "&reverse=" + @Model.reverse + "'>Next</a>");
-                    }
-                }
-            });
-         }
-    </script>
-</body>
+<p id="smth"></p>
+<center id="pages">
+</center>
+<script>
+    window.onload += populateGallery('@config["ApiHost"]', @Model.page, @Model.reverse);
+</script>

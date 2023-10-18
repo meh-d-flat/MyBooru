@@ -43,7 +43,7 @@ namespace MyBooru.Services
                 x.Parameters.AddNew("@b", email, System.Data.DbType.String);
                 var result = await x.ExecuteReaderAsync();
                 return TableCell.MakeEntities<Comment>(await TableCell.GetRowsAsync(result));
-            }, "SELECT * FROM Comments WHERE User = (SELECT Username From Tickets WHERE ID = @a) AND (SELECT Username From Users WHERE Email = @b)");
+            }, "SELECT * FROM Comments WHERE User = (SELECT Username From Tickets WHERE ID = @a) AND User = (SELECT Username From Users WHERE Email = @b)");
         }
 
         public async Task<Comment> GetCommentAsync(int id, CancellationToken ct)

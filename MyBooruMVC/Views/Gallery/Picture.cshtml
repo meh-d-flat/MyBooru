@@ -7,172 +7,33 @@
     Layout = "_Layout";
 }
 
-<body onload="getMediaDetails('@config["ApiHost"]')">
-    <div class="sidenav">
-        <form onsubmit="addTag(); return false;" method="get" id="tag-form" autocomplete="off">
-            <div style="margin-top: 10px">
-                <input name="tags" id="tags-to-add" type="text" placeholder="Add a tag..."/>
-            </div>
-        </form>
-        <ul id="tag-results"></ul>
-        <div id="tags"></div>
-        <form onsubmit="return false;" method="get">
-            <button type="submit" onclick="remove()">Delete</button>
-        </form>
-    </div>
-
-    <div class="main">
-        <div id="base">
+<div class="sidenav">
+    <form onsubmit="addTag('@config["ApiHost"]', '@Model'); return false;" method="get" id="tag-form" autocomplete="off">
+        <div style="margin-top: 10px">
+            <input name="tags" id="tags-to-add" type="text" placeholder="Add a tag..." />
         </div>
+    </form>
+    <ul id="tag-results"></ul>
+    <div id="tags"></div>
+    <form onsubmit="return false;" method="get">
+        <button type="submit" onclick="remove('@config["ApiHost"]', '@Model')">Delete</button>
+    </form>
+</div>
 
-        <form id="comment-form">
-            <textarea id="new-comment" rows="2" cols="50" name="new-comment" placeholder="Your comment..."></textarea>
-            <br>
-            <input type="button" onclick="addComment()" value="Submit">
-        </form>
-
-        <div id="comms"></div>
+<div class="main">
+    <div id="base">
     </div>
 
-    <script>
-        var pic = false;
-        var tagThing = { length: -1, chars: "", data: [], isPerioded: false };
+    <form id="comment-form">
+        <textarea id="new-comment" rows="2" cols="50" name="new-comment" placeholder="Your comment..."></textarea>
+        <br>
+        <input type="button" onclick="addComment('@config["ApiHost"]', '@Model')" value="Submit">
+    </form>
 
-        const tagSearchForm = document.getElementById("tag-form");
-        const tagSearchInput = document.getElementById("tags-to-add");
-        const tagSuggestions = document.getElementById("tag-results");
+    <div id="comms"></div>
+</div>
 
-        tagSearchInput.addEventListener("input", (e) => search(e, tagSuggestions, tagRetrieve, tagThing));
-        tagSearchForm.addEventListener("submit", () => tagFormSubmit(tagSearchInput));
-        tagSuggestions.addEventListener("click", (e) => submitEntry(e, tagSearchInput, tagThing));
-
-        function tagRetrieve(str) {
-            $.ajax({
-                url: "@config["ApiHost"]/api/tag",
-                data: {
-                    tagName: str
-                },
-                success: function (response) {
-                    tagThing.data = response;
-                }
-            });
-        }
-
-        function tagFormSubmit(self) {
-            self.value = "";
-        }
-
-        function getMediaDetails(apihost) {
-            $.ajax({
-                url: apihost + "/api/media/details",
-                data: {
-                    id: '@Model'
-                },
-                success: function (response) {
-                    let tags = "";
-                    if (response.tags != null)
-                        response.tags.forEach(x => tags += x.name + " ");
-                    if(response.type.includes("image"))
-                        $("#base").append("<img src='@config["ApiHost"]/" + response.path + "' alt='" + tags + "'>");
-                    if (response.type.includes("video"))
-                        $("#base").append("<video preload='metadata' loop controls autoplay muted src='@config["ApiHost"]/" + response.path + "'>");
-
-                    makeList(response.tags);
-                    makeComments(response.comments);
-                }
-            });
-        }
-
-        function addComment() {
-            let commText = $("#new-comment").val();
-
-            if(commText == null | commText === ""){
-                $(".modal-body").html("comment cannot be empty");
-                $("#modal").addClass("active");
-                return;
-            }
-
-            $.ajax({
-                url: "@config["ApiHost"]/api/comment/post",
-                method: "POST",
-                data: {
-                    hash: "@Model",
-                    commentText: commText
-                },
-                xhrFields: {
-                    withCredentials: true
-                },
-                success: function (response) {
-                    $("#new-comment").val("");
-                    ajaxGet("@config["ApiHost"]/api/comment/byId", x => makeComment(x), null, false, { id: response });
-                },
-                error: function (jqXHR) {
-                    checkAuth(jqXHR);
-                }
-            });
-        }
-
-
-        function addTag() {
-            $.ajax({
-                url: "@config["ApiHost"]/api/media/addTags",
-                method: "GET",
-                data: {
-                    id: '@Model',
-                    tags: $("#tags-to-add").val()
-                },
-                success: function (response) {
-                    makeList(response.items);
-                    $("#tags-to-add").val("");
-                },
-                xhrFields: {
-                    withCredentials: true
-                },
-                error: function (jqXHR) {
-                    checkAuth(jqXHR);
-                    alert("Can't add tag: " + jQuery.parseJSON(jqXHR.responseText).value.bad_tag + "\nTags should only contain letters and numbers\nAnd be 3 to 32 characters long");
-                }
-            });
-        }
-
-        function remove() {
-            $.ajax({
-                url: "@config["ApiHost"]/api/media/remove?id=" + "@Model",
-                method: "DELETE",
-                xhrFields: {
-                    withCredentials: true
-                },
-                success: function () {
-                    location.replace("gallery");
-                },
-                error: function (jqXHR) {
-                    checkAuth(jqXHR);
-                    alert(jQuery.parseJSON(jqXHR.responseText).result);
-                }
-            })
-        }
-
-        function makeList(responseItems) {
-            if (responseItems == null)
-                return;
-
-            for (var i = 0; i < responseItems.length; i++) {
-                $("#tags").append("<a href='/gallery/search?tags=" + responseItems[i].name + "'>" + responseItems[i].name + "</a>");
-            }
-        }
-
-        function makeComments(responseItems){
-            if (responseItems == null)
-                return;
-
-           for (var i = 0; i < responseItems.length; i++){
-                makeComment(responseItems[i]);
-           }
-        }
-
-        function minmax() {
-            $("#picture").attr("width", pic ? '33%' : '100%');
-            pic = !pic;
-        }
-    </script>
-</body>
+<script>
+    window.onload += getMediaDetails('@config["ApiHost"]', '@Model');
+    window.onload += bindTagSearch('@config["ApiHost"]', '@Model');
+</script>

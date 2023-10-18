@@ -9,11 +9,12 @@
     @*<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>*@
     <script type="text/javascript" src="~/jquery-3.6.0.js"></script>
     @*<script src="https://code.jquery.com/jquery-3.6.0.js"></script>*@
+    <script type="text/javascript" src="~/scripts.js"></script>
     <link rel="stylesheet" href="~/styles.css">
     <base href="/" />
     <!--so ajax requests get the right path-->
 </head>
-<body onload="makeUserButtons('@config["ApiHost"]')">
+<body>
     @*<div class="nav">*@
     <div class="topnav">
         <a href="/Gallery" id="button-home">Home</a>
@@ -26,6 +27,11 @@
         <div class="topnav-right">
         </div>
     </div>
+
+    <script>
+        window.onload = makeUserButtons('@config["ApiHost"]');
+        window.onload += bindNavSearch('@config["ApiHost"]');
+    </script>
 
     <div>
         @RenderBody()
@@ -40,147 +46,5 @@
         </div>
     </div>
 
-    <script>
-        const searchForm = document.getElementById("search-form");
-        const searchInput = document.getElementById("search");
-        const suggestions = document.getElementById("results");
-
-        var thing = { length: -1, chars: "", data: [], isPerioded: true };
-        var userData;
-
-        searchInput.addEventListener("input", (e) => search(e, suggestions, retrieve, thing));
-        searchForm.addEventListener("submit", () => formSubmit(searchInput));
-        suggestions.addEventListener("click", (e) => submitEntry(e, searchInput, thing));
-
-        function makeUserButtons(apihost) {
-            ajaxGet(apihost + "/api/user/getInfo",
-                function (response) {
-                    userData = response;
-                    $("<a href=\"/Gallery/upload\" id=\"button-upload\">Upload</a>").insertAfter("#button-home");
-                    $(".topnav-right").append("<a href='/user'> Hi there, <div id='username'>" + response.username + "</div></a>");
-                },
-                function (jqXHR) {
-                    $(".topnav-right").append("<a href='/user/login'>Sign in</a><a href='/user/register'>Sign up</a>");
-                },
-                true
-            );
-        }
-
-        function ajaxGet(getUrl, successFunc, errorFunc, sendCreds, dataObject) {
-            $.ajax({
-                url: getUrl,
-                method: "GET",
-                type: "GET",
-                data: dataObject,
-                xhrFields: {
-                    withCredentials: sendCreds
-                },
-                success: function (response) {
-                    successFunc(response);
-                },
-                error: function (jqXHR) {
-                    errorFunc(jqXHR);
-                }
-            });
-        }
-
-        function formSubmit(input) {
-            if (input.value.endsWith(","))
-                input.value = input.value.slice(0, -1);
-        };
-
-        function submitEntry(e, input, obj) {
-            const setValue = e.target.innerText;
-            a = input.value;
-            input.value = a.slice(0, a.lastIndexOf(",") + 1) + a.slice(a.lastIndexOf(",") + 1, a.length).replace(obj.chars, "");//yeah...
-            input.value += setValue + (obj.isPerioded ? "," : "");
-            obj.length = setValue.length;
-            obj.chars = "";
-            e.target.remove();
-        }
-
-        function getResults(input, func, obj) {
-            const results = [];
-            func(input, obj);
-            for (i = 0; i < obj.data.length; i++) {
-                if (input.localeCompare(obj.data[i].slice(0, input.length), undefined, { sensitivity: 'accent' }) == 0)
-                    results.push(obj.data[i]);
-            }
-            return results;
-        }
-
-        function retrieve(str, obj) {
-            ajaxGet("@config["ApiHost"]/api/tag", x => obj.data = x, null, false, { tagname: str });
-        };
-
-        //deleteContentBackward, deleteContentForward, insertFromPaste, insertText
-        function search(e, suggest, func, obj) {
-            let results = [];
-            if (e.inputType == "insertText" || e.inputType == "insertFromPaste")
-                obj.chars += e.data;
-            if (e.inputType == "deleteContentBackward")
-                obj.chars = obj.chars.slice(0, obj.chars.length - 1);
-
-            const userInput = e.target.value;
-            suggest.innerHTML = "";
-            if (userInput.length > 0 || userInput.length > obj.length) {
-                results = getResults(obj.chars, func, obj);
-                suggest.style.display = "block";
-                for (i = 0; i < results.length; i++) {
-                    suggest.innerHTML += "<li style='border-bottom: 1px solid white;' onclick=pickTag(this)>" + results[i] + "</li>";
-                }
-            }
-        }
-
-        function pickTag(liElement) {
-            liElement.parentElement.innerHTML = "";
-        }
-
-        function checkAuth(jqXHR) {
-            if (jqXHR.status == "401") {
-                $(".modal-body").html("unauthorized!");
-                $("#modal").addClass("active");
-                return;
-            };
-            if (jqXHR.status == "403") {
-                $(".modal-body").html("you don't have permissions for that!");
-                $("#modal").addClass("active");
-                return;
-            };
-        }
-
-        function makeComment(item, printMediaID) {
-            let date = new Date(item.timestamp * 1000).toLocaleString(navigator.language, { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });;
-            let a = printMediaID
-                ? $("<a></a>").attr("href", "/gallery/picture?id=" + item.mediaID).attr("id", "username").text("this picture").prepend(document.createTextNode("You said on "))
-                : $("<a></a>").text(item.user).attr("href", window.location.origin + "/user/details?username=" + item.user).attr("id", "username");
-            let p = $("<p></p>").text(item.text);
-            let p2 = $("<p></p>").text(" said at: " + date).attr("class", "comm").attr("key", item.id).append("<br>");
-            $("#comms").append(p2.prepend(a).prepend("<p class='close' title='Delete' role='button' onclick=deleteComment(this)>&times;</p>").append(p));
-        }
-
-        function deleteComment(elem) {
-            var commId = elem.parentElement.attributes['key'].value;
-            $.ajax({
-                url: "@config["ApiHost"]/api/comment/remove?id=" + commId,
-                method: "DELETE",
-                xhrFields: {
-                    withCredentials: true
-                },
-                success: function () {
-                    elem.parentElement.remove();
-                },
-                error: function (jqXHR) {
-                    checkAuth(jqXHR);
-                    alert(jQuery.parseJSON(jqXHR.responseText).result);
-                }
-
-            });
-        }
-
-        $(".close-button").on("click", function () {
-            $("#modal").removeClass("active");
-        });
-    </script>
 </body>
 </html>
