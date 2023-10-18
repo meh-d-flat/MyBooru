@@ -4,9 +4,8 @@
     ViewBag.Title = "Login";
     Layout = "_Layout";
 }
-
+<body onload="bindLogin('@config["ApiHost"]')">
 <h1>Login</h1>
-
 <form action="@config["ApiHost"]/api/user/signin" method="post" id="login-form">
     <label for="email">Email:</label><br>
     <input type="text" id="email" name="email" required><br>
@@ -14,30 +13,35 @@
     <input type="password" id="password" name="password" required><br>
     <input type="submit" value="Submit">
 </form>
+</body>
 
 <script>
-    $(document).on("submit", "#login-form", function (e) {
-            e.preventDefault();
-            var formData = new FormData(this);
+    function bindLogin(apihost) {
+        document.getElementById("login-form").addEventListener("submit", (e) => processLogin(e, apihost));
+    }
 
-            $.ajax({
-                url: "@config["ApiHost"]/api/user/signin",
-                method: "POST",
-                type: "POST",
-                cache: false,
-                data: formData,
-                processData: false,
-                contentType: false,
-                xhrFields: {
-                    withCredentials: true
-                },
-                success: function (response) {
-                    console.log(response);
-                    window.location = "/gallery";
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    console.log(`$first: ${jqXHR.responseText} second: ${textStatus} third: ${errorThrown}`);
-                }
-            });
+    function processLogin(e, apihost) {
+        e.preventDefault();
+        var formData = new FormData(e.target);
+
+        $.ajax({
+            url: apihost + "/api/user/signin",
+            method: "POST",
+            type: "POST",
+            cache: false,
+            data: formData,
+            processData: false,
+            contentType: false,
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function (response) {
+                console.log(response);
+                window.location = "/gallery";
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                console.log(`$first: ${jqXHR.responseText} second: ${textStatus} third: ${errorThrown}`);
+            }
         });
+    }
 </script>

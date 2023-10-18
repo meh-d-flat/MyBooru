@@ -7,7 +7,7 @@
     Layout = "_Layout";
 }
 
-<body>
+<body onload="getMediaDetails('@config["ApiHost"]')">
     <div class="sidenav">
         <form onsubmit="addTag(); return false;" method="get" id="tag-form" autocomplete="off">
             <div style="margin-top: 10px">
@@ -62,9 +62,9 @@
             self.value = "";
         }
 
-        $(document).ready(function () {
+        function getMediaDetails(apihost) {
             $.ajax({
-                url: "@config["ApiHost"]/api/media/details",
+                url: apihost + "/api/media/details",
                 data: {
                     id: '@Model'
                 },
@@ -81,7 +81,7 @@
                     makeComments(response.comments);
                 }
             });
-        });
+        }
 
         function addComment() {
             let commText = $("#new-comment").val();

@@ -89,7 +89,7 @@ namespace MyBooru.Controllers
 
             await _userService.PersistUserAsync(username, password, email, ct);
 
-            return await this.SignIn(username, password, ct);
+            return await this.SignIn(email, password, ct);
         }
 
         [HttpPost, Route("signin")]

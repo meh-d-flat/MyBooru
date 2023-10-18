@@ -7,15 +7,14 @@
     Layout = "_Layout";
 }
 
-<body>
+<body onload="populateGallery('@config["ApiHost"]')">
     <p id="smth"></p>
     <center id="pages">
-        
     </center>
     <script>
-        $(document).ready(function () {
+        function populateGallery(apihost) {
             $.ajax({
-                url: "@config["ApiHost"]/api/media",
+                url: apihost + "/api/media",
                 data: {
                     page: @Model.page,
                     reverse: @Model.reverse
@@ -38,6 +37,6 @@
                     }
                 }
             });
-        });
+         }
     </script>
 </body>

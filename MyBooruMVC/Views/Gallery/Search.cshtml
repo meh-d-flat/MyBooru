@@ -6,16 +6,16 @@
     Layout = "_Layout";
 }
 
-<body>
+<body onload="populateSearch('@config["ApiHost"]')">
     <div id="resultCount"></div>
     <p id="smth"></p>
     <center id="pages">
 
     </center>
     <script>
-        $(document).ready(function () {
+        function populateSearch(apihost) {
             $.ajax({
-                url: "@config["ApiHost"]/api/media/byTag",
+                url: apihost + "/api/media/byTag",
                 method: "GET",
                 data: {
                     tags: '@Model.tags',
@@ -46,8 +46,8 @@
                         $("#pages").append("<a href='/gallery/search?tags=" + '@Model.tags' + "&page=" + prevPage + "&reverse=" + @Model.reverse + "'>Next</a>")
                     }
                 }
-            })
-        });
+            });
+        }
     </script>
 </body>
 

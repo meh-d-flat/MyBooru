@@ -109,20 +109,19 @@ namespace MyBooru.Services
                 passwordHash = await hmac.ComputeHashAsync(new MemoryStream(Encoding.UTF8.GetBytes(password)));
             }
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
-            await queryService.QueryTheDbAsync<Task>(async x => 
+            await connection.OpenAsync(ct);
+            var userCommand = TableCell.MakeAddCommand<User>(new User()
             {
-                x = TableCell.MakeAddCommand<User>(new User()
-                {
-                    Username = username,
-                    Email = email,
-                    PasswordHash = passwordHash,
-                    PasswordSalt = passwordSalt,
-                    Role = "User",
-                    RegisterDateTime = DateTime.UtcNow.GetUnixTime()
-                }, connection);
-
-                return Task.CompletedTask;
-            }, "");
+                Username = username,
+                Email = email,
+                PasswordHash = passwordHash,
+                PasswordSalt = passwordSalt,
+                Role = "User",
+                RegisterDateTime = DateTime.UtcNow.GetUnixTime()
+            }, connection);
+            await userCommand.ExecuteNonQueryAsync(ct);
+            await userCommand.DisposeAsync();
+            await connection.CloseAsync();
             return 1;
         }
 

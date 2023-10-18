@@ -4,7 +4,7 @@
     ViewBag.Title = "Upload";
     Layout = "_Layout";
 }
-<body>
+<body onload="bindForms('@config["ApiHost"]')">
     <form action="@config["ApiHost"]/api/media/upload" method="post" enctype="multipart/form-data" id="file-form">
         <div style="padding-top: 1em">
             <label for="file">Upload File</label>
@@ -21,24 +21,27 @@
     </form>
 
     <script>
-        const form = document.getElementById("file-form");
-        const formFrom = document.getElementById("uploadfrom-form");
-        const fileInput = document.getElementById("file-input");
+        function bindForms(apihost){
+            window.addEventListener('paste', e => {
+                document.getElementById("file-input").files = e.clipboardData.files;
+                if (!e.clipboardData.getData("text/plain") && e.clipboardData.files.length != 0) {
+                    $(".modal-body").html("File pasted successfully!");
+                    $("#modal").addClass("active");
+                }
+            });
 
-        window.addEventListener('paste', e => {
-            fileInput.files = e.clipboardData.files;
-            if (!e.clipboardData.getData("text/plain") && e.clipboardData.files.length != 0) {
-                $(".modal-body").html("File pasted successfully!");
-                $("#modal").addClass("active");
-            }
-        });
+            document.getElementById("file-form").addEventListener("submit", (e) => handleUpload(e, apihost));
+            document.getElementById("uploadfrom-form").addEventListener("submit", (e) => handleUploadFrom(e, apihost));
+        }
 
-        $(document).on("submit", "#file-form", function (e) {
+        
+
+        function handleUpload (e, apihost) {
             e.preventDefault(); //important
-            var formData = new FormData(this);
+            var formData = new FormData(e.target);
 
             $.ajax({
-                url: "@config["ApiHost"]/api/media/upload",
+                url: apihost + "/api/media/upload",
                 method: "POST",
                 type: "POST",
                 cache: false,
@@ -50,10 +53,10 @@
                 },
                 success: function (response) {
 
-                    form.reset();
-                    ajaxGet("@config["ApiHost"]/api/media/details",
+                    e.target.reset();
+                    ajaxGet(apihost + "/api/media/details",
                         function (uploadResponse) {
-                            $(".modal-body").html("Uploaded:<br> <a href='/gallery/picture?id=" + uploadResponse.hash + "'>" + "<img src='@config["ApiHost"]/" + uploadResponse.thumb + "'>" + "</a>");
+                            $(".modal-body").html("Uploaded:<br> <a href='/gallery/picture?id=" + uploadResponse.hash + "'>" + "<img src='" + apihost + "/" + uploadResponse.thumb + "'>" + "</a>");
                             $("#modal").addClass("active");
                         },
                         null,
@@ -67,20 +70,19 @@
                     $("#modal").addClass("active");
                 }
             });
-        });
+        }
 
-        $(document).on("submit", "#uploadfrom-form", function (e) {
+        function handleUploadFrom(e, apihost) {
             e.preventDefault(); //important
-            //var formData = new FormData(this);
 
             ajaxGet(
-                "@config["ApiHost"]/api/media/uploadfrom",
+                apihost + "/api/media/uploadfrom",
                 function (response) {
 
-                    formFrom.reset();
-                    ajaxGet("@config["ApiHost"]/api/media/details",
+                    e.target.reset();
+                    ajaxGet(apihost + "/api/media/details",
                         function (uploadResponse) {
-                            $(".modal-body").html("Uploaded:<br> <a href='/gallery/picture?id=" + uploadResponse.hash + "'>" + "<img src='@config["ApiHost"]/" + uploadResponse.thumb + "'>" + "</a>");
+                            $(".modal-body").html("Uploaded:<br> <a href='/gallery/picture?id=" + uploadResponse.hash + "'>" + "<img src='" + apihost + "/" + uploadResponse.thumb + "'>" + "</a>");
                             $("#modal").addClass("active");
                         },
                         null,
@@ -90,13 +92,13 @@
                 },
                 function (jqXHR) {
                     checkAuth(jqXHR);
-                    formFrom.reset();
+                    e.target.reset();
                     $(".modal-body").html(jQuery.parseJSON(jqXHR.responseText).value.item);
                     $("#modal").addClass("active");
                 },
                 true,
                 { source: $("#link-input").val()}
             );
-        });
+        }
     </script>
 </body>
