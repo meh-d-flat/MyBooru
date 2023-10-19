@@ -1,35 +1,27 @@
-/*
-LAYOUT
-*/
-
+//LAYOUT
 function bindNavSearch(apihost) {
+    var thing = { length: -1, chars: "", data: [], isPerioded: true };
     const searchForm = document.getElementById("search-form");
     const searchInput = document.getElementById("search");
     const suggestions = document.getElementById("results");
-
-    var thing = { length: -1, chars: "", data: [], isPerioded: true };
-
     searchInput.addEventListener("input", (e) => search(e, suggestions, retrieve, thing, apihost));
     searchForm.addEventListener("submit", () => formSubmit(searchInput));
     suggestions.addEventListener("click", (e) => submitEntry(e, searchInput, thing));
 }
 function makeUserButtons(apihost) {
-    ajaxGet(apihost + "/api/user/getInfo",
+    ajaxNonPost(apihost + "/api/user/getInfo", "GET",
         function (response) {
             $("<a href=\"/Gallery/upload\" id=\"button-upload\">Upload</a>").insertAfter("#button-home");
             $(".topnav-right").append("<a href='/user'> Hi there, <div id='username'>" + response.username + "</div></a>");
         },
         function (jqXHR) {
             $(".topnav-right").append("<a href='/user/login'>Sign in</a><a href='/user/register'>Sign up</a>");
-        },
-        true
-    );
+        }, true);
 }
-function ajaxGet(getUrl, successFunc, errorFunc, sendCreds, dataObject) {
+function ajaxNonPost(getUrl, method, successFunc, errorFunc, sendCreds, dataObject) {
     $.ajax({
         url: getUrl,
-        method: "GET",
-        type: "GET",
+        method: method,
         data: dataObject,
         xhrFields: {
             withCredentials: sendCreds
@@ -40,6 +32,22 @@ function ajaxGet(getUrl, successFunc, errorFunc, sendCreds, dataObject) {
         error: function (jqXHR) {
             if (errorFunc != null)
                 errorFunc(jqXHR);
+        }
+    });
+}
+function ajaxPost(postUrl, succesF, errorF, sendCreds, formData) {
+    $.ajax({
+        url: postUrl,
+        method: "POST",
+        cache: false,
+        data: formData,
+        processData: false,
+        contentType: false,
+        xhrFields: { withCredentials: sendCreds },
+        success: res => succesF(res),
+        error: (jqXHR, textStatus, errorThrown) => {
+            if (errorF != null)
+                errorF(jqXHR, textStatus, errorThrown);
         }
     });
 }
@@ -61,7 +69,6 @@ function getResults(input, retriever, obj, apihost) {
     retriever(input, obj, apihost);
     if (obj.data == null)
         return;
-
     for (i = 0; i < obj.data.length; i++) {
         if (input.localeCompare(obj.data[i].slice(0, input.length), undefined, { sensitivity: 'accent' }) == 0)
             results.push(obj.data[i]);
@@ -70,7 +77,7 @@ function getResults(input, retriever, obj, apihost) {
 }
 function retrieve(str, obj, apihost) {
     if (str != null & str.length >= 2)
-        ajaxGet(apihost + "/api/tag", x => obj.data = x, null, false, { tagname: str });
+        ajaxNonPost(apihost + "/api/tag", "GET", x => obj.data = x, null, false, { tagname: str });
 };
 //deleteContentBackward, deleteContentForward, insertFromPaste, insertText
 function search(e, suggest, retriever, obj, apihost) {
@@ -79,15 +86,12 @@ function search(e, suggest, retriever, obj, apihost) {
         obj.chars += e.data;
     if (e.inputType == "deleteContentBackward")
         obj.chars = obj.chars.slice(0, obj.chars.length - 1);
-
     const userInput = e.target.value;
     suggest.innerHTML = "";
     if (userInput.length > 0 || userInput.length > obj.length) {
         results = getResults(obj.chars, retriever, obj, apihost);
-
         if (results == null)
             return;
-
         suggest.style.display = "block";
         for (i = 0; i < results.length; i++) {
             suggest.innerHTML += "<li style='border-bottom: 1px solid white;' onclick=pickTag(this)>" + results[i] + "</li>";
@@ -120,165 +124,96 @@ function makeComment(apihost, item, printMediaID) {
 }
 function deleteComment(elem, apihost) {
     var commId = elem.parentElement.attributes['key'].value;
-    $.ajax({
-        url: apihost + "/api/comment/remove?id=" + commId,
-        method: "DELETE",
-        xhrFields: {
-            withCredentials: true
-        },
-        success: function () {
-            elem.parentElement.remove();
-        },
-        error: function (jqXHR) {
-            checkAuth(jqXHR);
-            alert(jQuery.parseJSON(jqXHR.responseText).result);
-        }
-
-    });
+    ajaxNonPost(apihost + "/api/comment/remove?id=" + commId, "DELETE",
+        () => elem.parentElement.remove(),
+        x => {
+            checkAuth(x);
+            alert(jQuery.parseJSON(x.responseText).result);
+        }, true, null);
 }
 $(".close-button").on("click", function () {
     $("#modal").removeClass("active");
 });
 
-/*
-PICTURE INDEX
-*/
-
+//PICTURE INDEX
 function populateGallery(apihost, page, reverse) {
-    $.ajax({
-        url: apihost + "/api/media",
-        data: {
-            page: page,
-            reverse: reverse
-        },
-        success: function (response) {
-            for (var i = 0; i < response.items.length; i++) {
-                $("#smth").append("<a href='/gallery/picture?id=" + response.items[i].hash + "'>" + "<img src='" + apihost + "/" + response.items[i].thumb + "'>" + "</a>");
+    ajaxNonPost(apihost + "/api/media", "GET",
+        x => {
+            for (var i = 0; i < x.items.length; i++) {
+                $("#smth").append("<a href='/gallery/picture?id=" + x.items[i].hash + "'>" + "<img src='" + apihost + "/" + x.items[i].thumb + "'>" + "</a>");
             }
-
-            if (response.prevPage) {
-                var currentPage = page;
-                var prevPage = page - 1;
-                $("#pages").append("<a href='/gallery?page=" + prevPage + "&reverse=" + reverse + "'>Previous</a>");
+            if (x.prevPage) {
+                $("#pages").append("<a href='/gallery?page=" + (page-1) + "&reverse=" + reverse + "'>Previous</a>");
             }
-
-            if (response.nextPage) {
-                var currentPage = page;
-                var nextPage = page + 1;
-                $("#pages").append("<a href='/gallery?page=" + nextPage + "&reverse=" + reverse + "'>Next</a>");
+            if (x.nextPage) {
+                $("#pages").append("<a href='/gallery?page=" + (page+1) + "&reverse=" + reverse + "'>Next</a>");
             }
-        }
-    });
+        }, null, false, { page: page, reverse: reverse });
 }
 
-/*
-PICTURE
-*/
-
+//PICTURE
 function bindTagSearch(apihost) {
     var tagThing = { length: -1, chars: "", data: [], isPerioded: false };
-
     const tagSearchForm = document.getElementById("tag-form");
     const tagSearchInput = document.getElementById("tags-to-add");
     const tagSuggestions = document.getElementById("tag-results");
-
     tagSearchInput.addEventListener("input", (e) => search(e, tagSuggestions, retrieve, tagThing, apihost));
-    tagSearchForm.addEventListener("submit", () => tagFormSubmit(tagSearchInput));
+    tagSearchForm.addEventListener("submit", (e) => e.target.value = "");
     tagSuggestions.addEventListener("click", (e) => submitEntry(e, tagSearchInput, tagThing));
 }
-
-function tagFormSubmit(self) {
-    self.value = "";
-}
 function getMediaDetails(apihost, mediaID) {
-    $.ajax({
-        url: apihost + "/api/media/details",
-        data: {
-            id: mediaID
-        },
-        success: function (response) {
+    ajaxNonPost(apihost + "/api/media/details", "GET",
+        a => {
             let tags = "";
-            if (response.tags != null)
-                response.tags.forEach(x => tags += x.name + " ");
-            if (response.type.includes("image"))
-                $("#base").append("<img src='" + apihost + "/" + response.path + "' alt='" + tags + "'>");
-            if (response.type.includes("video"))
-                $("#base").append("<video preload='metadata' loop controls autoplay muted src='" + apihost + "/" + response.path + "'>");
-
-            makeList(response.tags);
-            makeComments(apihost, response.comments);
-        }
-    });
+            if (a.tags != null)
+                a.tags.forEach(x => tags += x.name + " ");
+            if (a.type.includes("image"))
+                $("#base").append("<img src='" + apihost + "/" + a.path + "' alt='" + tags + "'>");
+            if (a.type.includes("video"))
+                $("#base").append("<video preload='metadata' loop controls autoplay muted src='" + apihost + "/" + a.path + "'>");
+            makeList(a.tags);
+            makeComments(apihost, a.comments);
+        }, null, false, { id: mediaID });
 }
 function addComment(apihost, mediaID) {
     let commText = $("#new-comment").val();
-
     if (commText == null | commText === "") {
         $(".modal-body").html("comment cannot be empty");
         $("#modal").addClass("active");
         return;
     }
-
     $.ajax({
         url: apihost + "/api/comment/post",
         method: "POST",
-        data: {
-            hash: mediaID,
-            commentText: commText
-        },
-        xhrFields: {
-            withCredentials: true
-        },
-        success: function (response) {
+        data: { hash: mediaID, commentText: commText },
+        xhrFields: { withCredentials: true },
+        success: a => {
             $("#new-comment").val("");
-            ajaxGet(apihost + "/api/comment/byId", x => makeComment(apihost, x), null, false, { id: response });
+            ajaxNonPost(apihost + "/api/comment/byId", "GET", x => makeComment(apihost, x), null, false, { id: a });
         },
-        error: function (jqXHR) {
-            checkAuth(jqXHR);
-        }
+        error: y => checkAuth(y)
     });
 }
 function addTag(apihost, mediaID) {
-    $.ajax({
-        url: apihost + "/api/media/addTags",
-        method: "GET",
-        data: {
-            id: mediaID,
-            tags: $("#tags-to-add").val()
-        },
-        success: function (response) {
-            makeList(response.items);
+    ajaxNonPost(apihost + "/api/media/addTags", "GET",
+        x => {
+            makeList(x.items);
             $("#tags-to-add").val("");
         },
-        xhrFields: {
-            withCredentials: true
-        },
-        error: function (jqXHR) {
-            checkAuth(jqXHR);
-            alert("Can't add tag: " + jQuery.parseJSON(jqXHR.responseText).value.bad_tag + "\nTags should only contain letters and numbers\nAnd be 3 to 32 characters long");
-        }
-    });
+        y => {
+            checkAuth(y);
+            alert("Can't add tag: " + jQuery.parseJSON(y.responseText).value.bad_tag + "\nTags should only contain letters and numbers\nAnd be 3 to 32 characters long");
+        }, true, { id: mediaID, tags: $("#tags-to-add").val() });
 }
 function remove(apihost, mediaID) {
-    $.ajax({
-        url: apihost + "/api/media/remove?id=" + mediaID,
-        method: "DELETE",
-        xhrFields: {
-            withCredentials: true
-        },
-        success: function () {
-            location.replace("gallery");
-        },
-        error: function (jqXHR) {
-            checkAuth(jqXHR);
-            alert(jQuery.parseJSON(jqXHR.responseText).result);
-        }
-    })
+    ajaxNonPost(apihost + "/api/media/remove?id=" + mediaID, "DELETE", x => location.replace("gallery"), y => {
+        checkAuth(y);
+        alert(jQuery.parseJSON(y.responseText).result);
+    }, true, null);
 }
 function makeList(responseItems) {
     if (responseItems == null)
         return;
-
     for (var i = 0; i < responseItems.length; i++) {
         $("#tags").append("<a href='/gallery/search?tags=" + responseItems[i].name + "'>" + responseItems[i].name + "</a>");
     }
@@ -286,56 +221,33 @@ function makeList(responseItems) {
 function makeComments(apihost, responseItems) {
     if (responseItems == null)
         return;
-
     for (var i = 0; i < responseItems.length; i++) {
         makeComment(apihost, responseItems[i]);
     }
 }
 
-/*
-PICTURE SEARCH
-*/
-
+//PICTURE SEARCH
 function populateSearch(apihost, tags, page, reverse) {
-    $.ajax({
-        url: apihost + "/api/media/byTag",
-        method: "GET",
-        data: {
-            tags: tags,
-            page: page,
-            reverse: reverse
-        },
-        success: function (response) {
-            if (response.items.length == 0) {
+    ajaxNonPost(apihost + "/api/media/byTag", "GET",
+        x => {
+            if (x.items.length == 0) {
                 $("#resultCount").text("0 results found")
                 return;
             }
-
-            $("#resultCount").text(response.count + " results found");
-
-            for (var i = 0; i < response.items.length; i++) {
-                $("#smth").append("<a href='/gallery/picture?id=" + response.items[i].hash + "'>" + "<img src='" + apihost + "/" + response.items[i].thumb + "'>" + "</a>");
+            $("#resultCount").text(x.count + " results found");
+            for (var i = 0; i < x.items.length; i++) {
+                $("#smth").append("<a href='/gallery/picture?id=" + x.items[i].hash + "'>" + "<img src='" + apihost + "/" + x.items[i].thumb + "'>" + "</a>");
             }
-
-            if (response.prevPage) {
-                var currentPage = page;
-                var prevPage = page - 1;
-                $("#pages").append("<a href='/gallery/search?tags=" + tags + "&page=" + prevPage + "&reverse=" + reverse + "'>Previous</a>")
+            if (x.prevPage) {
+                $("#pages").append("<a href='/gallery/search?tags=" + tags + "&page=" + (page-1) + "&reverse=" + reverse + "'>Previous</a>")
             }
-
-            if (response.nextPage) {
-                var currentPage = page;
-                var nextPage = page + 1;
-                $("#pages").append("<a href='/gallery/search?tags=" + tags + "&page=" + prevPage + "&reverse=" + reverse + "'>Next</a>")
+            if (x.nextPage) {
+                $("#pages").append("<a href='/gallery/search?tags=" + tags + "&page=" + (page+1) + "&reverse=" + reverse + "'>Next</a>")
             }
-        }
-    });
+        }, null, false, { tags: tags, page: page, reverse: reverse });
 }
 
-/*
-PICTURE UPLOAD
-*/
-
+//PICTURE UPLOAD
 function bindForms(apihost) {
     window.addEventListener('paste', e => {
         document.getElementById("file-input").files = e.clipboardData.files;
@@ -344,182 +256,98 @@ function bindForms(apihost) {
             $("#modal").addClass("active");
         }
     });
-
     document.getElementById("file-form").addEventListener("submit", (e) => handleUpload(e, apihost));
     document.getElementById("uploadfrom-form").addEventListener("submit", (e) => handleUploadFrom(e, apihost));
 }
 function handleUpload(e, apihost) {
-    e.preventDefault(); //important
-    var formData = new FormData(e.target);
-
-    $.ajax({
-        url: apihost + "/api/media/upload",
-        method: "POST",
-        type: "POST",
-        cache: false,
-        data: formData,
-        processData: false,
-        contentType: false,
-        xhrFields: {
-            withCredentials: true
-        },
-        success: function (response) {
-
+    e.preventDefault();
+    ajaxPost(apihost + "/api/media/upload",
+        x => {
             e.target.reset();
-            ajaxGet(apihost + "/api/media/details",
-                function (uploadResponse) {
-                    $(".modal-body").html("Uploaded:<br> <a href='/gallery/picture?id=" + uploadResponse.hash + "'>" + "<img src='" + apihost + "/" + uploadResponse.thumb + "'>" + "</a>");
+            ajaxNonPost(apihost + "/api/media/details", "GET",
+                y => {
+                    $(".modal-body").html("Uploaded:<br> <a href='/gallery/picture?id=" + y.hash + "'>" + "<img src='" + apihost + "/" + y.thumb + "'>" + "</a>");
                     $("#modal").addClass("active");
                 },
-                null,
-                false,
-                { id: response.value.item }
-            );
+                null, false, { id: x.value.item });
         },
-        error: function (jqXHR) {
-            checkAuth(jqXHR);
-            $(".modal-body").html(jQuery.parseJSON(jqXHR.responseText).value.item);
+        y => {
+            checkAuth(y);
+            $(".modal-body").html(jQuery.parseJSON(y.responseText).value.item);
             $("#modal").addClass("active");
-        }
-    });
+        }, true, new FormData(e.target));
 }
 function handleUploadFrom(e, apihost) {
-    e.preventDefault(); //important
-
-    ajaxGet(
-        apihost + "/api/media/uploadfrom",
-        function (response) {
-
+    e.preventDefault();
+    ajaxNonPost(
+        apihost + "/api/media/uploadfrom", "GET",
+        x => {
             e.target.reset();
-            ajaxGet(apihost + "/api/media/details",
-                function (uploadResponse) {
-                    $(".modal-body").html("Uploaded:<br> <a href='/gallery/picture?id=" + uploadResponse.hash + "'>" + "<img src='" + apihost + "/" + uploadResponse.thumb + "'>" + "</a>");
+            ajaxNonPost(apihost + "/api/media/details", "GET",
+                y => {
+                    $(".modal-body").html("Uploaded:<br> <a href='/gallery/picture?id=" + y.hash + "'>" + "<img src='" + apihost + "/" + y.thumb + "'>" + "</a>");
                     $("#modal").addClass("active");
                 },
-                null,
-                false,
-                { id: response.value.item }
-            );
+                null, false, { id: x.value.item });
         },
-        function (jqXHR) {
-            checkAuth(jqXHR);
+        y => {
+            checkAuth(y);
             e.target.reset();
-            $(".modal-body").html(jQuery.parseJSON(jqXHR.responseText).value.item);
+            $(".modal-body").html(jQuery.parseJSON(y.responseText).value.item);
             $("#modal").addClass("active");
         },
-        true,
-        { source: $("#link-input").val() }
-    );
+        true, { source: $("#link-input").val() });
 }
 
-/*
-USER HOMEPAGE
-*/
-
+//USER HOMEPAGE
 function getLoggedUserDetails(apihost) {
-    ajaxGet(apihost + "/api/user/getInfo",
-        function (response) {
-            $("#user-info").append("<p>" + response.username + "</p>");
-            $("#user-info").append("<p>Registered: " + new Date(response.dateRegistered * 1000) + "</p>");
-            $("#user-info").append("<p>User group: " + response.role + "</p>");
+    ajaxNonPost(apihost + "/api/user/getInfo", "GET",
+        x => {
+            $("#user-info").append("<p>" + x.username + "</p>");
+            $("#user-info").append("<p>Registered: " + new Date(x.dateRegistered * 1000) + "</p>");
+            $("#user-info").append("<p>User group: " + x.role + "</p>");
         },
-        function (jqXHR) {
-            checkAuth(jqXHR);
-        },
-        true
-    );
-
-    ajaxGet(apihost + "/api/user/getSessions",
-        function (response) {
-            response.allSessions.reverse();
-            response.allSessions.forEach(function (item) {
+        y => checkAuth(y), true);
+    ajaxNonPost(apihost + "/api/user/getSessions", "GET",
+        x => {
+            x.allSessions.reverse();
+            x.allSessions.forEach(function (item) {
                 $("#base").append("<details id='" + item.id + "'><summary>Session " + item.id + "</summary><p>Last Active: " + new Date(item.lastActivity * 1000) + "Ip Address: " + item.ip + "UserAgent: " + item.userAgent + (item.isActiveSession ? "Active" : "<button onclick='closeSession(\"" + apihost + "\",\"" + item.id + "\");'>Close</button>") + "</p></details>");
             });
         },
-        function (jqXHR) {
-            checkAuth(jqXHR);
+        y => checkAuth(y), true);
+    ajaxNonPost(apihost + "/api/comment/mine", "GET",
+        x => {
+            if (x.value.items != null)
+                x.value.items.forEach(i => makeComment(apihost, i, true));
         },
-        true
-    );
-
-    ajaxGet(apihost + "/api/comment/mine",
-        function (response) {
-            if (response.value.items != null)
-                response.value.items.forEach(i => makeComment(apihost, i, true));
-        },
-        function (jqXHR) {
-            checkAuth(jqXHR);
-        },
-        true
-    );
+        y => checkAuth(y), true);
 }
 function signOff(apihost) {
-    ajaxGet(apihost + "/api/user/signoff", x => window.location.href = "/user/login", x => alert("Something went wrong, try again"), true, { fromAJAX: true });
+    ajaxNonPost(apihost + "/api/user/signoff", "GET", x => window.location.href = "/user/login", x => alert("Something went wrong, try again"), true, { fromAJAX: true });
 }
 function closeSession(apihost, session) {
-    ajaxGet(apihost + "/api/user/closeSession", x => $("#" + session + "").remove(), x => alert("Something went wrong!"), true, { sessionId: session });
+    ajaxNonPost(apihost + "/api/user/closeSession", "GET", x => $("#" + session + "").remove(), x => alert("Something went wrong!"), true, { sessionId: session });
 }
 
-/*
-USER LOGIN
-*/
-
+//USER LOGIN
 function bindLogin(apihost) {
     document.getElementById("login-form").addEventListener("submit", (e) => processLogin(e, apihost));
 }
 function processLogin(e, apihost) {
     e.preventDefault();
-    var formData = new FormData(e.target);
-
-    $.ajax({
-        url: apihost + "/api/user/signin",
-        method: "POST",
-        type: "POST",
-        cache: false,
-        data: formData,
-        processData: false,
-        contentType: false,
-        xhrFields: {
-            withCredentials: true
-        },
-        success: function (response) {
-            console.log(response);
-            window.location = "/gallery";
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-            console.log(`$first: ${jqXHR.responseText} second: ${textStatus} third: ${errorThrown}`);
-        }
-    });
+    ajaxPost(apihost + "/api/user/signin", x => window.location = "/gallery",
+        (a, b, c) => console.log(`$first: ${a.responseText} second: ${b} third: ${c}`),
+        true, new FormData(e.target));
 }
 
-/*
-USER REGISTER
- */
-
+//USER REGISTER
 function bindRegister(apihost) {
     document.getElementById("register-form").addEventListener("submit", (e) => processRegister(e, apihost));
 }
 function processRegister(e, apihost) {
     e.preventDefault();
-    var formData = new FormData(e.target);
-
-    $.ajax({
-        url: apihost + "/api/user/signup",
-        method: "POST",
-        type: "POST",
-        cache: false,
-        data: formData,
-        processData: false,
-        contentType: false,
-        xhrFields: {
-            withCredentials: true
-        },
-        success: function (response) {
-            console.log(response);
-            window.location = "/gallery";
-        },
-        error: function (jqXHR, textStatus, errorThrown) {
-            console.log(`$first: ${jqXHR.responseText} second: ${textStatus} third: ${errorThrown}`);
-        }
-    });
+    ajaxPost(apihost + "/api/user/signup", x => window.location = "/gallery",
+        (a, b, c) => console.log(`$first: ${a.responseText} second: ${b} third: ${c}`),
+        true, new FormData(e.target));
 }
