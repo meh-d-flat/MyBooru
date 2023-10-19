@@ -42,7 +42,14 @@ namespace MyBooru.Services
 
         public async Task<bool> DBSetupAsync()
         {
-            await CheckDbFileExists();
+            try
+            {
+                await CheckDbFileExists();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex);
+            }
             return await CreateDbTablesAsync();
         }
 
@@ -86,6 +93,7 @@ namespace MyBooru.Services
                     DateTime INTEGER,
                     FOREIGN KEY(User) REFERENCES Users(Username) ON DELETE SET NULL
                 );
+                ALTER TABLE Tags ADD COLUMN NSFW INTEGER DEFAULT 0;
                 CREATE TABLE IF NOT EXISTS MediasTags (
                     MediaID INTEGER,
                     TagID INTEGER,

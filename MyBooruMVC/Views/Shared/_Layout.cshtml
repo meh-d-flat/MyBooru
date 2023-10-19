@@ -29,8 +29,11 @@
     </div>
 
     <script>
-        window.onload = makeUserButtons('@config["ApiHost"]');
+        window.onload = makeUserButtonsAndModal('@config["ApiHost"]');
         window.onload += bindNavSearch('@config["ApiHost"]');
+        $(".close-button").on("click", function () {
+            $("#modal").removeClass("active");
+        });
     </script>
 
     <div>

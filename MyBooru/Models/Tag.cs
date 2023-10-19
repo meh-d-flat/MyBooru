@@ -11,5 +11,6 @@ namespace MyBooru.Models
         public string Name { get; set; }
         public string User { get; set; }
         public int DateTime { get; set; }
+        public int NSFW { get; set; }
     }
 }

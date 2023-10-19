@@ -49,7 +49,8 @@ namespace MyBooru.Services
         public async Task<Comment> GetCommentAsync(int id, CancellationToken ct)
         {
             Comment comment = new();
-            return await queryService.QueryTheDbAsync<Comment>(async x => {
+            return await queryService.QueryTheDbAsync<Comment>(async x =>
+            {
                 x.Parameters.AddNew("@p", id, System.Data.DbType.Int32);
                 var result = await x.ExecuteReaderAsync(ct);
                 return TableCell.MakeEntity<Comment>(await TableCell.GetRowAsync(result));
@@ -59,7 +60,7 @@ namespace MyBooru.Services
         public async Task<int> PostCommentAsync(string username, string commentText, string pictureHash)
         {
             int result = -1;
-            var comment = new Comment() {  User = username, MediaID = pictureHash, Text = commentText, Timestamp = DateTime.UtcNow.GetUnixTime() };
+            var comment = new Comment() { User = username, MediaID = pictureHash, Text = commentText, Timestamp = DateTime.UtcNow.GetUnixTime() };
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             await connection.OpenAsync();
             var addComment = TableCell.MakeAddCommand<Comment>(comment, connection);
@@ -69,7 +70,7 @@ namespace MyBooru.Services
             }
             catch (SQLiteException ex)
             {
-                 result = 0;
+                result = 0;
             }
             finally
             {
@@ -88,9 +89,8 @@ namespace MyBooru.Services
                 x.Parameters.AddNew("@b", sessionId, System.Data.DbType.String);
                 x.Parameters.AddNew("@c", email, System.Data.DbType.String);
                 return await x.ExecuteNonQueryAsync();
-            }, @"DELETE FROM Comments WHERE ID = @a
-                AND Comments.User = (SELECT Username FROM Tickets WHERE ID = @b AND Username = (SELECT Username From Users WHERE Email = @c))
-                OR Comments.MediaID = (SELECT Medias.ID FROM Medias WHERE Medias.Uploader IN (SELECT Username FROM Tickets WHERE ID = @b AND Username = (SELECT Username From Users WHERE Email = @c)))");
+            }, @"DELETE FROM Comments WHERE Comments.ID = @a AND Comments.User = (SELECT Tickets.Username FROM Tickets WHERE Tickets.ID = @b AND Tickets.Username = (SELECT Users.Username From Users WHERE Users.Email = @c))
+                OR (Comments.MediaID = (SELECT Medias.Hash FROM Medias WHERE Medias.Uploader IN (SELECT Tickets.Username FROM Tickets WHERE Tickets.ID = @b AND Tickets.Username = (SELECT Users.Username From Users WHERE Users.Email = @c))) AND Comments.ID = @a)");
         }
     }
 }

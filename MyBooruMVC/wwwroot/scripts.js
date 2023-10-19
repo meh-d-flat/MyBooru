@@ -8,7 +8,7 @@ function bindNavSearch(apihost) {
     searchForm.addEventListener("submit", () => formSubmit(searchInput));
     suggestions.addEventListener("click", (e) => submitEntry(e, searchInput, thing));
 }
-function makeUserButtons(apihost) {
+function makeUserButtonsAndModal(apihost) {
     ajaxNonPost(apihost + "/api/user/getInfo", "GET",
         function (response) {
             $("<a href=\"/Gallery/upload\" id=\"button-upload\">Upload</a>").insertAfter("#button-home");
@@ -17,6 +17,9 @@ function makeUserButtons(apihost) {
         function (jqXHR) {
             $(".topnav-right").append("<a href='/user/login'>Sign in</a><a href='/user/register'>Sign up</a>");
         }, true);
+        $(".close-button").on("click", function () {
+            $("#modal").removeClass("active");
+        });
 }
 function ajaxNonPost(getUrl, method, successFunc, errorFunc, sendCreds, dataObject) {
     $.ajax({
@@ -131,9 +134,6 @@ function deleteComment(elem, apihost) {
             alert(jQuery.parseJSON(x.responseText).result);
         }, true, null);
 }
-$(".close-button").on("click", function () {
-    $("#modal").removeClass("active");
-});
 
 //PICTURE INDEX
 function populateGallery(apihost, page, reverse) {
