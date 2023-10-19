@@ -91,9 +91,9 @@ namespace MyBooru.Services
                 	Name VARCHAR(255) NOT NULL UNIQUE,
                     User VARCHAR(255),
                     DateTime INTEGER,
+                    NSFW INTEGER DEFAULT 0,
                     FOREIGN KEY(User) REFERENCES Users(Username) ON DELETE SET NULL
                 );
-                ALTER TABLE Tags ADD COLUMN NSFW INTEGER DEFAULT 0;
                 CREATE TABLE IF NOT EXISTS MediasTags (
                     MediaID INTEGER,
                     TagID INTEGER,

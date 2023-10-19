@@ -87,6 +87,13 @@ namespace MyBooru
             services.AddTransient<Contracts.IUserService, UserService>();
             services.AddTransient<Contracts.IQueryService, QueryService>();
             services.AddTransient<Contracts.ICommentService, CommentService>();
+
+            services.AddMemoryCache(o =>
+            {
+                o.ExpirationScanFrequency = TimeSpan.FromDays(30);
+                o.SizeLimit = 1_000_000_000;//a GB
+            });
+
             services.AddMvc();
         }
 

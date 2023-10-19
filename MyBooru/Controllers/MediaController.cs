@@ -63,8 +63,8 @@ namespace MyBooru.Controllers
             return new JsonResult(result);
         }
 
-        [HttpGet, Route("addTags"), Authorize(Roles = "User")]
-        public async Task<IActionResult> AddTags(string id, string tags, CancellationToken ct)
+        [HttpPost, Route("addTags"), Authorize(Roles = "User")]
+        public async Task<IActionResult> AddTags([FromForm]string id, [FromForm]string tags, CancellationToken ct)
         {
             if (!await _checker.CheckMediaExistsAsync(id, ct))
                 return StatusCode(400);

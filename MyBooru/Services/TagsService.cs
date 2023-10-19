@@ -30,13 +30,6 @@ namespace MyBooru.Services
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             await connection.OpenAsync();
             var cmd = TableCell.MakeAddCommand<Tag>(new { Name = name, User = username, @DateTime = DateTime.UtcNow.GetUnixTime() }, connection);
-            //string addTagQuery = "INSERT OR IGNORE INTO Tags ('Name') VALUES (@a)";
-            //using (SQLiteCommand addTag = new SQLiteCommand(addTagQuery, connection))
-            //{
-            //    addTag.Parameters.AddNew("@a", name, System.Data.DbType.String);
-            //    rowsChanged = await addTag.ExecuteNonQueryAsync() > 0;
-            //}
-
             try
             {
                 rowsChanged = await cmd.ExecuteNonQueryAsync() > 0;

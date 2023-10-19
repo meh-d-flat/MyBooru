@@ -8,7 +8,7 @@
 }
 
 <div class="sidenav">
-    <form onsubmit="addTag('@config["ApiHost"]', '@Model'); return false;" method="get" id="tag-form" autocomplete="off">
+    <form onsubmit="addTag('@config["ApiHost"]', '@Model'); return false;" method="post" id="tag-form" autocomplete="off">
         <div style="margin-top: 10px">
             <input name="tags" id="tags-to-add" type="text" placeholder="Add a tag..." />
         </div>

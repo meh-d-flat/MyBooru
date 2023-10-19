@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using MyBooru.Models;
 using System;
@@ -38,7 +39,7 @@ namespace MyBooru.Services
                 x.Parameters.AddNew("@a", id, System.Data.DbType.String);
                 var result = await x.ExecuteReaderAsync(ct);
                 return TableCell.MakeEntities<Tag>(await TableCell.GetRowsAsync(result));
-            }, @"SELECT Tags.Name FROM Medias 
+            }, @"SELECT Tags.Name, Tags.NSFW FROM Medias 
                 JOIN MediasTags ON Medias.id = MediasTags.MediaID
                 JOIN Tags ON Tags.ID = MediasTags.TagID
                 Where Hash = @a;");

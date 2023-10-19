@@ -182,20 +182,17 @@ function addComment(apihost, mediaID) {
         $("#modal").addClass("active");
         return;
     }
-    $.ajax({
-        url: apihost + "/api/comment/post",
-        method: "POST",
-        data: { hash: mediaID, commentText: commText },
-        xhrFields: { withCredentials: true },
-        success: a => {
+    var f = new FormData(); f.set("hash", mediaID); f.set("commentText", commText);
+    ajaxPost(apihost + "/api/comment/post",
+        a => {
             $("#new-comment").val("");
             ajaxNonPost(apihost + "/api/comment/byId", "GET", x => makeComment(apihost, x), null, false, { id: a });
         },
-        error: y => checkAuth(y)
-    });
+        y => checkAuth(y), true, f);
 }
 function addTag(apihost, mediaID) {
-    ajaxNonPost(apihost + "/api/media/addTags", "GET",
+    var f = new FormData(); f.set("id", mediaID); f.set("tags", $("#tags-to-add").val());
+    ajaxPost(apihost + "/api/media/addTags",
         x => {
             makeList(x.items);
             $("#tags-to-add").val("");
@@ -203,7 +200,7 @@ function addTag(apihost, mediaID) {
         y => {
             checkAuth(y);
             alert("Can't add tag: " + jQuery.parseJSON(y.responseText).value.bad_tag + "\nTags should only contain letters and numbers\nAnd be 3 to 32 characters long");
-        }, true, { id: mediaID, tags: $("#tags-to-add").val() });
+        }, true, f);
 }
 function remove(apihost, mediaID) {
     ajaxNonPost(apihost + "/api/media/remove?id=" + mediaID, "DELETE", x => location.replace("gallery"), y => {
