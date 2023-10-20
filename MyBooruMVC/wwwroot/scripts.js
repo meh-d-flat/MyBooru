@@ -47,6 +47,7 @@ function ajaxPost(postUrl, succesF, errorF, sendCreds, formData) {
         processData: false,
         contentType: false,
         xhrFields: { withCredentials: sendCreds },
+        headers: { 'x-query': this.location.search },
         success: res => succesF(res),
         error: (jqXHR, textStatus, errorThrown) => {
             if (errorF != null)

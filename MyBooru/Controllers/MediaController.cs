@@ -13,6 +13,8 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using System.Threading;
 using System.Security.Claims;
+using Microsoft.Extensions.Caching.Memory;
+using MyBooru.Models;
 
 namespace MyBooru.Controllers
 {
@@ -25,15 +27,17 @@ namespace MyBooru.Controllers
         readonly Contracts.ITagsService _tagger;
         readonly Contracts.IUploadService _uploader;
         readonly Contracts.IRemoveService _remover;
+        private readonly IMemoryCache _memoryCache;
 
         public MediaController(Contracts.ICheckService checker, Contracts.IDownloadService downloader,
-            Contracts.ITagsService tagger, Contracts.IUploadService uploader, Contracts.IRemoveService remover)
+            Contracts.ITagsService tagger, Contracts.IUploadService uploader, Contracts.IRemoveService remover, IMemoryCache memoryCache)
         {
             _checker = checker;
             _downloader = downloader;
             _tagger = tagger;
             _uploader = uploader;
             _remover = remover;
+            _memoryCache = memoryCache;
         }
         [HttpGet]
         public async Task<IActionResult> Get(CancellationToken ct, int page = 1, int reverse = 1)
@@ -59,13 +63,25 @@ namespace MyBooru.Controllers
             if (!await _checker.CheckMediaExistsAsync(id, ct))
                 return NotFound();
 
-            var result = await _downloader.DownloadAsync(id, ct);
+            var s = HttpContext.Request.QueryString.Value;
+
+            if (_memoryCache.TryGetValue<Media>(s, out Media result))
+                return new JsonResult(result);
+            else
+            {
+                result = await _downloader.DownloadAsync(id, ct);
+                _memoryCache.Set<Media>(s, result);
+            }
+
             return new JsonResult(result);
         }
 
         [HttpPost, Route("addTags"), Authorize(Roles = "User")]
         public async Task<IActionResult> AddTags([FromForm]string id, [FromForm]string tags, CancellationToken ct)
         {
+            var h = HttpContext.Request.Headers.FirstOrDefault(x => x.Key == "x-query").Value[0];
+            _memoryCache.Remove(h);
+
             if (!await _checker.CheckMediaExistsAsync(id, ct))
                 return StatusCode(400);
 
@@ -161,6 +177,9 @@ namespace MyBooru.Controllers
             bool exist = await _checker.CheckMediaExistsAsync(id, ct);
             if (!exist)
                 return StatusCode(400);
+
+            var s = HttpContext.Request.QueryString.Value;
+            _memoryCache.Remove(s);
 
             var result = await _remover.RemoveAsync(
                 id,
