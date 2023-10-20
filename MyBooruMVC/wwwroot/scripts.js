@@ -26,6 +26,7 @@ function ajaxNonPost(getUrl, method, successFunc, errorFunc, sendCreds, dataObje
         url: getUrl,
         method: method,
         data: dataObject,
+        headers: { 'x-query': this.location.search },
         xhrFields: {
             withCredentials: sendCreds
         },

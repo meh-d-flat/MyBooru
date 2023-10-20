@@ -15,6 +15,7 @@ using System.Threading;
 using System.Security.Claims;
 using Microsoft.Extensions.Caching.Memory;
 using MyBooru.Models;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace MyBooru.Controllers
 {
@@ -43,18 +44,19 @@ namespace MyBooru.Controllers
         public async Task<IActionResult> Get(CancellationToken ct, int page = 1, int reverse = 1)
         {
             var mediasCount = await _checker.MediasCountAsync(ct);
-            var result = await _downloader.DownloadAsync(page, reverse, ct);
 
-            return new JsonResult(new
+            var q = HttpContext.Request.QueryString.Value;
+            q = q == string.Empty ? "?page=1&reverse=1" : q;
+
+            if (_memoryCache.TryGetValue<List<Media>>(q, out var result))
+                return MakeJsonList(page, reverse, mediasCount, result);
+            else
             {
-                page = page,
-                prevPage = page - 1 != 0,
-                nextPage = mediasCount - (20 * page) > 0,
-                total = mediasCount,
-                count = result.Count,
-                items = result,
-                isReversed = reverse
-            });
+                result = await _downloader.DownloadAsync(page, reverse, ct);
+                _memoryCache.Set<List<Media>>(q, result);
+            }
+
+            return MakeJsonList(page, reverse, mediasCount, result);
         }
 
         [HttpGet, Route("details")]
@@ -102,18 +104,18 @@ namespace MyBooru.Controllers
         {
             //validate the tags
             var mediasCount = await _tagger.MediasCountAsync(tags, ct);
-            var result = await _tagger.GetMediasByTagsAsync(tags, page, reverse, ct);//rewrite to get only ids by tag then go through download
 
-            return new JsonResult(new
+            var s = HttpContext.Request.QueryString.Value;
+
+            if (_memoryCache.TryGetValue<List<Media>>(s, out List<Media> result))
+                return MakeJsonList(page, reverse, mediasCount, result);
+            else
             {
-                page = page,
-                prevPage = page - 1 != 0,
-                nextPage = mediasCount - (20 * page) > 0,
-                total = mediasCount,
-                count = result.Count,
-                items = result,
-                isReversed = reverse
-            });
+                result = await _tagger.GetMediasByTagsAsync(tags, page, reverse, ct);//rewrite to get only ids by tag then go through download
+                _memoryCache.Set<List<Media>>(s, result);
+            }
+
+            return MakeJsonList(page, reverse, mediasCount, result);
         }
 
         [HttpGet, Route("download")]
@@ -187,6 +189,20 @@ namespace MyBooru.Controllers
                 HttpContext.User.FindFirstValue(ClaimTypes.Email));
             return result.StartsWith("error")
                 ? StatusCode(500, result) : (IActionResult)Ok(result);
+        }
+
+        JsonResult MakeJsonList(int page, int reverse, int mediasCount, List<Media> result)
+        {
+            return new JsonResult(new
+            {
+                page = page,
+                prevPage = page - 1 != 0,
+                nextPage = mediasCount - (20 * page) > 0,
+                total = mediasCount,
+                count = result.Count,
+                items = result,
+                isReversed = reverse
+            });
         }
     }
 }

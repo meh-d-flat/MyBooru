@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using MyBooru.Models;
 using System;
@@ -72,5 +73,14 @@ namespace MyBooru.Services
             Task<List<Comment>> GetMyCommentsAsync(string sessionId, string email, CancellationToken ct);
             Task<int> RemoveCommentAsync(int id, string sessionId, string email);
         }
+
+        public interface ICachingService
+        {
+            bool TryGet(string key, out JsonResult result);
+            bool Set(string key, JsonResult value);
+            bool Remove(string key);
+            void Clear();
+        }
+
     }
 }

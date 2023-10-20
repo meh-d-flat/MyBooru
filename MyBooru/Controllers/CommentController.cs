@@ -72,6 +72,9 @@ namespace MyBooru.Controllers
         [HttpDelete, Route("remove"), Authorize(Roles = "User")]
         public async Task<IActionResult> Delete(int id)
         {
+            var h = HttpContext.Request.Headers.FirstOrDefault(x => x.Key == "x-query").Value[0];
+            _memoryCache.Remove(h);
+
             var result = await _commService.RemoveCommentAsync(
                 id,
                 HttpContext.User.FindFirstValue("uniqueId"),
