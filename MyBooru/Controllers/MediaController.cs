@@ -28,17 +28,21 @@ namespace MyBooru.Controllers
         readonly Contracts.ITagsService _tagger;
         readonly Contracts.IUploadService _uploader;
         readonly Contracts.IRemoveService _remover;
-        private readonly IMemoryCache _memoryCache;
+        private readonly CachingService.GalleryCacher _galleryCacher;
+        private readonly CachingService.MediaCacher _mediaCacher;
 
         public MediaController(Contracts.ICheckService checker, Contracts.IDownloadService downloader,
-            Contracts.ITagsService tagger, Contracts.IUploadService uploader, Contracts.IRemoveService remover, IMemoryCache memoryCache)
+            Contracts.ITagsService tagger, Contracts.IUploadService uploader,
+            Contracts.IRemoveService remover, CachingService.GalleryCacher galleryCacher,
+            CachingService.MediaCacher mediaCacher)
         {
             _checker = checker;
             _downloader = downloader;
             _tagger = tagger;
             _uploader = uploader;
             _remover = remover;
-            _memoryCache = memoryCache;
+            _galleryCacher = galleryCacher;
+            _mediaCacher = mediaCacher;
         }
         [HttpGet]
         public async Task<IActionResult> Get(CancellationToken ct, int page = 1, int reverse = 1)
@@ -48,15 +52,14 @@ namespace MyBooru.Controllers
             var q = HttpContext.Request.QueryString.Value;
             q = q == string.Empty ? "?page=1&reverse=1" : q;
 
-            if (_memoryCache.TryGetValue<List<Media>>(q, out var result))
-                return MakeJsonList(page, reverse, mediasCount, result);
+            if (_galleryCacher.TryGet(q, out JsonResult res))
+                return res;
             else
             {
-                result = await _downloader.DownloadAsync(page, reverse, ct);
-                _memoryCache.Set<List<Media>>(q, result);
+                res = MakeJsonList(page, reverse, mediasCount, await _downloader.DownloadAsync(page, reverse, ct));
+                _galleryCacher.Set(q, res);
             }
-
-            return MakeJsonList(page, reverse, mediasCount, result);
+            return res;
         }
 
         [HttpGet, Route("details")]
@@ -67,22 +70,22 @@ namespace MyBooru.Controllers
 
             var s = HttpContext.Request.QueryString.Value;
 
-            if (_memoryCache.TryGetValue<Media>(s, out Media result))
-                return new JsonResult(result);
+            if (_mediaCacher.TryGet(s, out JsonResult res))
+                return res;
             else
             {
-                result = await _downloader.DownloadAsync(id, ct);
-                _memoryCache.Set<Media>(s, result);
+                res = new JsonResult(await _downloader.DownloadAsync(id, ct));
+                _mediaCacher.Set(s, res);
             }
 
-            return new JsonResult(result);
+            return res;
         }
 
         [HttpPost, Route("addTags"), Authorize(Roles = "User")]
         public async Task<IActionResult> AddTags([FromForm]string id, [FromForm]string tags, CancellationToken ct)
         {
             var h = HttpContext.Request.Headers.FirstOrDefault(x => x.Key == "x-query").Value[0];
-            _memoryCache.Remove(h);
+            _mediaCacher.Remove(h);
 
             if (!await _checker.CheckMediaExistsAsync(id, ct))
                 return StatusCode(400);
@@ -106,15 +109,14 @@ namespace MyBooru.Controllers
             var mediasCount = await _tagger.MediasCountAsync(tags, ct);
 
             var s = HttpContext.Request.QueryString.Value;
-
-            if (_memoryCache.TryGetValue<List<Media>>(s, out List<Media> result))
-                return MakeJsonList(page, reverse, mediasCount, result);
-            else
-            {
-                result = await _tagger.GetMediasByTagsAsync(tags, page, reverse, ct);//rewrite to get only ids by tag then go through download
-                _memoryCache.Set<List<Media>>(s, result);
-            }
-
+            //if (_memoryCache.TryGetValue<List<Media>>(s, out List<Media> result))
+            //    return MakeJsonList(page, reverse, mediasCount, result);
+            //else
+            //{
+            //    result = await _tagger.GetMediasByTagsAsync(tags, page, reverse, ct);
+            //    _memoryCache.Set<List<Media>>(s, result);
+            //}
+            var result = await _tagger.GetMediasByTagsAsync(tags, page, reverse, ct);//rewrite to get only ids by tag then go through download
             return MakeJsonList(page, reverse, mediasCount, result);
         }
 
@@ -142,8 +144,12 @@ namespace MyBooru.Controllers
         {
             var result = await _uploader.UploadOneAsync(file, HttpContext.User.Identity.Name);
             var response = new JsonResult(new { item = result });
-            return result == "empty" || result.StartsWith("error")
-              ? StatusCode(400, response) : (IActionResult)Ok(response);
+            var isResult = result == "empty" || result.StartsWith("error");
+
+            if (!isResult)
+                _galleryCacher.Clear();
+
+            return isResult ? StatusCode(400, response) : (IActionResult)Ok(response);
         }
 
         [HttpGet, Route("uploadfrom"), Authorize(Roles = "User")]
@@ -181,7 +187,8 @@ namespace MyBooru.Controllers
                 return StatusCode(400);
 
             var s = HttpContext.Request.QueryString.Value;
-            _memoryCache.Remove(s);
+            _mediaCacher.Remove(s);
+            _galleryCacher.Clear();
 
             var result = await _remover.RemoveAsync(
                 id,

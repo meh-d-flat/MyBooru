@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using MyBooru.Services;
 using System.Linq;
 using System.Security.Claims;
@@ -15,12 +16,12 @@ namespace MyBooru.Controllers
     public class CommentController : ControllerBase
     {
         readonly Contracts.ICommentService _commService;
-        private readonly IMemoryCache _memoryCache;
+        private readonly CachingService.MediaCacher _mediaCache;
 
-        public CommentController(Contracts.ICommentService commService, IMemoryCache memoryCache)
+        public CommentController(Contracts.ICommentService commService, CachingService.MediaCacher mediaCacher)
         {
             _commService = commService;
-            _memoryCache = memoryCache;
+            _mediaCache = mediaCacher;
         }
 
         [HttpGet, Route("byMedia")]
@@ -63,7 +64,7 @@ namespace MyBooru.Controllers
         public async Task<IActionResult> Post([FromForm] string commentText, [FromForm] string hash)
         {
             var h = HttpContext.Request.Headers.FirstOrDefault(x => x.Key == "x-query").Value[0];
-            _memoryCache.Remove(h);
+            _mediaCache.Remove(h);
 
             var result = await _commService.PostCommentAsync(HttpContext.User.Identity.Name, commentText, hash);
             return result > 0 ? Ok(result) : StatusCode(500);
@@ -73,7 +74,7 @@ namespace MyBooru.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             var h = HttpContext.Request.Headers.FirstOrDefault(x => x.Key == "x-query").Value[0];
-            _memoryCache.Remove(h);
+            _mediaCache.Remove(h);
 
             var result = await _commService.RemoveCommentAsync(
                 id,

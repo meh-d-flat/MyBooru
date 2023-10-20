@@ -38,5 +38,9 @@ namespace MyBooru.Services
         {
             _cache.Clear();
         }
+
+        public class MediaCacher : CachingService { }
+        public class GalleryCacher : CachingService { }
+        public class SearchCacher : CachingService { }
     }
 }
