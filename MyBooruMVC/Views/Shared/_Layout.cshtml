@@ -1,21 +1,17 @@
 ﻿@using Microsoft.Extensions.Configuration;
 @inject IConfiguration config
 <!DOCTYPE html>
-
 <html>
 <head>
     <meta name="viewport" content="width=device-width" />
     <title>@ViewBag.Title</title>
-    @*<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>*@
-    <script type="text/javascript" src="~/jquery-3.6.0.js"></script>
-    @*<script src="https://code.jquery.com/jquery-3.6.0.js"></script>*@
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script type="text/javascript" src="~/scripts.js"></script>
     <link rel="stylesheet" href="~/styles.css">
     <base href="/" />
     <!--so ajax requests get the right path-->
 </head>
 <body>
-    @*<div class="nav">*@
     <div class="topnav">
         <a href="/Gallery" id="button-home">Home</a>
         <div class="search-container">
@@ -27,19 +23,9 @@
         <div class="topnav-right">
         </div>
     </div>
-
-    <script>
-        window.onload = makeUserButtonsAndModal('@config["ApiHost"]');
-        window.onload += bindNavSearch('@config["ApiHost"]');
-        $(".close-button").on("click", function () {
-            $("#modal").removeClass("active");
-        });
-    </script>
-
     <div>
         @RenderBody()
     </div>
-
     <div class="modal" id="modal">
         <div class="modal-header">
             <div class="title">Info: </div>
@@ -48,6 +34,12 @@
         <div class="modal-body">
         </div>
     </div>
-
+    <script>
+        window.onload += makeUserButtonsAndModal('@config["ApiHost"]');
+        window.onload += bindNavSearch('@config["ApiHost"]');
+        $(".close-button").on("click", function () {
+            $("#modal").removeClass("active");
+        });
+    </script>
 </body>
 </html>

@@ -1,31 +1,23 @@
-﻿/*
-    LAYOUT
-*/
-
+﻿/*LAYOUT*/
 #smth img {
     padding: 10px;
     margin: 0;
 }
-
 html, body {
     height: 100%;
 }
-
 body {
     margin-top: 65px;
     font-family: Arial, Helvetica, sans-serif;
     background-color: #444;
 }
-
 ::placeholder {
     font-style: italic;
 }
-
 a {
     text-decoration: none;
     color: #fff;
 }
-
 .nav {
     display: flex;
     overflow: hidden;
@@ -36,11 +28,9 @@ a {
     z-index: 9999;
     width: 100%;
 }
-
     .nav #search {
         margin-top: 13px;
     }
-
     .nav a {
         display: inline-block;
         float: left;
@@ -50,17 +40,14 @@ a {
         text-decoration: none;
         font-size: 17px;
     }
-
         .nav a:hover {
             background-color: #ddd;
             color: black;
         }
-
 ul {
     list-style-type: none;
     color: white;
 }
-
 #username {
     display: inline-block;
     text-decoration: underline;
@@ -68,7 +55,6 @@ ul {
     padding: 0px;
     margin: 0px;
 }
-
 .topnav {
     overflow: hidden;
     background-color: #333;
@@ -78,7 +64,6 @@ ul {
     z-index: 9999;
     width: 100%;
 }
-
     .topnav a {
         float: left;
         display: block;
@@ -88,34 +73,28 @@ ul {
         text-decoration: none;
         font-size: 17px;
     }
-
         .topnav a:hover {
             background-color: #ddd;
             color: black;
         }
-
     /*.topnav a.active {
           background-color: #2196F3;
           color: white;
         }*/
-
     .topnav .search-container {
         float: left;
         margin-left: 10px;
     }
-
     .topnav input[type=text] {
         padding: 6px;
         margin-top: 8px;
         font-size: 17px;
         border: none;
     }
-
 .topnav-right {
     float: right;
     text-align: right;
 }
-
 .topnav .search-container button {
     float: right;
     padding: 6px 10px;
@@ -126,11 +105,9 @@ ul {
     border: none;
     cursor: pointer;
 }
-
     .topnav .search-container button:hover {
         background: #ccc;
     }
-
 @media screen and (max-width: 620px) {
     body {
         margin-top: 280px;
@@ -138,13 +115,11 @@ ul {
     /*            .sidenav {
                 margin-top: 200px;
             }*/
-
     .topnav .search-container {
         float: none;
         margin-top: 15px;
         margin-left: 0;
     }
-
         .topnav a, .topnav input[type=text], .topnav .search-container button {
             float: none;
             display: block;
@@ -153,18 +128,15 @@ ul {
             margin: 0;
             padding: 14px;
         }
-
     .topnav input[type=text] {
         border: 1px solid #ccc;
     }
-
     .topnav-right {
         width: 100%;
         float: left;
         text-align: left;
     }
 }
-
 .modal {
     position: fixed;
     top: 50%;
@@ -177,11 +149,9 @@ ul {
     width: 500px;
     max-width: 80%;
 }
-
     .modal.active {
         transform: translate(-50%, -50%) scale(1);
     }
-
 .modal-header {
     padding: 10px 15px;
     display: flex;
@@ -189,12 +159,10 @@ ul {
     align-items: center;
     border-bottom: 1px solid white;
 }
-
     .modal-header .title {
         font-size: 1.25rem;
         font-weight: bold;
     }
-
     .modal-header .close-button {
         cursor: pointer;
         border: none;
@@ -203,11 +171,9 @@ ul {
         font-size: 1.25rem;
         font-weight: bold;
     }
-
 .modal-body {
     padding: 10px 15px;
 }
-
 .comm {
     padding: 15px;
     display: block;
@@ -215,35 +181,26 @@ ul {
     background: #333;
     color: cornsilk;
 }
-
 #new-comment {
     border: none;
 }
-
 .close {
     float: right;
     cursor: pointer;
 }
-
-/*
-    PICTURE
-*/
-
+/*PICTURE*/
 #base {
     height: 100%;
     /*text-align: center;*/
 }
-
     #base img {
         max-height: 95vh;
         max-width: 87vw;
     }
-
     #base video {
         max-height: 95vh;
         max-width: 87vw;
     }
-
 .sidenav {
     margin-top: 65px;
     width: 200px;
@@ -255,53 +212,39 @@ ul {
     overflow-x: hidden;
     padding: 8px 0;
 }
-
     .sidenav a {
         padding: 0px 16px;
         text-decoration: none;
         color: #fff;
         display: block;
     }
-
     .sidenav form {
         margin: 5px;
     }
-
     .sidenav a:hover {
         background-color: #ddd;
         color: black;
     }
-
 .main {
     margin-left: 200px;
     /*padding: 0px 10px;*/
 }
-
 /*        @@media screen and (max-height: 450px) {
           .sidenav {padding-top: 15px;}
           .sidenav a {font-size: 18px;}
         }*/
-
 @media screen and (max-width: 620px) {
     .sidenav {
         margin-top: 280px;
     }
 }
-
-/*
-    SEARCH
-*/
-
+/*SEARCH*/
 #resultCount {
     color: white;
     margin-top: 20px;
     padding-top: 10px;
 }
-
-/*
-    UPLOAD
-*/
-
+/*UPLOAD*/
 *, *::after, *::before {
     box-sizing: border-box;
 }

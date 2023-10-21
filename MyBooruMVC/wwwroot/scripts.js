@@ -84,8 +84,7 @@ function retrieve(str, obj, apihost) {
     if (str != null & str.length >= 2)
         ajaxNonPost(apihost + "/api/tag", "GET", x => obj.data = x, null, false, { tagname: str });
 };
-//deleteContentBackward, deleteContentForward, insertFromPaste, insertText
-function search(e, suggest, retriever, obj, apihost) {
+function search(e, suggest, retriever, obj, apihost) {//deleteContentBackward, deleteContentForward, insertFromPaste, insertText
     let results = [];
     if (e.inputType == "insertText" || e.inputType == "insertFromPaste")
         obj.chars += e.data;
@@ -136,7 +135,6 @@ function deleteComment(elem, apihost) {
             alert(jQuery.parseJSON(x.responseText).result);
         }, true, null);
 }
-
 //PICTURE INDEX
 function populateGallery(apihost, page, reverse) {
     ajaxNonPost(apihost + "/api/media", "GET",
@@ -152,7 +150,6 @@ function populateGallery(apihost, page, reverse) {
             }
         }, null, false, { page: page, reverse: reverse });
 }
-
 //PICTURE
 function bindTagSearch(apihost) {
     var tagThing = { length: -1, chars: "", data: [], isPerioded: false };
@@ -224,7 +221,6 @@ function makeComments(apihost, responseItems) {
         makeComment(apihost, responseItems[i]);
     }
 }
-
 //PICTURE SEARCH
 function populateSearch(apihost, tags, page, reverse) {
     ajaxNonPost(apihost + "/api/media/byTag", "GET",
@@ -245,7 +241,6 @@ function populateSearch(apihost, tags, page, reverse) {
             }
         }, null, false, { tags: tags, page: page, reverse: reverse });
 }
-
 //PICTURE UPLOAD
 function bindForms(apihost) {
     window.addEventListener('paste', e => {
@@ -297,7 +292,6 @@ function handleUploadFrom(e, apihost) {
         },
         true, { source: $("#link-input").val() });
 }
-
 //USER HOMEPAGE
 function getLoggedUserDetails(apihost) {
     ajaxNonPost(apihost + "/api/user/getInfo", "GET",
@@ -328,7 +322,6 @@ function signOff(apihost) {
 function closeSession(apihost, session) {
     ajaxNonPost(apihost + "/api/user/closeSession", "GET", x => $("#" + session + "").remove(), x => alert("Something went wrong!"), true, { sessionId: session });
 }
-
 //USER LOGIN
 function bindLogin(apihost) {
     document.getElementById("login-form").addEventListener("submit", (e) => processLogin(e, apihost));
@@ -339,7 +332,6 @@ function processLogin(e, apihost) {
         (a, b, c) => console.log(`$first: ${a.responseText} second: ${b} third: ${c}`),
         true, new FormData(e.target));
 }
-
 //USER REGISTER
 function bindRegister(apihost) {
     document.getElementById("register-form").addEventListener("submit", (e) => processRegister(e, apihost));

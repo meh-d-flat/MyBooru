@@ -4,9 +4,7 @@
     ViewBag.Title = "Register";
     Layout = "_Layout";
 }
-
 <h1>Register</h1>
-
 <form action="@config["ApiHost"]/api/user/signup" method="post" id="register-form">
     <label for="username">Username:</label><br>
     <input type="text" id="username" name="username" required><br>
@@ -18,8 +16,6 @@
     <input type="password" id="passwordRepeat" name="passwordRepeat" required><br><br>
     <input type="submit" value="Submit">
 </form>
-
 <script>
     window.onload += bindRegister('@config["ApiHost"]');
 </script>
-

@@ -57,7 +57,7 @@ namespace MyBooru.Services
         {
             if (File.Exists(path))
             {
-                await Task.Run(() => File.Copy(path, DateTime.Now.ToString() + "." + path));
+                await Task.Run(() => File.Copy(path, DateTime.Now.GetUnixTime() + "." + path));
                 return;
             }
 

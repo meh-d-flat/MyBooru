@@ -1,12 +1,10 @@
 ﻿@using Microsoft.Extensions.Configuration;
 @inject IConfiguration config
 @model System.String
-
 @{
     ViewBag.Title = "Picture";
     Layout = "_Layout";
 }
-
 <div class="sidenav">
     <form onsubmit="addTag('@config["ApiHost"]', '@Model'); return false;" method="post" id="tag-form" autocomplete="off">
         <div style="margin-top: 10px">
@@ -19,20 +17,15 @@
         <button type="submit" onclick="remove('@config["ApiHost"]', '@Model')">Delete</button>
     </form>
 </div>
-
 <div class="main">
     <div id="base">
     </div>
-
     <form id="comment-form">
-        <textarea id="new-comment" rows="2" cols="50" name="new-comment" placeholder="Your comment..."></textarea>
-        <br>
+        <textarea id="new-comment" rows="2" cols="50" name="new-comment" placeholder="Your comment..."></textarea><br>
         <input type="button" onclick="addComment('@config["ApiHost"]', '@Model')" value="Submit">
     </form>
-
     <div id="comms"></div>
 </div>
-
 <script>
     window.onload += getMediaDetails('@config["ApiHost"]', '@Model');
     window.onload += bindTagSearch('@config["ApiHost"]', '@Model');
