@@ -161,6 +161,35 @@ namespace MyBooru.Controllers
             return closed ? Ok() : BadRequest();
         }
 
+        [HttpPost, Route("changePass"), Authorize(Roles = "User")]
+        public async Task<IActionResult> ChangePassword([FromForm] string newPass, [FromForm] string oldPass, [FromForm] string newPassrepeat, CancellationToken ct)
+        {
+            if (newPass != newPassrepeat)
+                return BadRequest();
+
+            var sessionId = HttpContext.User.FindFirstValue("uniqueId");
+            var email = HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email).Value;
+            var checks = await _userService.ChangePasswordAsync(email, oldPass, newPass, sessionId, ct);
+            return checks ? (IActionResult)Ok() : StatusCode(500);
+        }
+
+        [HttpPost, Route("changeMail"), Authorize(Roles = "User")]
+        public async Task<IActionResult> ChangeEmail([FromForm]string newMail, CancellationToken ct)
+        {
+            var oldMail = HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email).Value;
+            var sessionId = HttpContext.User.FindFirstValue("uniqueId");
+            var changed = await _userService.ChangeEmailAsync(oldMail, newMail, sessionId, ct);
+            if (!changed)
+                return StatusCode(500);
+            else
+            {
+                var id = HttpContext.User.Identity as ClaimsIdentity;
+                id.RemoveClaim(id.FindFirst(x => x.Type == ClaimTypes.Email));
+                id.AddClaim(new Claim(ClaimTypes.Email, newMail));
+                return Ok();
+            }
+        }
+
         public static async Task<bool> ShuffledCredCheck(Contracts.IUserService us, string email, string password, CancellationToken ct)
         {
             Func<Task<bool>> un = async () => await us.CheckEmailAsync(email);

@@ -58,6 +58,8 @@ namespace MyBooru.Services
             Task<bool> CheckPasswordNewAsync(string email, string password, CancellationToken ct);
             Task<List<Ticket>> GetUserSessionsAsync(string username, CancellationToken ct);
             Task<bool> CloseUserSessionAsync(string sessionId, string email);
+            Task<bool> ChangePasswordAsync(string email, string oldPass, string newPass, string sessionId, CancellationToken ct);
+            Task<bool> ChangeEmailAsync(string oldMail, string newMail, string sessionId, CancellationToken ct);
         }
 
         public interface IQueryService

@@ -57,13 +57,14 @@ namespace MyBooru.Services
             return passwordChecksOut;
         }
 
-        public async Task<bool> CheckPasswordNewAsync(string username, string password, CancellationToken ct)
+        public async Task<bool> CheckPasswordNewAsync(string email, string password, CancellationToken ct)
         {
             bool passwordChecksOut = false;
+            bool saltChecksOut = false;
 
             User user = await queryService.QueryTheDbAsync<User>(async x =>
             {
-                x.Parameters.AddNew("@a", username, System.Data.DbType.String);
+                x.Parameters.AddNew("@a", email, System.Data.DbType.String);
                 using var result = await x.ExecuteReaderAsync(ct);
                 return TableCell.MakeEntity<User>(await TableCell.GetRowAsync(result));
             }, "SELECT * FROM Users WHERE Email = @a");
@@ -72,9 +73,10 @@ namespace MyBooru.Services
             {
                 var passwordBytes = Encoding.UTF8.GetBytes(password);
                 var computedHash = await hmac.ComputeHashAsync(new MemoryStream(passwordBytes));
+                saltChecksOut = hmac.Key.SequenceEqual(user.PasswordSalt);
                 passwordChecksOut = computedHash.SequenceEqual(user.PasswordHash);
             }
-            return passwordChecksOut;
+            return passwordChecksOut & saltChecksOut;
         }
 
         public async Task<User> GetUserAsync(string username, CancellationToken ct)
@@ -132,7 +134,7 @@ namespace MyBooru.Services
                 x.Parameters.AddNew("@a", sessionId, System.Data.DbType.String);
                 using var result = await x.ExecuteReaderAsync(ct);
                 return TableCell.MakeEntities<Ticket>(await TableCell.GetRowsAsync(result));
-            }, @"SELECT * FROM Tickets WHERE Username = (SELECT Username FROM Tickets WHERE ID = @a)");
+            }, "SELECT * FROM Tickets WHERE Username = (SELECT Username FROM Tickets WHERE ID = @a)");
         }
 
         public async Task<bool> CloseUserSessionAsync(string sessionId, string email)
@@ -142,7 +144,45 @@ namespace MyBooru.Services
                 x.Parameters.AddNew("@a", sessionId, System.Data.DbType.String);
                 x.Parameters.AddNew("@b", email, System.Data.DbType.String);
                 return Convert.ToBoolean(await x.ExecuteNonQueryAsync());
-            }, @"DELETE FROM Tickets WHERE ID = @a AND Username = (SELECT Username From Users WHERE Email = @b)");
+            }, "DELETE FROM Tickets WHERE ID = @a AND Username = (SELECT Username From Users WHERE Email = @b)");
+        }
+
+        public async Task<bool> ChangePasswordAsync(string email, string oldPass, string newPass, string sessionId, CancellationToken ct)
+        {
+            var passChecked = await CheckPasswordNewAsync(email, oldPass, ct);
+            if (!passChecked)
+                return passChecked;
+
+            byte[] passwordHash = new byte[2];
+            byte[] passwordSalt = new byte[2];
+
+            using (var hmac = new HMACSHA512())
+            {
+                passwordSalt = hmac.Key;
+                passwordHash = await hmac.ComputeHashAsync(new MemoryStream(Encoding.UTF8.GetBytes(newPass)));
+            }
+
+            var newPassChecked = await queryService.QueryTheDbAsync<bool>(async x =>
+            {
+                x.Parameters.AddNew("@a", email, System.Data.DbType.String);
+                x.Parameters.AddNew("@b", sessionId, System.Data.DbType.String);
+                x.Parameters.AddNew("@c", passwordSalt, System.Data.DbType.Binary);
+                x.Parameters.AddNew("@d", passwordHash, System.Data.DbType.Binary);
+                return Convert.ToBoolean(await x.ExecuteNonQueryAsync(ct));
+            }, "UPDATE Users SET PasswordSalt = @c, PasswordHash = @d WHERE Username = (SELECT Username From Users WHERE Email = @a) AND Username = (SELECT Username FROM Tickets WHERE ID = @b)");
+
+            return passChecked & newPassChecked;
+        }
+
+        public async Task<bool> ChangeEmailAsync(string oldMail, string newMail, string sessionId, CancellationToken ct)
+        {
+            return await queryService.QueryTheDbAsync<bool>(async x =>
+            {
+                x.Parameters.AddNew("@a", oldMail, System.Data.DbType.String);
+                x.Parameters.AddNew("@b", sessionId, System.Data.DbType.String);
+                x.Parameters.AddNew("@c", newMail, System.Data.DbType.String);
+                return Convert.ToBoolean(await x.ExecuteNonQueryAsync(ct));
+            }, "UPDATE Users SET Email = @c WHERE Username = (SELECT Username From Users WHERE Email = @a) AND Username = (SELECT Username FROM Tickets WHERE ID = @b)");
         }
     }
 }
