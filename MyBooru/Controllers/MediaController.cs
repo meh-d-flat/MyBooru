@@ -16,6 +16,7 @@ using System.Security.Claims;
 using Microsoft.Extensions.Caching.Memory;
 using MyBooru.Models;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Configuration;
 
 namespace MyBooru.Controllers
 {
@@ -30,11 +31,12 @@ namespace MyBooru.Controllers
         readonly Contracts.IRemoveService _remover;
         private readonly CachingService.GalleryCacher _galleryCacher;
         private readonly CachingService.MediaCacher _mediaCacher;
+        private readonly IConfiguration _config;
 
         public MediaController(Contracts.ICheckService checker, Contracts.IDownloadService downloader,
             Contracts.ITagsService tagger, Contracts.IUploadService uploader,
             Contracts.IRemoveService remover, CachingService.GalleryCacher galleryCacher,
-            CachingService.MediaCacher mediaCacher)
+            CachingService.MediaCacher mediaCacher, IConfiguration configuration)
         {
             _checker = checker;
             _downloader = downloader;
@@ -43,6 +45,7 @@ namespace MyBooru.Controllers
             _remover = remover;
             _galleryCacher = galleryCacher;
             _mediaCacher = mediaCacher;
+            _config = configuration;
         }
         [HttpGet]
         public async Task<IActionResult> Get(CancellationToken ct, int page = 1, int reverse = 1)
@@ -153,18 +156,27 @@ namespace MyBooru.Controllers
         }
 
         [HttpGet, Route("uploadfrom"), Authorize(Roles = "User")]
-        public async Task<IActionResult> UploadFrom(string source)
+        public async Task<IActionResult> UploadFrom(string source, CancellationToken ct)
         {
-            if (!Uri.TryCreate(source, UriKind.Absolute, out var givenURI) && !(givenURI?.Scheme == Uri.UriSchemeHttp || givenURI?.Scheme == Uri.UriSchemeHttps))
+            if (!_config.GetValue<bool>("ExternalFileUploadAllowed"))
+                return BadRequest("not allowed");
+
+            if (!Uri.TryCreate(source, UriKind.Absolute, out var givenURI)
+                & (givenURI?.Scheme != Uri.UriSchemeHttp || givenURI?.Scheme != Uri.UriSchemeHttps)
+                & (givenURI?.HostNameType == UriHostNameType.IPv4 | givenURI?.HostNameType == UriHostNameType.IPv6 | givenURI?.HostNameType == UriHostNameType.Dns)
+                & (bool)givenURI?.IsLoopback 
+                & (givenURI?.Port != 443 | givenURI?.Port != 80))
                 return StatusCode(400, new JsonResult(new { item = "bad url!" }));
 
             byte[] data;
             HeaderDictionary headers = new HeaderDictionary();
             using (var client = new HttpClient())
             {
-                using (var result = await client.GetAsync(source, HttpCompletionOption.ResponseHeadersRead))
+                using (var result = await client.GetAsync(givenURI, HttpCompletionOption.ResponseHeadersRead, ct))
                 {
-                    if (!result.IsSuccessStatusCode)
+                    var s = result.Content.Headers.First(x => x.Key == "content-type").Value.First();
+
+                    if (!result.IsSuccessStatusCode || !s.Contains("image") || !s.Contains("video")) 
                         return StatusCode(400);
                     else
                     {
