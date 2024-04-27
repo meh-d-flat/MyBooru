@@ -1,6 +1,26 @@
+//alternative jsdoc for functions:
+//@param {{ length: number, chars: string, data: string[], isPerioded: boolean }} obj
+/**
+ * @typedef {Object} Thingy
+ * @property {number} length
+ * @property {string} chars
+ * @property {string[]} data
+ * @property {boolean} isPerioded
+ */
+class Thingy {
+    length = -1;
+    chars = "";
+    data = [];
+    isPeroided = true;
+}
+
 //LAYOUT
+/**
+ * @param {string} apihost
+ */
 function bindNavSearch(apihost) {
-    var thing = { length: -1, chars: "", data: [], isPerioded: true };
+    //var thing = { length: -1, chars: "", data: [], isPerioded: true };
+    var thing = new Thingy();
     const searchForm = document.getElementById("search-form");
     const searchInput = document.getElementById("search");
     const suggestions = document.getElementById("results");
@@ -8,6 +28,9 @@ function bindNavSearch(apihost) {
     searchForm.addEventListener("submit", () => formSubmit(searchInput));
     suggestions.addEventListener("click", (e) => submitEntry(e, searchInput, thing));
 }
+/**
+ * @param {string} apihost
+ */
 function makeUserButtonsAndModal(apihost) {
     ajaxNonPost(apihost + "/api/user/getInfo", "GET",
         function (response) {
@@ -21,6 +44,14 @@ function makeUserButtonsAndModal(apihost) {
             $("#modal").removeClass("active");
         });
 }
+/**
+ * @param {string} getUrl
+ * @param {string} method
+ * @param {function(any): void} successFunc
+ * @param {function(any): void} errorFunc
+ * @param {boolean} sendCreds
+ * @param {any} dataObject
+ */
 function ajaxNonPost(getUrl, method, successFunc, errorFunc, sendCreds, dataObject) {
     $.ajax({
         url: getUrl,
@@ -39,6 +70,13 @@ function ajaxNonPost(getUrl, method, successFunc, errorFunc, sendCreds, dataObje
         }
     });
 }
+/**
+ * @param {string} postUrl
+ * @param {function(any): void} succesF
+ * @param {function(any): void} errorF
+ * @param {boolean} sendCreds
+ * @param {FormData} formData
+ */
 function ajaxPost(postUrl, succesF, errorF, sendCreds, formData) {
     $.ajax({
         url: postUrl,
@@ -56,10 +94,18 @@ function ajaxPost(postUrl, succesF, errorF, sendCreds, formData) {
         }
     });
 }
+/**
+ * @param {HTMLInputElement} input
+ */
 function formSubmit(input) {
     if (input.value.endsWith(","))
         input.value = input.value.slice(0, -1);
 };
+/**
+ * @param {Event} e
+ * @param {HTMLInputElement} input
+ * @param {Thingy} obj
+ */
 function submitEntry(e, input, obj) {
     const setValue = e.target.innerText;
     a = input.value;
@@ -69,6 +115,13 @@ function submitEntry(e, input, obj) {
     obj.chars = "";
     e.target.remove();
 }
+/**
+ * @param {string} input
+ * @param {function(Event, Thingy, string):void} retriever
+ * @param {Thingy} obj
+ * @param {string} apihost
+ * @returns void
+ */
 function getResults(input, retriever, obj, apihost) {
     const results = [];
     retriever(input, obj, apihost);
@@ -80,10 +133,24 @@ function getResults(input, retriever, obj, apihost) {
     }
     return results;
 }
+/**
+ * @param {string} str
+ * @param {Thingy} obj
+ * @param {string} apihost
+ */
 function retrieve(str, obj, apihost) {
     if (str != null & str.length >= 2)
         ajaxNonPost(apihost + "/api/tag", "GET", x => obj.data = x, null, false, { tagname: str });
 };
+//suggest is <UL>
+/**
+ * @param {Event} e
+ * @param {HTMLElement} suggest
+ * @param {function(Event, Thingy, string):void} retriever
+ * @param {Thingy} obj
+ * @param {string} apihost
+ * @returns void
+ */
 function search(e, suggest, retriever, obj, apihost) {//deleteContentBackward, deleteContentForward, insertFromPaste, insertText
     let results = [];
     if (e.inputType == "insertText" || e.inputType == "insertFromPaste")
@@ -102,9 +169,16 @@ function search(e, suggest, retriever, obj, apihost) {//deleteContentBackward, d
         }
     }
 }
+/**
+ * @param {HTMLLIElement} liElement
+ */
 function pickTag(liElement) {
     liElement.parentElement.innerHTML = "";
 }
+/**
+ * @param {XMLHttpRequest} jqXHR
+ * @returns void
+ */
 function checkAuth(jqXHR) {
     if (jqXHR.status == "401") {
         $(".modal-body").html("unauthorized!");
@@ -117,6 +191,11 @@ function checkAuth(jqXHR) {
         return;
     };
 }
+/**
+ * @param {string} apihost
+ * @param {any} item
+ * @param {Boolean} printMediaID
+ */
 function makeComment(apihost, item, printMediaID) {
     var date = new Date(item.timestamp * 1000).toLocaleString(navigator.language, { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });;
     var a = printMediaID
@@ -126,6 +205,10 @@ function makeComment(apihost, item, printMediaID) {
     var p2 = $("<p></p>").text(" said at: " + date).attr("class", "comm").attr("key", item.id).append("<br>");
     $("#comms").append(p2.prepend(a).prepend("<p class='close' title='Delete' role='button' onclick=deleteComment(this,'" + apihost + "')>&times;</p>").append(p));
 }
+/**
+ * @param {HTMLElement} elem
+ * @param {string} apihost
+ */
 function deleteComment(elem, apihost) {
     var commId = elem.parentElement.attributes['key'].value;
     ajaxNonPost(apihost + "/api/comment/remove?id=" + commId, "DELETE",
@@ -136,6 +219,11 @@ function deleteComment(elem, apihost) {
         }, true, null);
 }
 //PICTURE INDEX
+/**
+ * @param {string} apihost
+ * @param {number} page
+ * @param {number} reverse
+ */
 function populateGallery(apihost, page, reverse) {
     ajaxNonPost(apihost + "/api/media", "GET",
         x => {
@@ -151,6 +239,9 @@ function populateGallery(apihost, page, reverse) {
         }, null, false, { page: page, reverse: reverse });
 }
 //PICTURE
+/**
+ * @param {string} apihost
+ */
 function bindTagSearch(apihost) {
     var tagThing = { length: -1, chars: "", data: [], isPerioded: false };
     const tagSearchForm = document.getElementById("tag-form");
@@ -160,6 +251,10 @@ function bindTagSearch(apihost) {
     tagSearchForm.addEventListener("submit", (e) => e.target.value = "");
     tagSuggestions.addEventListener("click", (e) => submitEntry(e, tagSearchInput, tagThing));
 }
+/**
+ * @param {string} apihost
+ * @param {string} mediaID
+ */
 function getMediaDetails(apihost, mediaID) {
     ajaxNonPost(apihost + "/api/media/details", "GET",
         a => {
@@ -174,6 +269,10 @@ function getMediaDetails(apihost, mediaID) {
             makeComments(apihost, a.comments);
         }, null, false, { id: mediaID });
 }
+/**
+ * @param {string} apihost
+ * @param {string} mediaID
+ */
 function addComment(apihost, mediaID) {
     let commText = $("#new-comment").val();
     if (commText == null | commText === "") {
@@ -189,6 +288,10 @@ function addComment(apihost, mediaID) {
         },
         y => checkAuth(y), true, f);
 }
+/**
+ * @param {string} apihost
+ * @param {string} mediaID
+ */
 function addTag(apihost, mediaID) {
     var f = new FormData(); f.set("id", mediaID); f.set("tags", $("#tags-to-add").val());
     ajaxPost(apihost + "/api/media/addTags",
@@ -201,12 +304,20 @@ function addTag(apihost, mediaID) {
             alert("Can't add tag: " + jQuery.parseJSON(y.responseText).value.bad_tag + "\nTags should only contain letters and numbers\nAnd be 3 to 32 characters long");
         }, true, f);
 }
+/**
+ * @param {string} apihost
+ * @param {string} mediaID
+ */
 function remove(apihost, mediaID) {
     ajaxNonPost(apihost + "/api/media/remove?id=" + mediaID, "DELETE", x => location.replace("gallery"), y => {
         checkAuth(y);
         alert(jQuery.parseJSON(y.responseText).result);
     }, true, null);
 }
+/**
+ * @param {Array} responseItems
+ * @returns void
+ */
 function makeList(responseItems) {
     if (responseItems == null)
         return;
@@ -214,6 +325,11 @@ function makeList(responseItems) {
         $("#tags").append("<a href='/gallery/search?tags=" + responseItems[i].name + "'>" + responseItems[i].name + "</a>");
     }
 }
+/**
+ * @param {string} apihost
+ * @param {Array} responseItems
+ * @returns void
+ */
 function makeComments(apihost, responseItems) {
     if (responseItems == null)
         return;
@@ -222,6 +338,12 @@ function makeComments(apihost, responseItems) {
     }
 }
 //PICTURE SEARCH
+/**
+ * @param {string} apihost
+ * @param {string} tags
+ * @param {number} page
+ * @param {number} reverse
+ */
 function populateSearch(apihost, tags, page, reverse) {
     ajaxNonPost(apihost + "/api/media/byTag", "GET",
         x => {
@@ -242,6 +364,9 @@ function populateSearch(apihost, tags, page, reverse) {
         }, null, false, { tags: tags, page: page, reverse: reverse });
 }
 //PICTURE UPLOAD
+/**
+ * @param {string} apihost
+ */
 function bindForms(apihost) {
     window.addEventListener('paste', e => {
         document.getElementById("file-input").files = e.clipboardData.files;
@@ -253,6 +378,10 @@ function bindForms(apihost) {
     document.getElementById("file-form").addEventListener("submit", (e) => handleUpload(e, apihost));
     document.getElementById("uploadfrom-form").addEventListener("submit", (e) => handleUploadFrom(e, apihost));
 }
+/**
+ * @param {Event} e
+ * @param {string} apihost
+ */
 function handleUpload(e, apihost) {
     e.preventDefault();
     ajaxPost(apihost + "/api/media/upload",
@@ -271,6 +400,10 @@ function handleUpload(e, apihost) {
             $("#modal").addClass("active");
         }, true, new FormData(e.target));
 }
+/**
+ * @param {Event} e
+ * @param {string} apihost
+ */
 function handleUploadFrom(e, apihost) {
     e.preventDefault();
     ajaxNonPost(
@@ -293,6 +426,9 @@ function handleUploadFrom(e, apihost) {
         true, { source: $("#link-input").val() });
 }
 //USER HOMEPAGE
+/**
+ * @param {string} apihost
+ */
 function getLoggedUserDetails(apihost) {
     ajaxNonPost(apihost + "/api/user/getInfo", "GET",
         x => {
@@ -316,16 +452,30 @@ function getLoggedUserDetails(apihost) {
         },
         y => checkAuth(y), true);
 }
+/**
+ * @param {string} apihost
+ */
 function signOff(apihost) {
     ajaxNonPost(apihost + "/api/user/signoff", "GET", x => window.location.href = "/user/login", x => alert("Something went wrong, try again"), true, { fromAJAX: true });
 }
+/**
+ * @param {string} apihost
+ * @param {string} session
+ */
 function closeSession(apihost, session) {
     ajaxNonPost(apihost + "/api/user/closeSession", "GET", x => $("#" + session + "").remove(), x => alert("Something went wrong!"), true, { sessionId: session });
 }
 //USER LOGIN
+/**
+ * @param {string} apihost
+ */
 function bindLogin(apihost) {
     document.getElementById("login-form").addEventListener("submit", (e) => processLogin(e, apihost));
 }
+/**
+ * @param {Event} e
+ * @param {string} apihost
+ */
 function processLogin(e, apihost) {
     e.preventDefault();
     ajaxPost(apihost + "/api/user/signin", x => window.location = "/gallery",
@@ -333,9 +483,16 @@ function processLogin(e, apihost) {
         true, new FormData(e.target));
 }
 //USER REGISTER
+/**
+ * @param {string} apihost
+ */
 function bindRegister(apihost) {
     document.getElementById("register-form").addEventListener("submit", (e) => processRegister(e, apihost));
 }
+/**
+ * @param {Event} e
+ * @param {string} apihost
+ */
 function processRegister(e, apihost) {
     e.preventDefault();
     ajaxPost(apihost + "/api/user/signup", x => window.location = "/gallery",

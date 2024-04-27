@@ -14,13 +14,13 @@ namespace MyBooru.Services
     {
         readonly IConfiguration config;
         private readonly IQueryService queryService;
-        private readonly string path;
+        private readonly string dbFilePath;
 
         public CheckService(IConfiguration configuration, IQueryService queryService)
         {
             config = configuration;
             this.queryService = queryService;
-            path = config.GetValue<string>("SQLiteDBPath");
+            dbFilePath = config.GetValue<string>("SQLiteDBPath");
         }
 
         public async Task<int> MediasCountAsync(CancellationToken ct)
@@ -55,13 +55,13 @@ namespace MyBooru.Services
 
         async Task CheckDbFileExists()
         {
-            if (File.Exists(path))
+            if (File.Exists(dbFilePath))
             {
-                await Task.Run(() => File.Copy(path, DateTime.Now.GetUnixTime() + "." + path));
+                await Task.Run(() => File.Copy(dbFilePath, DateTime.Now.GetUnixTime() + "." + dbFilePath));
                 return;
             }
 
-            await Task.Run(() => SQLiteConnection.CreateFile(path));
+            await Task.Run(() => SQLiteConnection.CreateFile(dbFilePath));
         }
 
         //SELECT COUNT(name) FROM sqlite_master WHERE type='table' AND name='';
