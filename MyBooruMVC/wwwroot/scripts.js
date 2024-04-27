@@ -46,16 +46,16 @@ function makeUserButtonsAndModal(apihost) {
 }
 /**
  * @param {string} getUrl
- * @param {string} method
+ * @param {string} httpMethod
  * @param {function(any): void} successFunc
  * @param {function(any): void} errorFunc
  * @param {boolean} sendCreds
  * @param {any} dataObject
  */
-function ajaxNonPost(getUrl, method, successFunc, errorFunc, sendCreds, dataObject) {
+function ajaxNonPost(getUrl, httpMethod, successFunc, errorFunc, sendCreds, dataObject) {
     $.ajax({
         url: getUrl,
-        method: method,
+        method: httpMethod,
         data: dataObject,
         headers: { 'x-query': this.location.search },
         xhrFields: {
@@ -100,7 +100,7 @@ function ajaxPost(postUrl, succesF, errorF, sendCreds, formData) {
 function formSubmit(input) {
     if (input.value.endsWith(","))
         input.value = input.value.slice(0, -1);
-};
+}
 /**
  * @param {Event} e
  * @param {HTMLInputElement} input
@@ -108,7 +108,7 @@ function formSubmit(input) {
  */
 function submitEntry(e, input, obj) {
     const setValue = e.target.innerText;
-    a = input.value;
+    var a = input.value;
     input.value = a.slice(0, a.lastIndexOf(",") + 1) + a.slice(a.lastIndexOf(",") + 1, a.length).replace(obj.chars, "");//yeah...
     input.value += setValue + (obj.isPerioded ? "," : "");
     obj.length = setValue.length;
@@ -127,7 +127,7 @@ function getResults(input, retriever, obj, apihost) {
     retriever(input, obj, apihost);
     if (obj.data == null)
         return;
-    for (i = 0; i < obj.data.length; i++) {
+    for (var i = 0; i < obj.data.length; i++) {
         if (input.localeCompare(obj.data[i].slice(0, input.length), undefined, { sensitivity: 'accent' }) == 0)
             results.push(obj.data[i]);
     }
@@ -141,7 +141,7 @@ function getResults(input, retriever, obj, apihost) {
 function retrieve(str, obj, apihost) {
     if (str != null & str.length >= 2)
         ajaxNonPost(apihost + "/api/tag", "GET", x => obj.data = x, null, false, { tagname: str });
-};
+}
 //suggest is <UL>
 /**
  * @param {Event} e
@@ -164,7 +164,7 @@ function search(e, suggest, retriever, obj, apihost) {//deleteContentBackward, d
         if (results == null)
             return;
         suggest.style.display = "block";
-        for (i = 0; i < results.length; i++) {
+        for (var i = 0; i < results.length; i++) {
             suggest.innerHTML += "<li style='border-bottom: 1px solid white;' onclick=pickTag(this)>" + results[i] + "</li>";
         }
     }
@@ -184,12 +184,12 @@ function checkAuth(jqXHR) {
         $(".modal-body").html("unauthorized!");
         $("#modal").addClass("active");
         return;
-    };
+    }
     if (jqXHR.status == "403") {
         $(".modal-body").html("you don't have permissions for that!");
         $("#modal").addClass("active");
         return;
-    };
+    }
 }
 /**
  * @param {string} apihost
@@ -197,7 +197,7 @@ function checkAuth(jqXHR) {
  * @param {Boolean} printMediaID
  */
 function makeComment(apihost, item, printMediaID) {
-    var date = new Date(item.timestamp * 1000).toLocaleString(navigator.language, { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });;
+    var date = new Date(item.timestamp * 1000).toLocaleString(navigator.language, { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone });
     var a = printMediaID
         ? $("<a></a>").attr("href", "/gallery/picture?id=" + item.mediaID).attr("id", "username").text("this picture").prepend(document.createTextNode("You said on "))
         : $("<a></a>").text(item.user).attr("href", window.location.origin + "/user/details?username=" + item.user).attr("id", "username");
@@ -348,7 +348,7 @@ function populateSearch(apihost, tags, page, reverse) {
     ajaxNonPost(apihost + "/api/media/byTag", "GET",
         x => {
             if (x.items.length == 0) {
-                $("#resultCount").text("0 results found")
+                $("#resultCount").text("0 results found");
                 return;
             }
             $("#resultCount").text(x.count + " results found");
@@ -356,10 +356,10 @@ function populateSearch(apihost, tags, page, reverse) {
                 $("#smth").append("<a href='/gallery/picture?id=" + x.items[i].hash + "'>" + "<img src='" + apihost + "/" + x.items[i].thumb + "'>" + "</a>");
             }
             if (x.prevPage) {
-                $("#pages").append("<a href='/gallery/search?tags=" + tags + "&page=" + (page-1) + "&reverse=" + reverse + "'>Previous</a>")
+                $("#pages").append("<a href='/gallery/search?tags=" + tags + "&page=" + (page - 1) + "&reverse=" + reverse + "'>Previous</a>");
             }
             if (x.nextPage) {
-                $("#pages").append("<a href='/gallery/search?tags=" + tags + "&page=" + (page+1) + "&reverse=" + reverse + "'>Next</a>")
+                $("#pages").append("<a href='/gallery/search?tags=" + tags + "&page=" + (page + 1) + "&reverse=" + reverse + "'>Next</a>");
             }
         }, null, false, { tags: tags, page: page, reverse: reverse });
 }
