@@ -177,19 +177,21 @@ function pickTag(liElement) {
 }
 /**
  * @param {XMLHttpRequest} jqXHR
- * @returns void
+ * @returns boolean
  */
 function checkAuth(jqXHR) {
-    if (jqXHR.status == "401") {
+    if (jqXHR.status == 401) {
         $(".modal-body").html("unauthorized!");
         $("#modal").addClass("active");
-        return;
+        return false;
     }
-    if (jqXHR.status == "403") {
+    if (jqXHR.status == 403) {
         $(".modal-body").html("you don't have permissions for that!");
         $("#modal").addClass("active");
-        return;
+        return false;
     }
+
+    return true;
 }
 /**
  * @param {string} apihost
@@ -214,8 +216,8 @@ function deleteComment(elem, apihost) {
     ajaxNonPost(apihost + "/api/comment/remove?id=" + commId, "DELETE",
         () => elem.parentElement.remove(),
         x => {
-            checkAuth(x);
-            alert(jQuery.parseJSON(x.responseText).result);
+            if(checkAuth(x))
+            	alert(jQuery.parseJSON(x.responseText).result);
         }, true, null);
 }
 //PICTURE INDEX
@@ -300,8 +302,8 @@ function addTag(apihost, mediaID) {
             $("#tags-to-add").val("");
         },
         y => {
-            checkAuth(y);
-            alert("Can't add tag: " + jQuery.parseJSON(y.responseText).value.bad_tag + "\nTags should only contain letters and numbers\nAnd be 3 to 32 characters long");
+            if (checkAuth(y))
+                alert("Can't add tag: " + jQuery.parseJSON(y.responseText).value.bad_tag + "\nTags should only contain letters and numbers\nAnd be 3 to 32 characters long");
         }, true, f);
 }
 /**
@@ -311,7 +313,6 @@ function addTag(apihost, mediaID) {
 function remove(apihost, mediaID) {
     ajaxNonPost(apihost + "/api/media/remove?id=" + mediaID, "DELETE", x => location.replace("gallery"), y => {
         checkAuth(y);
-        alert(jQuery.parseJSON(y.responseText).result);
     }, true, null);
 }
 /**
@@ -395,9 +396,10 @@ function handleUpload(e, apihost) {
                 null, false, { id: x.value.item });
         },
         y => {
-            checkAuth(y);
-            $(".modal-body").html(jQuery.parseJSON(y.responseText).value.item);
-            $("#modal").addClass("active");
+            if (checkAuth(y)) {
+                $(".modal-body").html(jQuery.parseJSON(y.responseText).value.item);
+                $("#modal").addClass("active");
+            }
         }, true, new FormData(e.target));
 }
 /**
@@ -418,10 +420,12 @@ function handleUploadFrom(e, apihost) {
                 null, false, { id: x.value.item });
         },
         y => {
-            checkAuth(y);
+            var auth = checkAuth(y);
             e.target.reset();
-            $(".modal-body").html(jQuery.parseJSON(y.responseText).value.item);
-            $("#modal").addClass("active");
+            if (auth) {
+                $(".modal-body").html(jQuery.parseJSON(y.responseText).value.item);
+                $("#modal").addClass("active");
+            }
         },
         true, { source: $("#link-input").val() });
 }

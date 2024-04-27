@@ -171,12 +171,15 @@ namespace MyBooru.Controllers
             byte[] data;
             HeaderDictionary headers = new HeaderDictionary();
             using (var client = new HttpClient())
-            {
+            { 
                 using (var result = await client.GetAsync(givenURI, HttpCompletionOption.ResponseHeadersRead, ct))
                 {
-                    var s = result.Content.Headers.First(x => x.Key == "content-type").Value.First();
+                    if (result.Content.Headers.ContentType is null)
+                        return StatusCode(400);
 
-                    if (!result.IsSuccessStatusCode || !s.Contains("image") || !s.Contains("video")) 
+                    var s = result.Content.Headers.ContentType.MediaType;//here
+
+                    if (!result.IsSuccessStatusCode || !(s.Contains("image") | s.Contains("video"))) 
                         return StatusCode(400);
                     else
                     {
