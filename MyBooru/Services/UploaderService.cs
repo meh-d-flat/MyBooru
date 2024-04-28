@@ -12,6 +12,7 @@ using System.Net.Mime;
 using MyBooru.Models;
 using static System.Net.Mime.MediaTypeNames;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace MyBooru.Services
 {
@@ -30,6 +31,12 @@ namespace MyBooru.Services
             var up = new Media();
             var ffmpegPaths = config.GetSection("FFMpegExecPath").Get<List<string>>();
             var ffmpegPath = Ext.IsWindows() ? ffmpegPaths[0] : ffmpegPaths[1];
+            var ffprobePaths = config.GetSection("FFProbeExecPath").Get<List<string>>();
+            var ffprobePath = Ext.IsWindows() ? ffprobePaths[0] : ffprobePaths[1];
+            var dimensionsParsed = false;
+            var dimensions = new int[] { -1, -1 };
+            var ffOutput = "";
+            var scale = "scale = 300:-1";
 
             if (file == null)
                 return fileHash;
@@ -39,6 +46,9 @@ namespace MyBooru.Services
 
             if (!File.Exists(ffmpegPath))
                 return "error: ffmpeg not found";
+
+            if (!File.Exists(ffprobePath))
+                return "error: ffprobe not found";
 
             bool illegalChar = file.FileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 | file.FileName.Contains("%");
                 up.Name = illegalChar ? new Random().Next().ToString() + Path.GetExtension(file.FileName) : file.FileName;
@@ -75,9 +85,43 @@ namespace MyBooru.Services
                 var fullPath = Path.GetFullPath(path);
                 var thumbPath = Path.GetFullPath(path).Replace(Path.GetFileName(path), thumbName);
                 var webThumbPath = path.Replace(Path.GetFileName(path), thumbName);
+
+                var ffprobe = new System.Diagnostics.Process();
+                ffprobe.StartInfo.FileName = ffprobePath;
+                ffprobe.StartInfo.RedirectStandardOutput = true;
+                ffprobe.EnableRaisingEvents = true;
+                ffprobe.StartInfo.UseShellExecute = false;
+                ffprobe.StartInfo.Arguments = 
+                    $"-v error -select_streams v:0 -show_entries stream=width,height -of csv=s=,:p=0 \"{fullPath}\"";
+                ffprobe.OutputDataReceived += (s, e) => ffOutput += e.Data;
+
+                try
+                {
+                    ffprobe.Start();
+                    ffprobe.BeginOutputReadLine();
+                    ffprobe.WaitForExit();
+                    ffprobe.Close();
+                    ffprobe.Dispose();
+                    dimensionsParsed = 
+                        (int.TryParse(ffOutput.Split(",")[0], out var width) & width > 0) 
+                        & (int.TryParse(ffOutput.Split(",")[1], out var height) & height > 0);
+                    dimensions = dimensionsParsed ? new int[] { width, height} : dimensions;
+                    Debug.WriteLine($"dimension parse fail {fullPath}");
+                }
+                catch (Exception ex)
+                {
+                    ffprobe.Close();
+                    ffprobe.Dispose();
+                    Debug.WriteLine($"dimension parse exception {fullPath}\n{ex}");
+                }
+
+                scale = !dimensionsParsed ? scale : dimensions[0] > dimensions[1] ? scale : "scale=-1:300";
+
                 var ffmpeg = new System.Diagnostics.Process();
                 ffmpeg.StartInfo.FileName = ffmpegPath;
-                ffmpeg.StartInfo.Arguments = file.ContentType.Contains("video") ? $"-i \"{fullPath}\" -ss 00:00:00.000 -vframes 1 -vf scale=300:-1 \"{thumbPath}\"" : $"-i \"{fullPath}\" -vf scale=300:-1 \"{thumbPath}\"";
+                ffmpeg.StartInfo.Arguments = file.ContentType.Contains("video") 
+                    ? $"-i \"{fullPath}\" -ss 00:00:00.000 -vframes 1 -vf {scale} \"{thumbPath}\"" 
+                    : $"-i \"{fullPath}\" -vf {scale} \"{thumbPath}\"";
 
                 try
                 {
