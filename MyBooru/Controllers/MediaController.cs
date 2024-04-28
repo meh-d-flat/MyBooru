@@ -142,6 +142,8 @@ namespace MyBooru.Controllers
                 return StatusCode(400);
         }
 
+        //The default size is 30000000 bytes (28.6 MB). MaxValue is 4294967295 bytes (4 GB)
+        //<requestLimits maxAllowedContentLength="104857600" /> for 100MB in applicationhost.config
         [HttpPost, Route("upload"), Authorize(Roles = "User")]
         public async Task<IActionResult> Upload(IFormFile file)
         {

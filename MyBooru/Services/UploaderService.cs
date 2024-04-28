@@ -36,7 +36,7 @@ namespace MyBooru.Services
             var dimensionsParsed = false;
             var dimensions = new int[] { -1, -1 };
             var ffOutput = "";
-            var scale = "scale = 300:-1";
+            var scale = "scale=300:-1";
 
             if (file == null)
                 return fileHash;
@@ -100,6 +100,7 @@ namespace MyBooru.Services
                     ffprobe.Start();
                     ffprobe.BeginOutputReadLine();
                     ffprobe.WaitForExit();
+                    ffprobe.CancelOutputRead();
                     ffprobe.Close();
                     ffprobe.Dispose();
                     dimensionsParsed = 
@@ -126,16 +127,18 @@ namespace MyBooru.Services
                 try
                 {
                     ffmpeg.Start();
-                    if (!ffmpeg.WaitForExit(2000))
-                    {
-                        ffmpeg.Close();
+                    if (!ffmpeg.WaitForExit(1000))
                         await Task.Run(() => Directory.Delete(Path.GetDirectoryName(path), true));
-                    }
+
                     ffmpeg.WaitForExit();
+                    ffmpeg.Close();
+                    ffmpeg.Dispose();
                 }
                 catch
                 {
                     fileHash = "error: failed to create thumbnail";
+                    ffmpeg.Close();
+                    ffmpeg.Dispose();
                 }
 
                 up.Thumb = webThumbPath;
