@@ -132,7 +132,13 @@ namespace MyBooru
 
             app.UseEndpoints(endpoints =>
             {
+                var hidden = Configuration.GetSection("AdminControllerRoute").Get<string>();
                 endpoints.MapControllers();
+                endpoints.MapControllerRoute(
+                    name: "admin",
+                    pattern: $"{hidden}/{{action}}",
+                    defaults: new { controller = "Admin", action = "Get" }
+                );
             });
         }
     }
