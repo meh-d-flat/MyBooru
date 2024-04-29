@@ -36,7 +36,7 @@ namespace MyBooru.Controllers
                 }));
         }
 
-        [HttpGet, Route("mine"), Authorize(Roles = "User")]
+        [HttpGet, Route("mine"), Authorize(Policy = "IsLogged")]
         public async Task<IActionResult> Get(CancellationToken ct)
         {
             var result = await _commService.GetMyCommentsAsync(
@@ -60,7 +60,7 @@ namespace MyBooru.Controllers
                 : NotFound() ;
         }
 
-        [HttpPost, Authorize(Roles = "User"), Route("post")]
+        [HttpPost, Authorize(Policy = "IsLogged"), Route("post")]
         public async Task<IActionResult> Post([FromForm] string commentText, [FromForm] string hash)
         {
             var h = HttpContext.Request.Headers.FirstOrDefault(x => x.Key == "x-query").Value[0];
@@ -70,7 +70,7 @@ namespace MyBooru.Controllers
             return result > 0 ? Ok(result) : StatusCode(500);
         }
 
-        [HttpDelete, Route("remove"), Authorize(Roles = "User")]
+        [HttpDelete, Route("remove"), Authorize(Policy = "IsLogged")]
         public async Task<IActionResult> Delete(int id)
         {
             var h = HttpContext.Request.Headers.FirstOrDefault(x => x.Key == "x-query").Value[0];

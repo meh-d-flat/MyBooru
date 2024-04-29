@@ -62,7 +62,7 @@ namespace MyBooru
             services.AddOptions<CookieAuthenticationOptions>("bla.bla")
                 .Configure<ITicketStore>((options, store) => options.SessionStore = store);
 
-            services.AddAuthorization();
+            services.AddAuthorization(o => o.AddPolicy("IsLogged", p => p.RequireRole(new [] { "Admin", "Moder", "User" })));
 
             services.AddCors(options =>
             {

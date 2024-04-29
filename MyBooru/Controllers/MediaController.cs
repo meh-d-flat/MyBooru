@@ -84,7 +84,7 @@ namespace MyBooru.Controllers
             return res;
         }
 
-        [HttpPost, Route("addTags"), Authorize(Roles = "User")]
+        [HttpPost, Route("addTags"), Authorize(Policy = "IsLogged")]
         public async Task<IActionResult> AddTags([FromForm]string id, [FromForm]string tags, CancellationToken ct)
         {
             var h = HttpContext.Request.Headers.FirstOrDefault(x => x.Key == "x-query").Value[0];
@@ -144,7 +144,7 @@ namespace MyBooru.Controllers
 
         //The default size is 30000000 bytes (28.6 MB). MaxValue is 4294967295 bytes (4 GB)
         //<requestLimits maxAllowedContentLength="104857600" /> for 100MB in applicationhost.config
-        [HttpPost, Route("upload"), Authorize(Roles = "User")]
+        [HttpPost, Route("upload"), Authorize(Policy = "IsLogged")]
         public async Task<IActionResult> Upload(IFormFile file)
         {
             var result = await _uploader.UploadOneAsync(file, HttpContext.User.Identity.Name);
@@ -157,7 +157,7 @@ namespace MyBooru.Controllers
             return isResult ? StatusCode(400, response) : (IActionResult)Ok(response);
         }
 
-        [HttpGet, Route("uploadfrom"), Authorize(Roles = "User")]
+        [HttpGet, Route("uploadfrom"), Authorize(Policy = "IsLogged")]
         public async Task<IActionResult> UploadFrom(string source, CancellationToken ct)
         {
             if (!_config.GetValue<bool>("ExternalFileUploadAllowed"))
@@ -196,7 +196,7 @@ namespace MyBooru.Controllers
             }
         }
 
-        [HttpDelete, Route("remove"), Authorize(Roles = "User")]
+        [HttpDelete, Route("remove"), Authorize(Policy = "IsLogged")]
         public async Task<IActionResult> Remove(string id, CancellationToken ct)
         {
             bool exist = await _checker.CheckMediaExistsAsync(id, ct);

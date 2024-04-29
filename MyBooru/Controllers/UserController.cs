@@ -29,7 +29,7 @@ namespace MyBooru.Controllers
             _userService = userService;
         }
 
-        [Authorize(Roles = "User"), Route("getInfo")]
+        [Authorize(Policy = "IsLogged"), Route("getInfo")]
         public async Task<IActionResult> GetInfo(CancellationToken ct)
         {
             var user = await _userService.GetUserAsync(HttpContext.User.Identity.Name, ct);
@@ -134,7 +134,7 @@ namespace MyBooru.Controllers
             return fromAJAX ? new EmptyResult() : RedirectToAction("SignIn");
         }
 
-        [Authorize(Roles = "User"), Route("getSessions")]
+        [Authorize(Policy = "IsLogged"), Route("getSessions")]
         public async Task<IActionResult> GetSessions(CancellationToken ct)
         {
             var all = await _userService.GetUserSessionsAsync(HttpContext.User.FindFirstValue("uniqueId"), ct);
@@ -151,7 +151,7 @@ namespace MyBooru.Controllers
             return new JsonResult(new { allSessions = formatted });
         }
 
-        [Authorize(Roles = "User"), Route("closeSession")]
+        [Authorize(Policy = "IsLogged"), Route("closeSession")]
         public async Task<IActionResult> CloseSession(string sessionId)
         {
             if (sessionId == HttpContext.User.FindFirstValue("uniqueId"))
@@ -161,7 +161,7 @@ namespace MyBooru.Controllers
             return closed ? Ok() : BadRequest();
         }
 
-        [HttpPost, Route("changePass"), Authorize(Roles = "User")]
+        [HttpPost, Route("changePass"), Authorize(Policy = "IsLogged")]
         public async Task<IActionResult> ChangePassword([FromForm] string newPass, [FromForm] string oldPass, [FromForm] string newPassrepeat, CancellationToken ct)
         {
             if (newPass != newPassrepeat)
@@ -173,7 +173,7 @@ namespace MyBooru.Controllers
             return checks ? (IActionResult)Ok() : StatusCode(500);
         }
 
-        [HttpPost, Route("changeMail"), Authorize(Roles = "User")]
+        [HttpPost, Route("changeMail"), Authorize(Policy = "IsLogged")]
         public async Task<IActionResult> ChangeEmail([FromForm]string newMail, CancellationToken ct)
         {
             var oldMail = HttpContext.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email).Value;
