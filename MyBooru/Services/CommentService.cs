@@ -90,7 +90,8 @@ namespace MyBooru.Services
                 x.Parameters.AddNew("@c", email, System.Data.DbType.String);
                 return await x.ExecuteNonQueryAsync();
             }, @"DELETE FROM Comments WHERE Comments.ID = @a AND Comments.User = (SELECT Tickets.Username FROM Tickets WHERE Tickets.ID = @b AND Tickets.Username = (SELECT Users.Username From Users WHERE Users.Email = @c))
-                OR (Comments.MediaID = (SELECT Medias.Hash FROM Medias WHERE Medias.Uploader IN (SELECT Tickets.Username FROM Tickets WHERE Tickets.ID = @b AND Tickets.Username = (SELECT Users.Username From Users WHERE Users.Email = @c))) AND Comments.ID = @a)");
+                OR (Comments.MediaID = (SELECT Medias.Hash FROM Medias WHERE Medias.Uploader IN (SELECT Tickets.Username FROM Tickets WHERE Tickets.ID = @b AND Tickets.Username = (SELECT Users.Username From Users WHERE Users.Email = @c))) AND Comments.ID = @a)
+                OR (SELECT Users.Role FROM Users WHERE Users.Username = (SELECT Tickets.Username FROM Tickets WHERE Tickets.ID = @b)) = 'Admin' AND Comments.ID = @a");
         }
     }
 }

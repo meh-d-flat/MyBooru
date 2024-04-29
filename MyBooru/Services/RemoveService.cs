@@ -33,7 +33,8 @@ namespace MyBooru.Services
                 x.Parameters.AddNew("@c", email, System.Data.DbType.String);
                 return Convert.ToString(await x.ExecuteScalarAsync());
             }, @"SELECT Path FROM Medias WHERE Hash = @a
-                AND Medias.Uploader = (SELECT Username FROM Tickets WHERE ID = @b AND Username = (SELECT Username From Users WHERE Email = @c))");
+                AND (Medias.Uploader = (SELECT Username FROM Tickets WHERE ID = @b AND Username = (SELECT Username From Users WHERE Email = @c))
+                OR (SELECT Users.Role FROM Users WHERE Users.Username = (SELECT Tickets.Username FROM Tickets WHERE Tickets.ID = @b)) = 'Admin')");
 
             if (path == string.Empty | path == "none")
                 return "error: unauthorized to delete";
