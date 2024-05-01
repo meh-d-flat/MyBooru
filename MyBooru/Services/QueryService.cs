@@ -20,6 +20,7 @@ namespace MyBooru.Services
             T output = default(T);
             using var connection = new SQLiteConnection(config.GetSection("Store:ConnectionString").Value);
             await connection.OpenAsync();
+            //query = $"PRAGMA foreign_keys=on;{query}";//yeah...
             using var command = new SQLiteCommand(query, connection);
             try
             {

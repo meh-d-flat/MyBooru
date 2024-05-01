@@ -130,6 +130,7 @@ namespace MyBooru.Services
                     UserAgent VARCHAR(255),
                     IP VARCHAR(255)
                 );
+                INSERT OR IGNORE INTO Users (Username, Email, PasswordHash, PasswordSalt, Role, RegisterDateTime) VALUES ('DELETED', 'DELETED', 0, 0, 0, 0);
                 COMMIT;
                 PRAGMA foreign_keys=on;";
 
